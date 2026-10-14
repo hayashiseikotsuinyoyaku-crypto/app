@@ -43,7 +43,7 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
 </div>
 <iframe id="app" hidden title="大曲院システム" allow="camera; clipboard-write; fullscreen"></iframe>
 <script>
-var DEF = '';
+var DEF = 'https://script.google.com/macros/s/AKfycbw_VEIirLbaeXqeWVv5M7ME7uLZxfQOdAGSOF8utCz5KprUNjIk-sjWpI2hlbUE8id8/exec';
 var RX = /^https:\/\/script\.google\.com\/(a\/[\w.-]+\/)?macros\/s\/[\w-]{20,}\/exec$/;
 var q = new URLSearchParams(location.search), u = (q.get('u') || DEF || '').trim();
 var standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
