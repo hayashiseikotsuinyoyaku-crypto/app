@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>大曲院システム</title>
+<meta name="apple-mobile-web-app-title" content="大曲院システム">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<style>
+html,body{margin:0;height:100%;background:#fff}
+body{font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#2B2723}
+#app{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px));border:0}
+.box{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;gap:14px;padding:24px;box-sizing:border-box;text-align:center}
+img{width:110px;height:110px;border-radius:24px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:22px;margin:0}
+ol{text-align:left;font-size:17px;line-height:1.8;max-width:340px;padding-left:1.4em;margin:0}
+.note{font-size:14px;color:#6B635B;max-width:340px}
+a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:999px}
+[hidden]{display:none!important}
+</style>
+</head><body>
+<div class="box" id="ask" hidden>
+  <img src="apple-touch-icon.png" alt="">
+  <h1>大曲院システム</h1>
+  <p class="note" style="font-size:16px;color:#2B2723">大曲院の予約システムのアドレスを貼ってください<br><small>（https://script.google.com/macros/s/…/exec）</small></p>
+  <input id="u" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="width:100%;max-width:420px;font-size:16px;padding:12px;border:1px solid #ccc;border-radius:10px;box-sizing:border-box">
+  <p class="note" id="err" style="color:#B3261E" hidden>アドレスの形がちがいます。…/exec で終わるアドレスを貼ってください。</p>
+  <p><a class="btn" href="#" id="go">次へ</a></p>
+</div>
+<div class="box" id="setup" hidden>
+  <img src="apple-touch-icon.png" alt="">
+  <h1>大曲院システム</h1>
+  <ol>
+    <li>下の <b>共有ボタン</b>（□に↑のマーク）を押す<br><small>iPadは右上にあります</small></li>
+    <li><b>「ホーム画面に追加」</b>を押す</li>
+    <li>名前が「大曲院システム」になっているのを確かめて<b>「追加」</b></li>
+  </ol>
+  <p class="note">追加したら、ホーム画面のアイコンから開いてください。<br>Androidのスマホは、右上の︙ →「ホーム画面に追加」です。</p>
+  <p><a class="btn" id="now" href="#" target="_blank" rel="noopener">今すぐ開いてみる</a></p>
+</div>
+<iframe id="app" hidden title="大曲院システム" allow="camera; clipboard-write; fullscreen"></iframe>
+<script>
+var DEF = '';
+var RX = /^https:\/\/script\.google\.com\/(a\/[\w.-]+\/)?macros\/s\/[\w-]{20,}\/exec$/;
+var q = new URLSearchParams(location.search), u = (q.get('u') || DEF || '').trim();
+var standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+var $ = function (i) { return document.getElementById(i); };
+if (!RX.test(u)) {
+  $('ask').hidden = false;
+  $('go').onclick = function (e) {
+    e.preventDefault();
+    var v = $('u').value.trim().replace(/[?#].*$/, '');
+    if (!RX.test(v)) { $('err').hidden = false; return; }
+    location.replace(location.pathname + '?setup&u=' + encodeURIComponent(v));
+  };
+} else if (q.has('setup') && !standalone) {
+  $('setup').hidden = false; $('now').href = u;
+} else {
+  var f = $('app'); f.src = u; f.hidden = false;
+}
+</script>
+</body></html>
