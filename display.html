@@ -36,6 +36,20 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
 </div>
 <iframe id="app" hidden title="お会計表示" allow="camera; clipboard-write; fullscreen"></iframe>
 <script>
+/* ログインを覚える：中の予約システム（Googleの画面）から頼まれた分だけ、この端末に保存する（代表 10/14） */
+window.addEventListener('message', function (e) {
+  if (!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin)) return;
+  var d = e.data || {}; if (d.ts !== 'hayashi' || !/^[\w-]{1,40}$/.test(String(d.k || ''))) return;
+  var K = 'hs:' + location.pathname + ':' + d.k, v = null;
+  try {
+    if (d.op === 'get') v = localStorage.getItem(K);
+    else if (d.op === 'set') localStorage.setItem(K, String(d.v).slice(0, 500));
+    else if (d.op === 'del') localStorage.removeItem(K);
+  } catch (x) {}
+  try { e.source.postMessage({ts: 'hayashi', id: d.id, v: v}, e.origin); } catch (x) {}
+});
+</script>
+<script>
 var DEST = 'https://script.google.com/macros/s/AKfycby8QI2NKxAnfMymleQvHoTgtKQzDgCMyrNqpLqohiIJtAdZYc0U1zrNqB5NY5_4kwhf/exec?p=display';
 if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   document.getElementById('setup').hidden = false;
