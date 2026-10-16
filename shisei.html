@@ -76,6 +76,10 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 .fl{font-size:13px;color:var(--sub);font-weight:700;text-align:center}.ft{font-size:17px;display:block}.ft em{font-style:normal;color:var(--red)}
 .lg{margin-top:10px;font-size:13px;color:var(--sub)}.lg span{display:inline-block;width:22px;height:10px;border-radius:5px;vertical-align:middle;margin-right:4px}.lg .st{background:#ef5b6b}.lg .fa{background:#f4c95d;margin-left:8px}
 .gait{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gait>div{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff;max-width:220px;justify-self:center;width:100%}
+#use{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}#use .upre{grid-column:1/-1;background:var(--teal2);border-radius:10px;padding:4px 14px;line-height:1.75}#use .upre p{margin:8px 0}
+#use .ub{border:1px solid var(--line);border-radius:10px;padding:10px 14px;line-height:1.7}#use .ub.mine{border-color:var(--teal);box-shadow:inset 4px 0 0 var(--teal)}
+#use .ub b{font-size:17px;color:var(--teal)}#use .ub b i{font-style:normal;font-size:12px;background:var(--teal);color:#fff;border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+#use .u1,#use .un{border:0;padding:0;border-radius:0}#use .u1{font-weight:700;margin:2px 0 4px}#use .un{color:var(--warn);font-weight:700}#use ul{margin:4px 0 0;padding-left:1.2em}#use li{margin:3px 0}#use u{text-decoration:none;background:linear-gradient(transparent 60%,#f4e2b0 60%)}
 .find{display:grid;gap:10px}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
@@ -113,7 +117,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-11</span>
+  <h1>骨ぴかチェック</h1><span class="tag">試作 10/17-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -295,10 +299,42 @@ function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===
   /* w＝段（1〜3）＋はみ出し。正面から2つ・側面から2つまで（カルティと同じ数） */
   out.sort((a,b)=>b.w-a.w);
   return {top:[...out.filter(x=>x.s==='F').slice(0,2),...out.filter(x=>x.s==='S').slice(0,2)],use:[...use]}}
-const USE={sit:['座り方','骨盤を立てて座り、耳・肩・骨盤が縦にそろう位置に。脚は組まずに、両足の裏を床につけます。'],
-  stand:['立ち方','両足に均等に体重をのせて、ひざは軽く伸ばします。頭のてっぺんを上から引っぱられるように。'],
-  walk:['歩き方','つま先とひざを同じ向きに。かかとから着いて、足の指で地面を押して進みます。'],
-  abs:['腹筋の正しい使い方','おへその下を軽くへこませたまま、呼吸を止めずに。院ではEMSも使いながら、正しい使い方を一緒に練習します。']};
+// これから意識する体の使い方（代表の姿勢指導 10/17 を要約）。[名前, ひとこと, やり方]
+const USE={abs:['腹筋の使い方','すべての基本。骨盤を「まん中」に保つための使い方です。',[
+    '骨盤が前に傾くと反り腰・内股に、後ろに傾くと猫背・がに股になりやすくなります。大切なのは骨盤の「まん中」です。',
+    '① 下腹部を軽くへこませる　② へこませたまま、その力をみぞおちのあたりまで上げる　③ その状態を保つ。すると自然に胸が張れます。',
+    '胸を思い切り張ろうとすると腰が反り、おなかが前に出てしまいます。胸は「張る」のではなく、腹筋で「自然に張れる」ようにします。',
+    '腹筋を使わなくても背筋だけで立てますが、それだと腰に大きな負担がかかります。',
+    '腰がしんどくなったら我慢せず、一度力を抜いて脱力。楽になったら、また腹筋を使う。この繰り返しで、胸の張れる姿勢が自然になっていきます。院ではEMSも使って練習します。']],
+  sit:['座り方','「ON-OFFの姿勢」。デスクワーク・授業中・くつろぐ時・食事中も同じです。',[
+    'ON：骨盤を起こして、座骨に少し体重をのせます。自然に背すじが起きて、良い姿勢になります。ONのときは【腹筋の使い方】も一緒に。',
+    'OFF：疲れたら脱力して、背もたれに軽くもたれます。浅く座ると角度がきつくなるので、少し深めに座りましょう。',
+    'ずっとONのままでいられる人はいません。我慢すると腰がつらくなり、良い姿勢が「つらい姿勢」になってしまいます。OFFで体を休ませることも大切です。',
+    '最初はONが短くて当たり前。ONとOFFを繰り返しながら、ONの時間を少しずつ長くしていきましょう。']],
+  stand:['立ち方','左右均等に、外くるぶしの真下に体重をのせて立ちます。',[
+    '片足に体重をのせると、反対の足を外に出して立つ癖が出ます。股関節が開いて、脚の長さに差が出てしまいます（仮性延長）。',
+    '足は肩幅くらいに開き、つま先はまっすぐ正面に。足をそろえると重心が一点になり、ふらつきやすくなります。',
+    '体重は外くるぶしの真下にのせるイメージで。かかとにのせると後ろ重心になってしまいます。',
+    '【腹筋の使い方】を合わせると自然に胸が張れて、見た目もきれいになります。腰が疲れたら脱力して、また繰り返します。']],
+  walk:['歩き方','地面にまっすぐな線をイメージして、かかと→親指の順に線の上へ。',[
+    '骨盤が後ろに傾いている人は、線をまたぐように歩いてがに股になりやすく、猫背や頭が前に出る姿勢につながります。前に傾いている人は、つま先が線に乗ってかかとが外に開きます（ハイヒールが多い方に多い歩き方です）。',
+    '① 線の上に片方のかかとを乗せる　② 次に親指を線の上に乗せる。これを【腹筋の使い方】をしながら行います。',
+    '小またにならないように、手を自然に振って歩きます。下を向くと腹筋がゆるむので、正面を見て。',
+    'ふらつくのは、体幹が弱いか、太ももの外側か内側のどちらかを使いすぎているサインです。',
+    '慣れないうちは、スーパーのカートを支えにして、正面を見ながら足の運びを練習しましょう。']]};
+const USE_ORDER=['abs','sit','stand','walk'];
+// その方の型に合わせたひとこと（骨盤の向き・重心）
+function useNote(k,F,S){const pel=gI(S,'pel'),fu=futureOf(F,S),cg=cogOf(F,S);
+  const fwd=(pel&&lev(pel)>=2&&sgn(pel)<0)||fu.s==='sori',bwd=(pel&&lev(pel)>=2&&sgn(pel)>0)||fu.s==='neko'||fu.s==='heihai';
+  if(k==='abs'&&fwd)return 'あなたは骨盤が前に傾きやすい（反り腰・内股になりやすい）タイプです。';
+  if(k==='abs'&&bwd)return 'あなたは骨盤が後ろに傾きやすい（猫背・がに股になりやすい）タイプです。';
+  if(k==='walk'&&bwd)return 'あなたは線をまたいで、がに股で歩きやすいタイプです。';
+  if(k==='walk'&&fwd)return 'あなたはつま先が線に乗って、かかとが外に開きやすいタイプです。';
+  if(k==='stand'&&(cg.lr||cg.fb))return `今は重心が${cg.lr}${cg.fb}に偏っています。`;
+  if(k==='sit'&&(fu.s==='neko'||fu.s==='sori'))return fu.s==='neko'?'背中が丸まりやすいので、ONの時間を少しずつ増やしましょう。':'ONのときに腰を反らせすぎないよう、腹筋で起こしましょう。';
+  return ''}
+const USE_PRE='骨ぴか整体でゆがみを整えているからこそ、正しい体の使い方がしやすくなります。ゆがんだままだと、そのゆがみが「その人にとっての正しい姿勢」になってしまいます。\n良い姿勢をずっと続けられる人はいません。大切なのは、良い姿勢の時間を少しずつ長くすること。ゆがみにくい体になり、余計な負担がかかる時間が減るので、回復力も上がりやすくなります。\n今まで使ってこなかった筋肉は弱っているので、最初は続かなくて当たり前。続けることより、まずはチャレンジすることが大切です。';
+function useText(k,F,S){const U=USE[k],n=useNote(k,F,S);return (n?'★ '+n+'\n':'')+U[1]+'\n'+U[2].map(x=>'・'+x).join('\n')}
 // ---- 描く（カルティと同じ：点を線でつなぐ・縦の基準線・肩と腰の高さの横線） ----
 const LINKS={F:[['top','chin'],['chin','jug'],['jug','shR'],['jug','shL'],['shR','elR'],['elR','wrR'],['shL','elL'],['elL','wrL'],['jug','pub'],['asR','pub'],['asL','pub'],['hipR','pub'],['hipL','pub'],['asR','hipR'],['asL','hipL'],
     ['hipR','knR'],['knR','anR'],['anR','toR'],['hipL','knL'],['knL','anL'],['anL','toL']],
@@ -364,7 +400,9 @@ function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts
   const r=findings(F,S);
   $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
-  $('#use').innerHTML=us.length?us.map(k=>`<div><b>${USE[k][0]}</b><br>${USE[k][1]}</div>`).join(''):'<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
+  if(F||S){const mine=new Set(us);$('#use').innerHTML=`<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div>`+USE_ORDER.map(k=>{const U=USE[k],n=useNote(k,F,S);
+      return `<div class="ub${mine.has(k)?' mine':''}"><b>${U[0]}${mine.has(k)?' <i>特に意識</i>':''}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></div>`}).join('')}
+  else $('#use').innerHTML='<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
   try{extraRender(F,S)}catch(e){console.warn(e)}
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
@@ -403,7 +441,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-11）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-1）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -618,7 +656,7 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
   const rep=kpReport(),xi=await extraImg().catch(()=>null),X=window.__xtra;$('#kpSave').disabled=true;kpSt('保存しています…');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
-      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:(L.find.use.length?L.find.use:['stand','sit']).map(k=>USE[k])});
+      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:[['これから意識すること',USE_PRE]].concat(USE_ORDER.map(k=>[USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
     KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
     kpSt('保存しました（'+r.date.replace(/-/g,'/')+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
