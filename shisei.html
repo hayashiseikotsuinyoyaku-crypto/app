@@ -62,6 +62,12 @@ table.m td.v{text-align:right;white-space:nowrap;font-weight:700}
 body.pt .gc b{cursor:default}
 .fd.ok{border-color:var(--teal);background:var(--teal2)}
 #cF .find,#cS .find{margin-top:12px}
+.kpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}.kpbar .btns{margin-top:0;margin-left:auto}.kpn b{font-size:19px;margin-right:12px}
+.kpbar .status{flex-basis:100%;margin-top:0;min-height:0}
+#cmpBox h2 select{font:inherit;font-size:15px;padding:4px 8px;border-radius:8px;border:1px solid var(--line)}
+.cmpi{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cmph{font-weight:700;margin-bottom:4px}.cmpimg img,.cmpimg canvas{width:100%;border-radius:10px;display:block}
+table.cmp{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}table.cmp th,table.cmp td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp tr.worse td.b{color:var(--red)}
 .find{display:grid;gap:10px}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
@@ -99,12 +105,21 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-8</span>
+  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-9</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
-  <div class="note staff">写真はこのiPadの中だけで分析します。どこにも送らず、保存もしません（試作）。壁から少し離れて、全身が入るように、カメラは腰の高さで水平に。正面は両手を体の横に、左側面は体の左側をカメラに向けて立ってもらいます。</div>
+  <section class="card kpbar" id="kpBar" hidden>
+    <div class="kpn"><b id="kpName"></b><span id="kpPrev" class="note"></span></div>
+    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn" id="kpCmp" disabled>前回と比べる</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button></div>
+    <div class="status" id="kpSt"></div>
+  </section>
+  <section class="card" id="cmpBox" hidden><h2>前回と比べる <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
+    <div class="cmpi"><div><div class="cmph" id="cmpHa">前回</div><div id="cmpA" class="cmpimg"></div></div><div><div class="cmph">今回</div><div id="cmpB" class="cmpimg"></div></div></div>
+    <div id="cmpT"></div>
+  </section>
+  <div class="note staff" id="kpNote">写真はこのiPadの中だけで分析します。どこにも送らず、保存もしません（試作）。壁から少し離れて、全身が入るように、カメラは腰の高さで水平に。正面は両手を体の横に、左側面は体の左側をカメラに向けて立ってもらいます。</div>
   <section class="card" id="cF"><h2>立位正面 <small class="staff">点は指で動かせます。2本指で写真を拡大・縮小、グラフは目盛りを押して直せます</small></h2>
     <div class="pair"><div><div class="cv" id="cvF"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
       <div class="btns staff"><button class="btn pri" id="cmF">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fF"></label><button class="btn" id="rF" disabled>点を最初に戻す</button></div>
@@ -334,7 +349,7 @@ function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts
   $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
   $('#use').innerHTML=us.length?us.map(k=>`<div><b>${USE[k][0]}</b><br>${USE[k][1]}</div>`).join(''):'<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
-  window.__last={F,S,find:r}}
+  window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
 function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
   const url=URL.createObjectURL(file),im=new Image();
@@ -371,7 +386,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-8）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-9）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -433,7 +448,57 @@ $('#camShot').onclick=camPress;$('#camFlip').onclick=camFlip;$('#camOk').onclick
 $('#ht').addEventListener('input',renderNums);
 const mode=pt=>{document.body.classList.toggle('pt',pt);$('#vPt').setAttribute('aria-pressed',pt);$('#vStaff').setAttribute('aria-pressed',!pt)};
 $('#vPt').onclick=()=>mode(true);$('#vStaff').onclick=()=>mode(false);
-window.__shisei={CAM,camOpen,camShoot,camOk,camRe,camFlip,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
+
+/* ---- 予約システムとつなぐ（?t=チケット&a=予約システムのURL）：保存・前回と比べる・LINEで送る ---- */
+var KP=(()=>{const q=new URLSearchParams(location.search),t=q.get('t')||'',a=q.get('a')||'';
+  return /^[0-9a-f]{40}$/.test(t)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(a)?{t,a,info:null,saved:null,dirty:true}:null})();
+async function kpApi(op,body){const r=await fetch(KP.a,{method:'POST',body:JSON.stringify(Object.assign({op,t:KP.t},body||{}))});return r.json()}
+const kpSt=t=>{$('#kpSt').textContent=t||''};
+function kpButtons(){if(!KP)return;const has=!!(V.F.pts||V.S.pts);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
+  $('#kpLine').disabled=!KP.saved||KP.dirty||!(KP.info&&KP.info.line);$('#kpLine').title=KP.info&&!KP.info.line?'LINEの登録がない方です':'';
+  $('#kpCmp').disabled=!has||!kpPrevList().length}
+const kpPrevList=()=>((KP&&KP.info&&KP.info.list)||[]).filter(x=>x.id!==KP.saved);
+async function kpInit(){if(!KP)return;$('#kpBar').hidden=false;$('#kpNote').textContent='写真はこのiPadの中で分析し、「保存する」を押すと予約システム（院のGoogleドライブ）に保存します。';
+  kpSt('患者さんの情報を読み込んでいます…');
+  try{const r=await kpApi('kpInfo');if(r.error){kpSt(r.error);return}KP.info=r;
+    $('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
+    $('#kpPrev').textContent=r.list.length?'前回 '+r.list[0].date.replace(/-/g,'/')+'（これまで'+r.list.length+'回）':'はじめての骨ぴかチェックです';
+    if(r.height)$('#ht').value=r.height;kpSt('');renderNums()}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}}
+// 結果の画像：正面と側面（点と線つき）を横に並べた1枚
+function kpReport(){const cs=['F','S'].map(k=>V[k].pts?$('#cv'+k+' canvas'):null).filter(Boolean);if(!cs.length)return null;
+  const H=900,g=16,ws=cs.map(c=>Math.round(c.width*H/c.height)),out=document.createElement('canvas');out.width=ws.reduce((a,b)=>a+b,0)+g*(cs.length-1);out.height=H;
+  const c=out.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,out.width,H);let x=0;cs.forEach((cv,i)=>{c.drawImage(cv,x,0,ws[i],H);x+=ws[i]+g});return out}
+const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
+const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
+async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(L.F||L.S))return;
+  ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
+  const rep=kpReport();$('#kpSave').disabled=true;kpSt('保存しています…');
+  try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),
+      dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
+      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:(L.find.use.length?L.find.use:['stand','sit']).map(k=>USE[k])});
+    if(r.error){kpSt(r.error);kpButtons();return}
+    KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
+    kpSt('保存しました（'+r.date.replace(/-/g,'/')+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
+  catch(e){kpSt('保存できませんでした。インターネットを確認して、もう一度押してください。');kpButtons()}}
+async function kpLine(){if(!KP||!KP.saved)return;if(!$('#kpLine').dataset.sure){$('#kpLine').dataset.sure=1;$('#kpLine').textContent='もう一度押すと送ります';return}
+  delete $('#kpLine').dataset.sure;$('#kpLine').textContent='LINEで送る';$('#kpLine').disabled=true;kpSt('LINEを送っています…');
+  try{const r=await kpApi('kpLine',{id:KP.saved});kpSt(r.error?r.error:'患者さんのLINEに結果を送りました。');}catch(e){kpSt('LINEを送れませんでした。もう一度押してください。')}kpButtons()}
+// 前回と比べる（希望された方だけ）：写真を並べて、項目ごとに前回→今回
+const labOf=m=>{if(!m)return '—';const k=m.sg*m.lev;if(!k)return 'ずれなし';const d=k<0?m.side[0]:m.side[1];return m.ov!=null?d+'（'+m.lev+'段）':d+' '+Math.abs(m.v).toFixed(1)+m.u};
+async function kpCmp(){const P=kpPrevList();if(!P.length)return;const sel=$('#cmpSel');sel.innerHTML=P.map(x=>`<option value="${x.id}">${x.date.replace(/-/g,'/')}</option>`).join('');
+  $('#cmpBox').hidden=false;$('#cmpBox').scrollIntoView({behavior:'smooth',block:'start'});await kpCmpShow()}
+async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.id===id);if(!x)return;
+  $('#cmpHa').textContent='前回（'+x.date.replace(/-/g,'/')+'）';$('#cmpA').innerHTML='<div class="note">写真を読み込んでいます…</div>';
+  const rep=kpReport();$('#cmpB').innerHTML='';if(rep)$('#cmpB').appendChild(rep);
+  const L=window.__last,rows=[];[['正面',x.F,L.F],['左側面',x.S,L.S]].forEach(([vn,a,b])=>{const A=(a&&a.items)||[],B=kpItems(b)||[];
+    (B.length?B:A).forEach(m=>{const pa=A.find(y=>y.id===m.id),pb=B.find(y=>y.id===m.id);const la=pa?pa.lev:null,lb=pb?pb.lev:null;
+      rows.push(`<tr class="${la!=null&&lb!=null&&la!==lb?(lb<la?'chg':'worse'):''}"><td>${vn}</td><th>${m.name}</th><td>${labOf(pa)}</td><td class="b">${labOf(pb)}${la!=null&&lb!=null&&lb<la?' ↓よくなっています':''}</td></tr>`)})});
+  $('#cmpT').innerHTML=`<table class="cmp"><thead><tr><th></th><th>項目</th><th>前回</th><th>今回</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  try{const r=await kpApi('kpImg',{id,kind:'R'});if(r.error){$('#cmpA').innerHTML='<div class="note">'+r.error+'</div>';return}
+    $('#cmpA').innerHTML='';const im=new Image();im.alt='前回の写真';im.src='data:image/jpeg;base64,'+r.data;$('#cmpA').appendChild(im)}
+  catch(e){$('#cmpA').innerHTML='<div class="note">前回の写真を読み込めませんでした。</div>'}}
+if(KP){$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
+window.__shisei={KP,kpReport,CAM,camOpen,camShoot,camOk,camRe,camFlip,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
 renderNums();
 </script>
 </body></html>
