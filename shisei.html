@@ -80,6 +80,8 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 #use .ub{border:1px solid var(--line);border-radius:10px;padding:10px 14px;line-height:1.7}#use .ub.mine{border-color:var(--teal);box-shadow:inset 4px 0 0 var(--teal)}
 #use .ub b{font-size:17px;color:var(--teal)}#use .ub b i{font-style:normal;font-size:12px;background:var(--teal);color:#fff;border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px}
 #use .u1,#use .un{border:0;padding:0;border-radius:0}#use .u1{font-weight:700;margin:2px 0 4px}#use .un{color:var(--warn);font-weight:700}#use ul{margin:4px 0 0;padding-left:1.2em}#use li{margin:3px 0}#use u{text-decoration:none;background:linear-gradient(transparent 60%,#f4e2b0 60%)}
+#use .ustep,#use .s1{border:0!important;padding:0!important}#use .ustep{grid-column:1/-1;font-weight:800;font-size:17px;color:var(--ink);margin-top:6px}#use .sn{display:inline-block;background:var(--teal);color:#fff;border-radius:6px;padding:2px 8px;margin-right:8px;font-size:14px}
+#use .s1{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}#use .uwhy{background:#fff8ec;border:1px solid #f0dcc0;border-radius:10px;padding:10px 14px;line-height:1.75}#use .uwhy b{color:var(--warn);font-size:16px}#use .uwhy p{margin:6px 0}
 .find{display:grid;gap:10px}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
@@ -117,7 +119,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>骨ぴかチェック</h1><span class="tag">試作 10/17-1</span>
+  <h1>骨ぴかチェック</h1><span class="tag">試作 10/17-2</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -323,6 +325,11 @@ const USE={abs:['腹筋の使い方','すべての基本。骨盤を「まん中
     'ふらつくのは、体幹が弱いか、太ももの外側か内側のどちらかを使いすぎているサインです。',
     '慣れないうちは、スーパーのカートを支えにして、正面を見ながら足の運びを練習しましょう。']]};
 const USE_ORDER=['abs','sit','stand','walk'];
+// なぜ腹筋から？（代表 10/17：腹筋の使い方ができないと、ほかもうまくできない → だからEMS）
+const USE_WHY=['筋肉には3つの特性があります。① 鍛えたら向上する　② 使っていると維持する　③ 使わないと衰退する。',
+  '使わないと衰えやすいのは、まず腹筋。次に内もも・二の腕・お尻・あごです。使われない筋肉は脂肪を燃やさないので、そこに脂肪がたまりやすくなります。太っても、おなかと腕に同じだけ脂肪がつかないのはそのためです。鍛えているのにおなかの脂肪が取れないのは、日常生活で腹筋を使っていないからです。',
+  '鍛えても使っていなければ、衰えをくり返すだけで効率がとても悪くなります。まず「使える筋肉」にすることで維持しやすくなり、筋トレの効率も上がります。',
+  '体幹の中心は腹筋です。体幹がしっかりすると、体がゆがみにくくなり、施術の後も安定しやすくなります。だから、腹筋をEMSで「使える筋肉」に育てていきましょう。'];
 // その方の型に合わせたひとこと（骨盤の向き・重心）
 function useNote(k,F,S){const pel=gI(S,'pel'),fu=futureOf(F,S),cg=cogOf(F,S);
   const fwd=(pel&&lev(pel)>=2&&sgn(pel)<0)||fu.s==='sori',bwd=(pel&&lev(pel)>=2&&sgn(pel)>0)||fu.s==='neko'||fu.s==='heihai';
@@ -400,8 +407,11 @@ function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts
   const r=findings(F,S);
   $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
-  if(F||S){const mine=new Set(us);$('#use').innerHTML=`<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div>`+USE_ORDER.map(k=>{const U=USE[k],n=useNote(k,F,S);
-      return `<div class="ub${mine.has(k)?' mine':''}"><b>${U[0]}${mine.has(k)?' <i>特に意識</i>':''}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></div>`}).join('')}
+  if(F||S){const mine=new Set(us),blk=k=>{const U=USE[k],n=useNote(k,F,S);
+      return `<div class="ub${mine.has(k)?' mine':''}"><b>${U[0]}${mine.has(k)?' <i>特に意識</i>':''}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></div>`};
+    $('#use').innerHTML=`<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div>`+
+      `<div class="ustep"><span class="sn">STEP 1</span>まずは腹筋の使い方（すべての土台）</div><div class="s1">${blk('abs')}<div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></div>`+
+      `<div class="ustep"><span class="sn">STEP 2</span>腹筋が使えるようになったら、ふだんの姿勢へ</div>`+['sit','stand','walk'].map(blk).join('')}
   else $('#use').innerHTML='<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
   try{extraRender(F,S)}catch(e){console.warn(e)}
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
@@ -441,7 +451,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-1）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-2）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -561,7 +571,9 @@ function figSVG(o){const W=120,H=230,c=o.col||BODY.cur,side=!!o.side,P=o.p||{},p
       if(m.at==='thighF'){[-1,1].forEach(q=>mark.push(cap(hx+q*14,hy+12,hx+q*14,hy+40,8,C,.85)))}
       if(m.at==='calf'){[-1,1].forEach(q=>mark.push(cap(hx+q*15,175,hx+q*15,198,7,C,.85)))}
       if(m.at==='side'){mark.push(cap(hx+sd*16,hy-26,hx+sd*16,hy-4,8,C,.85))}
-      if(m.at==='hip'){mark.push(cap(hx+sd*12,hy+6,hx+sd*16,hy+14,9,C,.85))}})}
+      if(m.at==='hip'){mark.push(cap(hx+sd*12,hy+6,hx+sd*16,hy+14,9,C,.85))}
+      if(m.at==='inThigh'){[-1,1].forEach(q=>mark.push(cap(hx+q*8,hy+14,hx+q*8,hy+38,6,C,.85)))}
+      if(m.at==='upArm'){[sR,sL].forEach((sp,i)=>{const q=i?1:-1;mark.push(cap(sp[0]+q*3,sp[1]+8,sp[0]+q*5,sp[1]+32,6,C,.85))})}})}
   else{   // 横向き（左向き）。lean＋＝前かがみ、sori＝腰の反り、knee＝膝の曲がり、head＝頭が前、back＝上半身が後ろ
     const f=-1,ft=210,lean=(P.lean||0)-(P.back||0),kb=P.knee||0;
     const sw=ph==null?0:Math.sin(ph),sw2=ph==null?0:Math.sin(ph+Math.PI),bob=ph==null?0:Math.abs(Math.cos(ph))*2;
@@ -594,9 +606,10 @@ function figSVG(o){const W=120,H=230,c=o.col||BODY.cur,side=!!o.side,P=o.p||{},p
 // 型ごとの絵のくせ（少し大げさに）と、硬くなりやすい筋肉・脂肪がつきやすい所
 const FUT_P={rUp:{tilt:-6},lUp:{tilt:6}};   // tilt−＝画面の左（＝体の右）の肩が上がる
 const FUT_PS={sori:{sori:9,lean:-1},neko:{neko:10,head:8,lean:5},sway:{sway:8,back:5},heihai:{sori:-5,knee:4},hiza:{knee:12,lean:3}};
-const FUT_MF={rUp:[{at:'neckSh',side:'R',t:'stiff'},{at:'waist',side:'L',t:'stiff'},{at:'side',side:'R',t:'fat'}],lUp:[{at:'neckSh',side:'L',t:'stiff'},{at:'waist',side:'R',t:'stiff'},{at:'side',side:'L',t:'fat'}]};
+const FAT_F=[{at:'belly',t:'fat'},{at:'inThigh',t:'fat'},{at:'upArm',t:'fat'}];   // 使われない筋肉に脂肪：腹筋・内もも・二の腕（代表 10/17）
+const FUT_MF={rUp:[{at:'neckSh',side:'R',t:'stiff'},{at:'waist',side:'L',t:'stiff'}].concat(FAT_F),lUp:[{at:'neckSh',side:'L',t:'stiff'},{at:'waist',side:'R',t:'stiff'}].concat(FAT_F)};
 const FUT_MS={sori:[{at:'lowback',t:'stiff'},{at:'thighF',t:'stiff'},{at:'belly',t:'fat'}],neko:[{at:'neck',t:'stiff'},{at:'upback',t:'stiff'},{at:'belly',t:'fat'}],
-  sway:[{at:'thighB',t:'stiff'},{at:'lowback',t:'stiff'},{at:'belly',t:'fat'}],heihai:[{at:'thighB',t:'stiff'},{at:'hipB',t:'fat'}],hiza:[{at:'thighF',t:'stiff'},{at:'calf',t:'stiff'},{at:'belly',t:'fat'}]};
+  sway:[{at:'thighB',t:'stiff'},{at:'lowback',t:'stiff'},{at:'belly',t:'fat'},{at:'hipB',t:'fat'}],heihai:[{at:'thighB',t:'stiff'},{at:'belly',t:'fat'},{at:'hipB',t:'fat'}],hiza:[{at:'thighF',t:'stiff'},{at:'calf',t:'stiff'},{at:'belly',t:'fat'}]};
 const GAIT_P={sori:{sori:8,lean:-1},neko:{neko:9,head:7,lean:6},sway:{sway:6,back:5},heihai:{sori:-4,knee:5},hiza:{knee:11,lean:3},lr:{},ok:{}};
 function extraRender(F,S){const box=$('#xtra');if(!box)return;if(!F&&!S){box.hidden=true;return}box.hidden=false;
   const cg=cogOf(F,S),fu=futureOf(F,S),gk=fu.s||(fu.f?'lr':'ok'),G=GAIT[gk];
@@ -607,7 +620,7 @@ function extraRender(F,S){const box=$('#xtra');if(!box)return;if(!F&&!S){box.hid
   $('#cogT').textContent=cg.t;
   // 未来姿勢
   const pf=Object.assign({},fu.f?FUT_P[fu.f]:{}),ps=Object.assign({},fu.s?FUT_PS[fu.s]:{});
-  $('#futFig').innerHTML=`<div><div class="fl">正面</div>${figSVG({p:pf,marks:fu.f?FUT_MF[fu.f]:[]})}</div><div><div class="fl">横から</div>${figSVG({side:1,p:ps,marks:fu.s?FUT_MS[fu.s]:[]})}</div>`;
+  $('#futFig').innerHTML=`<div><div class="fl">正面</div>${figSVG({p:pf,marks:fu.f?FUT_MF[fu.f]:(fu.s?FAT_F:[])})}</div><div><div class="fl">横から</div>${figSVG({side:1,p:ps,marks:fu.s?FUT_MS[fu.s]:[]})}</div>`;
   $('#futT').innerHTML=`<b class="ft">${fu.title.replace(/(将来、)(.+)(型姿勢)/,'$1<em>$2$3</em>')}</b>${fu.sub?`<div class="note">${fu.sub}</div>`:''}${fu.tf?`<p><b>正面</b><br>${fu.tf}</p>`:''}${fu.ts?`<p><b>横から</b><br>${fu.ts}</p>`:''}${fu.f||fu.s?'<div class="lg"><span class="st"></span>筋肉が硬くなりやすい所　<span class="fa"></span>脂肪がつきやすい所</div>':''}`;
   // 歩き方（動く絵）
   $('#gaitT').innerHTML=`今の歩き方の目安：<b>${G[0]}</b>（${G[1]}）`;
@@ -656,7 +669,7 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
   const rep=kpReport(),xi=await extraImg().catch(()=>null),X=window.__xtra;$('#kpSave').disabled=true;kpSt('保存しています…');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
-      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:[['これから意識すること',USE_PRE]].concat(USE_ORDER.map(k=>[USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
+      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
     KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
     kpSt('保存しました（'+r.date.replace(/-/g,'/')+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
