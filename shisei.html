@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>姿勢チェック</title>
+<title>骨ぴかチェック</title><meta name="apple-mobile-web-app-title" content="骨ぴかチェック">
 <style>
 /* iPadで撮って、その場で患者さんに見せる。左：写真と点、右：数字と「意識すること」 */
 :root{--bg:#f4f7f6;--card:#ffffff;--ink:#1f2a30;--sub:#5a6b70;--line:#d6e0de;--teal:#1f6f63;--teal2:#e3f0ed;--warn:#b5651d;--warn2:#fbefe3;--red:#b23a3a;--pt:#ff5a36;--pt2:#2b8cff;
@@ -99,7 +99,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>姿勢チェック</h1><span class="tag">試作 10/16-7</span>
+  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-8</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -142,7 +142,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
 <script>
-/* 姿勢チェック（試作・代表 10/16）
+/* 骨ぴかチェック（姿勢の分析・試作・代表 10/16）
    ・MediaPipe Pose（Googleの無料のAI）で、写真から体の点を見つける。写真はこの端末の中だけ
    ・点は指で動かして直せる（服・髪でずれるため）。動かすとすぐ計算し直す
    ・数字はカルティと同じ項目（正面：傾き・ずれ／側面：前後の傾き・頭の位置・膝の曲がり）。点数・ランクは出さない */
@@ -360,7 +360,7 @@ function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)ret
 async function camOpen(kind){CAM.kind=kind;CAM.gv=null;CAM.okH=false;try{document.activeElement&&document.activeElement.blur();window.scrollTo(0,0)}catch(e){}
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')await DeviceMotionEvent.requestPermission()}catch(e){}
   window.addEventListener('devicemotion',onMotion);
-  if(!(await camStart())){$('#s'+kind).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください（線つきのカメラは、姿勢チェックのページを直接開いたときに使えます）。';return}
+  if(!(await camStart())){$('#s'+kind).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください（線つきのカメラは、骨ぴかチェックのページを直接開いたときに使えます）。';return}
   $('#cam').hidden=false;$('#camPv').hidden=true;$('#camC').hidden=true;camText();
   cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
 // 外カメラ（environment）と内カメラ（user）。内カメラでも写真は左右反転しない（右・左がそのまま）
@@ -371,7 +371,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-7）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-8）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
