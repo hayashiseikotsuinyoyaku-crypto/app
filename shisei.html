@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja"><head><base target="_top"><meta charset="utf-8">
+<html lang="ja"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>姿勢チェック</title>
 <style>
 /* iPadで撮って、その場で患者さんに見せる。左：写真と点、右：数字と「意識すること」 */
@@ -238,17 +238,19 @@ async function runAI(kind){const v=V[kind],st=$('#s'+kind);st.textContent='AIが
   try{const lm=await detect(v.img);if(!lm){st.textContent='体が見つかりませんでした。全身が入るように撮り直してください。';return}
     v.ai=lm;v.pts=initPts(kind,lm,v.img.width,v.img.height);st.textContent='';$('#r'+kind).disabled=false;draw(kind);renderNums()}
   catch(e){st.textContent=String(e&&e.message||e)}}
-/* ---- カメラ（線つき）：カルティと同じ。人の形の枠・中心線・へその高さの線。傾きセンサーで黄色の線が動き、まっすぐになると赤 ----
+/* ---- カメラ（線つき）：カルティと同じ。人の形の枠・中心線・体の中心の高さの線。傾きセンサーで黄色の線が動き、まっすぐになると赤 ----
    ・カメラはページを直接開いたときだけ使える（予約システムの中では使えない→「写真から選ぶ」）
    ・撮った瞬間の左右の傾きで、写真を自動でまっすぐに直す（5度まで） */
-const CAM={st:null,kind:'F',g:null,roll:0,pitch:0,ok:false,raf:0,tm:null};
+const CAM={gv:null,okH:false,st:null,kind:'F',g:null,roll:0,pitch:0,ok:false,raf:0,tm:null};
 const TXT={F:['立位正面','1/2','正面を向いて、かかとをつけて立ってください'],S:['立位左側面','2/2','体の左側をカメラに向けて、かかとをつけて立ってください']};
 function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
   let x=a.x,y=a.y,z=a.z;const ang=(screen.orientation&&screen.orientation.angle)||window.orientation||0;
   if(ang===90){[x,y]=[-y,x]}else if(ang===-90||ang===270){[x,y]=[y,-x]}else if(ang===180){x=-x;y=-y}
-  const r=deg(Math.atan2(x,-y)),pt=deg(Math.atan2(z,Math.hypot(x,y)));   // r：左右の傾き、pt：上下の傾き（＋＝下を向く）
-  const k=CAM.g?0.25:1;CAM.roll+=(r-CAM.roll)*k;CAM.pitch+=(pt-CAM.pitch)*k;CAM.g=Date.now()}
-async function camOpen(kind){CAM.kind=kind;
+  // 手ブレをならす：重力の向きだけを、ゆっくり追いかける（約0.5秒）
+  const now=Date.now(),G=CAM.gv;
+  if(!G||now-CAM.g>1500){CAM.gv={x,y,z}}else{const k=Math.min(0.1,(now-CAM.g)/500);G.x+=(x-G.x)*k;G.y+=(y-G.y)*k;G.z+=(z-G.z)*k}
+  const v=CAM.gv;CAM.roll=deg(Math.atan2(v.x,-v.y));CAM.pitch=deg(Math.atan2(v.z,Math.hypot(v.x,v.y)));CAM.g=now}   // roll：左右、pitch：上下（＋＝下を向く）
+async function camOpen(kind){CAM.kind=kind;CAM.gv=null;CAM.okH=false;try{document.activeElement&&document.activeElement.blur();window.scrollTo(0,0)}catch(e){}
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')await DeviceMotionEvent.requestPermission()}catch(e){}
   window.addEventListener('devicemotion',onMotion);
   try{if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))throw new Error('no');
@@ -269,18 +271,19 @@ function silhouette(c,b,side){const cx=b.x+b.w/2,top=b.y+b.h*0.12,ht=b.h*0.80,u=
     c.moveTo(cx-1.5*u,top+12.5*u);c.lineTo(cx-2*u,top+15*u);c.quadraticCurveTo(cx-7*u,top+17*u,cx-6.5*u,top+26*u);c.lineTo(cx-6*u,top+52*u);c.lineTo(cx-4.5*u,top+97*u);c.lineTo(cx+5.5*u,top+99*u);c.lineTo(cx+2.5*u,top+96*u);
     c.lineTo(cx+4*u,top+58*u);c.quadraticCurveTo(cx+7.5*u,top+50*u,cx+5.5*u,top+38*u);c.quadraticCurveTo(cx+7*u,top+20*u,cx+2*u,top+15*u);c.lineTo(cx+1.5*u,top+12.5*u)}
   c.lineWidth=Math.max(2,u*0.5);c.strokeStyle='rgba(255,255,255,.85)';c.stroke()}
-function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1;if(cv.width!==b.W*dpr){cv.width=b.W*dpr;cv.height=b.H*dpr}
+const CENTER=0.42;   // 体の中心の高さ（頭の上から身長の42%）
+function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1;const cw=Math.round(b.W*dpr),ch=Math.round(b.H*dpr);if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch}
   const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,b.W,b.H);
   silhouette(c,b,CAM.kind==='S');
-  const cx=b.x+b.w/2,ty=b.y+b.h*0.12+b.h*0.80*0.55,has=CAM.g&&Date.now()-CAM.g<1500;
+  const cx=b.x+b.w/2,ty=b.y+b.h*0.12+b.h*0.80*CENTER,has=CAM.g&&Date.now()-CAM.g<1500;
   c.setLineDash([5,6]);c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,b.y);c.lineTo(cx,b.y+b.h);c.stroke();
   c.beginPath();c.arc(cx,ty,16,0,7);c.stroke();
   if(!has){c.setLineDash([]);CAM.ok=true;$('#camS').textContent='傾きセンサーが使えないので、線は動きません。床や壁と線を目で合わせてください。';
     c.strokeStyle='rgba(255,90,54,.95)';c.lineWidth=2;c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke();$('#camShot').classList.remove('ok');return}
-  const R=CAM.roll,P=CAM.pitch,ok=Math.abs(R)<1&&Math.abs(P)<2;CAM.ok=ok;
+  const R=CAM.roll,P=CAM.pitch,ok=CAM.okH?(Math.abs(R)<2&&Math.abs(P)<3.5):(Math.abs(R)<1&&Math.abs(P)<2);CAM.okH=ok;CAM.ok=ok;
   $('#camS').textContent=`左右 ${R>=0?'+':''}${R.toFixed(1)}°・上下 ${P>=0?'+':''}${P.toFixed(1)}°${ok?'　まっすぐです':''}`;
   if(!ok){c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke()}   // 画面の基準（白い破線）
-  c.setLineDash([]);const dy=Math.max(-b.h/2,Math.min(b.h/2,P*b.h/40)),L=b.w;
+  c.setLineDash([]);const dy=Math.max(-b.h/2,Math.min(b.h/2,P*b.h/60)),L=b.w;
   c.save();c.translate(cx,ty+dy);c.rotate(-R*Math.PI/180);c.strokeStyle=ok?'rgba(255,70,40,1)':'rgba(255,214,0,1)';c.lineWidth=ok?2.5:2;c.beginPath();c.moveTo(-L,0);c.lineTo(L,0);c.stroke();c.restore();
   c.beginPath();c.arc(cx,ty+dy,9,0,7);c.fillStyle=ok?'#ff4628':'#ffd600';c.fill();
   $('#camShot').classList.toggle('ok',ok)}
