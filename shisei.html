@@ -43,7 +43,8 @@ table.m td.v{text-align:right;white-space:nowrap;font-weight:700}
 .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:2px}
 .pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:760px){.pair{grid-template-columns:1fr}}
-.cv .lr{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;pointer-events:none}
+.cv .zr{position:absolute;left:10px;bottom:10px;z-index:2;font:inherit;font-size:14px;font-weight:700;border:0;border-radius:99px;padding:8px 14px;background:rgba(0,0,0,.65);color:#fff}
+.cv .lr{z-index:1;position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;pointer-events:none}
 .cv .lr span{background:rgba(60,60,60,.55);color:#fff;font-weight:700;padding:6px 12px;font-size:15px}
 .cv .lr span:first-child{border-bottom-right-radius:10px}.cv .lr span:last-child{border-bottom-left-radius:10px}
 .gr{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
@@ -98,13 +99,13 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>姿勢チェック</h1><span class="tag">試作 10/16-6</span>
+  <h1>姿勢チェック</h1><span class="tag">試作 10/16-7</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
   <div class="note staff">写真はこのiPadの中だけで分析します。どこにも送らず、保存もしません（試作）。壁から少し離れて、全身が入るように、カメラは腰の高さで水平に。正面は両手を体の横に、左側面は体の左側をカメラに向けて立ってもらいます。</div>
-  <section class="card" id="cF"><h2>立位正面 <small class="staff">点がずれていたら指で動かし、右のグラフは目盛りを押して直せます</small></h2>
+  <section class="card" id="cF"><h2>立位正面 <small class="staff">点は指で動かせます。2本指で写真を拡大・縮小、グラフは目盛りを押して直せます</small></h2>
     <div class="pair"><div><div class="cv" id="cvF"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
       <div class="btns staff"><button class="btn pri" id="cmF">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fF"></label><button class="btn" id="rF" disabled>点を最初に戻す</button></div>
       <div class="status" id="sF"></div></div>
@@ -275,8 +276,8 @@ const LINKS={F:[['top','chin'],['chin','jug'],['jug','shR'],['jug','shL'],['shR'
 function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
   let cv=box.querySelector('canvas');if(!cv){box.innerHTML='';cv=document.createElement('canvas');box.appendChild(cv);bindDrag(kind,cv);
     const lab=document.createElement('div');lab.className='lr';box.appendChild(lab)}
-  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600;
-  c.drawImage(v.img,0,0);
+  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600/((v.z&&v.z.s)||1);   // 拡大しても点と線は同じ太さに見える
+  c.drawImage(v.img,0,0);if(!v.z)zoomApply(kind);
   const lr=box.querySelector('.lr');
   if(!v.pts){lr.innerHTML='';return}const p=v.pts;
   const f=kind==='S'?(p.eye.x>=p.occ.x?1:-1):0;
@@ -290,13 +291,31 @@ function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
   LINKS[kind].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,214,90,.95)',1.8));
   (kind==='F'?PF:PS).forEach(([k,,blue])=>{const q=p[k];c.beginPath();c.arc(q.x,q.y,(k===v.drag?8:4.6)*u,0,7);c.fillStyle=blue?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=1.4*u;c.strokeStyle='#fff';c.stroke()});
   if(v.drag){const q=p[v.drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
-function bindDrag(kind,cv){const v=V[kind];
+// 点を動かす（1本指）・拡大縮小（2本指でつまむ）・拡大中は何もない所を1本指でなぞると移動。縮小は元の大きさまで
+function zoomApply(kind){const v=V[kind],box=$('#cv'+kind),cv=box.querySelector('canvas');if(!cv)return;const z=v.z||(v.z={s:1,x:0,y:0});
+  const bw=cv.offsetWidth,bh=cv.offsetHeight;z.s=Math.max(1,Math.min(5,z.s));z.x=Math.min(0,Math.max(bw-bw*z.s,z.x));z.y=Math.min(0,Math.max(bh-bh*z.s,z.y));
+  cv.style.transformOrigin='0 0';cv.style.transform=z.s>1.001?`translate(${z.x}px,${z.y}px) scale(${z.s})`:'';
+  const rb=box.querySelector('.zr');if(rb)rb.hidden=!(z.s>1.001)}
+function zoomReset(kind){const v=V[kind];v.z={s:1,x:0,y:0};zoomApply(kind);draw(kind)}
+function bindDrag(kind,cv){const box=$('#cv'+kind),P=new Map();let pin=null,pan=null,orig=null;
+  const rb=document.createElement('button');rb.className='zr';rb.type='button';rb.textContent='元の大きさに戻す';rb.hidden=true;rb.onclick=()=>zoomReset(kind);box.appendChild(rb);
   const at=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height,k:cv.width/r.width}};
-  cv.addEventListener('pointerdown',e=>{if(!v.pts||document.body.classList.contains('pt'))return;const m=at(e);let best=null,bd=26*m.k;
-    Object.keys(v.pts).forEach(k=>{const d=Math.hypot(v.pts[k].x-m.x,v.pts[k].y-m.y);if(d<bd){bd=d;best=k}});
-    if(best){v.drag=best;cv.setPointerCapture(e.pointerId);e.preventDefault();draw(kind)}});
-  cv.addEventListener('pointermove',e=>{if(!v.drag)return;const m=at(e);v.pts[v.drag]={x:m.x,y:m.y};draw(kind);renderNums()});
-  const up=()=>{if(!v.drag)return;v.drag=null;draw(kind);renderNums()};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
+  const loc=e=>{const r=box.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+  const two=()=>{const [a,b]=[...P.values()];return {d:Math.hypot(a.x-b.x,a.y-b.y)||1,m:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}};
+  cv.addEventListener('pointerdown',e=>{const v=V[kind];if(!v.pts)return;try{cv.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();
+    P.set(e.pointerId,loc(e));const z=v.z||(v.z={s:1,x:0,y:0});
+    if(P.size===2){if(v.drag&&orig){v.pts[v.drag]=orig;v.drag=null;renderNums()}pan=null;const t=two();pin={d0:t.d,m0:t.m,s0:z.s,x0:z.x,y0:z.y};return}
+    if(P.size>2)return;
+    const m=at(e);let best=null,bd=26*m.k;
+    if(!document.body.classList.contains('pt'))Object.keys(v.pts).forEach(k=>{const d=Math.hypot(v.pts[k].x-m.x,v.pts[k].y-m.y);if(d<bd){bd=d;best=k}});
+    if(best){v.drag=best;orig={...v.pts[best]};draw(kind)}else if(z.s>1.001){const q=loc(e);pan={q,x0:z.x,y0:z.y}}});
+  cv.addEventListener('pointermove',e=>{const v=V[kind];if(!P.has(e.pointerId))return;P.set(e.pointerId,loc(e));const z=v.z;
+    if(pin&&P.size>=2){const t=two(),s1=Math.max(1,Math.min(5,pin.s0*t.d/pin.d0)),ix=(pin.m0.x-pin.x0)/pin.s0,iy=(pin.m0.y-pin.y0)/pin.s0;
+      z.s=s1;z.x=t.m.x-ix*s1;z.y=t.m.y-iy*s1;zoomApply(kind);return}
+    if(pan){const q=loc(e);z.x=pan.x0+q.x-pan.q.x;z.y=pan.y0+q.y-pan.q.y;zoomApply(kind);return}
+    if(v.drag){const m=at(e);v.pts[v.drag]={x:m.x,y:m.y};draw(kind);renderNums()}});
+  const up=e=>{const v=V[kind];P.delete(e.pointerId);if(P.size<2&&pin){pin=null;draw(kind)}if(P.size===0){pan=null;if(v.drag){v.drag=null;orig=null;draw(kind);renderNums()}}};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
 // ---- グラフ（7マス）：押すとその段に直せる（施術者の調整）。もう一度押すとAIの値に戻る ----
 function table(kind,L){if(!L)return `<div class="note">写真を撮ると、ここに出ます。</div>`;
   const hd=kind==='F'?['右','左']:['前','後'];
@@ -352,7 +371,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-6）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-7）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
