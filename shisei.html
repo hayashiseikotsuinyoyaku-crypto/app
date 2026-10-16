@@ -41,6 +41,26 @@ table.m td.v{text-align:right;white-space:nowrap;font-weight:700}
 .bar i{position:absolute;top:0;bottom:0;border-radius:99px;background:var(--teal)}
 .bar i.w{background:var(--warn)}.bar i.r{background:var(--red)}
 .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:2px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.cv .lr{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;pointer-events:none}
+.cv .lr span{background:rgba(60,60,60,.55);color:#fff;font-weight:700;padding:6px 12px;font-size:15px}
+.cv .lr span:first-child{border-bottom-right-radius:10px}.cv .lr span:last-child{border-bottom-left-radius:10px}
+.gr{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.gh,.gl{display:grid;grid-template-columns:minmax(0,1fr) 210px;align-items:end}
+.gh{grid-template-columns:minmax(0,1fr) 70px 70px 70px;font-size:13px;color:var(--sub);font-weight:700;text-align:center;padding-bottom:4px}
+.gh span:nth-child(2){text-align:left}.gh span:nth-child(4){text-align:right}
+.gl{padding:6px 0;border-top:1px solid #eef2f1}
+.gn{font-size:15px;padding-bottom:4px}.ovm{font-style:normal;color:var(--warn)}
+.gc{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding-top:20px}
+.gc em{position:absolute;top:0;font-style:normal;font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap}
+.gc b{height:12px;border-radius:3px;background:#d9dfde;cursor:pointer;position:relative}
+.gc b.z{outline:2px solid #c9b3b0;outline-offset:2px}
+.gc b.on{background:#e8534a}
+.gc b::after{content:"";position:absolute;left:-2px;right:-2px;top:-10px;bottom:-10px}
+body.pt .gc b{cursor:default}
+.fd.ok{border-color:var(--teal);background:var(--teal2)}
+#cF .find,#cS .find{margin-top:12px}
 .find{display:grid;gap:10px}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
@@ -70,29 +90,27 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>姿勢チェック</h1><span class="tag">試作 10/16-3</span>
+  <h1>姿勢チェック</h1><span class="tag">試作 10/16-4</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
   <div class="note staff">写真はこのiPadの中だけで分析します。どこにも送らず、保存もしません（試作）。壁から少し離れて、全身が入るように、カメラは腰の高さで水平に。正面は両手を体の横に、左側面は体の左側をカメラに向けて立ってもらいます。</div>
-  <div class="views">
-    <section class="card" id="cF"><h2>立位正面 <small>AIの点がずれていたら、指で動かして直してください</small></h2>
-      <div class="cv" id="cvF"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
+  <section class="card" id="cF"><h2>立位正面 <small class="staff">点がずれていたら指で動かし、右のグラフは目盛りを押して直せます</small></h2>
+    <div class="pair"><div><div class="cv" id="cvF"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
       <div class="btns staff"><button class="btn pri" id="cmF">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fF"></label><button class="btn" id="rF" disabled>点を最初に戻す</button></div>
-      <div class="status" id="sF"></div>
-    </section>
-    <section class="card" id="cS"><h2>立位左側面 <small>体の左側をカメラに</small></h2>
-      <div class="cv" id="cvS"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
-      <div class="btns staff"><button class="btn pri" id="cmS">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fS"></label><button class="btn" id="rS" disabled>点を最初に戻す</button></div>
-      <div class="status" id="sS"></div>
-    </section>
-  </div>
-  <section class="card"><h2>今日の姿勢（現在地）</h2>
-    <div class="shot"><div id="tF"></div><div id="tS"></div></div>
-    <div class="note staff" style="margin-top:8px">角度は「度」、ずれは身長から計算した「cm」の目安です。骨盤の前傾・後傾は写真の点ではわからないので、目で確認してください。</div>
+      <div class="status" id="sF"></div></div>
+      <div id="tF"></div></div>
+    <div class="find" id="fdF"></div>
   </section>
-  <section class="card"><h2>気になる点</h2><div class="find" id="fd"><div class="note">写真を撮ると、ここに出ます。</div></div></section>
+  <section class="card" id="cS"><h2>立位左側面 <small class="staff">患者さんは右を向いて（画面では左向き）</small></h2>
+    <div class="pair"><div><div class="cv" id="cvS"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
+      <div class="btns staff"><button class="btn pri" id="cmS">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fS"></label><button class="btn" id="rS" disabled>点を最初に戻す</button></div>
+      <div class="status" id="sS"></div></div>
+      <div id="tS"></div></div>
+    <div class="find" id="fdS"></div>
+    <div class="note staff" style="margin-top:8px">角度は「度」、ずれは身長から計算した「cm」の目安です。骨盤の前後傾き・猫背は、点を見て必要なら直してください（✎＝グラフで直した項目）。</div>
+  </section>
   <section class="card"><h2>毎日の3つのポイント</h2>
     <ul class="keep" style="margin:0;padding:0">
       <li>脚を組んでいることに気が付いたら、直す</li>
@@ -118,113 +136,173 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
    ・点は指で動かして直せる（服・髪でずれるため）。動かすとすぐ計算し直す
    ・数字はカルティと同じ項目（正面：傾き・ずれ／側面：前後の傾き・頭の位置・膝の曲がり）。点数・ランクは出さない */
 const $=s=>document.querySelector(s);
-const LM={nose:0,eyeL:2,eyeR:5,earL:7,earR:8,mouthL:9,mouthR:10,shL:11,shR:12,hipL:23,hipR:24,knL:25,knR:26,anL:27,anR:28,heL:29,heR:30};
-// 動かせる点（正面・側面）
-const PF=[['top','頭のてっぺん'],['earR','右耳'],['earL','左耳'],['shR','右肩'],['shL','左肩'],['hipR','右の骨盤'],['hipL','左の骨盤'],['knR','右ひざ'],['knL','左ひざ'],['anR','右くるぶし'],['anL','左くるぶし'],['floor','かかと（床）']];
-const PS=[['top','頭のてっぺん'],['nose','鼻'],['ear','耳'],['sh','肩'],['hip','骨盤（股関節）'],['kn','ひざ'],['an','くるぶし'],['floor','かかと（床）']];
-const V={F:{img:null,pts:null,ai:null},S:{img:null,pts:null,ai:null}};
+const LM={nose:0,eyeL:2,eyeR:5,earL:7,earR:8,mouthL:9,mouthR:10,shL:11,shR:12,elL:13,elR:14,wrL:15,wrR:16,hipL:23,hipR:24,knL:25,knR:26,anL:27,anR:28,heL:29,heR:30,toL:31,toR:32};
+// 動かせる点（カルティと同じ場所・代表 10/16）。b＝青い点（高さの基準）
+const PF=[['top','頭頂部',1],['chin','顎'],['jug','胸骨上部'],['shR','右の肩峰'],['shL','左の肩峰'],['elR','右の肘'],['elL','左の肘'],['wrR','右の手首'],['wrL','左の手首'],
+  ['asR','右の上前腸骨棘'],['asL','左の上前腸骨棘'],['pub','恥骨'],['hipR','右の股関節'],['hipL','左の股関節'],['knR','右の膝蓋骨'],['knL','左の膝蓋骨'],['anR','右の足関節'],['anL','左の足関節'],['toR','右のつま先',1],['toL','左のつま先',1]];
+const PS=[['top','頭頂部',1],['occ','後頭部'],['occF','後頭窩'],['eye','眼窩'],['chin','顎'],['c4','C4'],['c7','C7'],['cor','烏口突起'],['sh','肩峰'],['th5','Th5'],['th8','Th8'],['th12','Th12'],['l5','L5'],['coc','尾骨'],
+  ['gt','大転子'],['asis','上前腸骨棘'],['kn','膝関節'],['an','外果'],['toe','母趾',1],['el','肘窩'],['wr','手関節']];
+const V={F:{img:null,pts:null,ai:null,ov:{}},S:{img:null,pts:null,ai:null,ov:{}}};
 let pose=null,poseQ=Promise.resolve();
 function getPose(){if(window.__FAKE_POSE)return window.__FAKE_POSE;if(pose)return pose;
   if(typeof Pose==='undefined')throw new Error('AIの読み込みに失敗しました。インターネットにつながっているか確認して、もう一度開いてください。');
   pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
-  pose.setOptions({modelComplexity:1,smoothLandmarks:false,enableSegmentation:false,minDetectionConfidence:.5});
+  pose.setOptions({modelComplexity:1,smoothLandmarks:false,enableSegmentation:true,minDetectionConfidence:.5});
   return pose}
+// AIの点＋体の形（背中の線を探すのに使う）
 function detect(cv){return poseQ=poseQ.then(()=>new Promise((ok,ng)=>{let p;try{p=getPose()}catch(e){ng(e);return}
   const t=setTimeout(()=>ng(new Error('AIの準備に時間がかかっています。もう一度押してください。')),60000);
-  p.onResults(r=>{clearTimeout(t);ok(r.poseLandmarks||null)});p.send({image:cv}).catch(e=>{clearTimeout(t);ng(e)})}))}
-const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
-function initPts(kind,lm,W,H){const P=i=>({x:lm[i].x*W,y:lm[i].y*H});
-  const floor=Math.max(lm[LM.heL].y,lm[LM.heR].y,lm[LM.anL].y,lm[LM.anR].y)*H;
-  if(kind==='F'){const o={};['earR','earL','shR','shL','hipR','hipL','knR','knL','anR','anL'].forEach(k=>o[k]=P(LM[k]));
-    const e=mid(o.earL,o.earR),s=mid(o.shL,o.shR);o.top={x:e.x,y:e.y-(s.y-e.y)*0.62};o.floor={x:mid(o.anL,o.anR).x,y:floor};return o}
-  // 側面：見えている側（左）。前＝鼻の向き
-  const vis=(a,b)=>(lm[a].visibility||0)>=(lm[b].visibility||0)?a:b;
-  const o={nose:P(LM.nose),ear:P(vis(LM.earL,LM.earR)),sh:P(vis(LM.shL,LM.shR)),hip:P(vis(LM.hipL,LM.hipR)),kn:P(vis(LM.knL,LM.knR)),an:P(vis(LM.anL,LM.anR))};
-  o.top={x:o.ear.x,y:o.ear.y-(o.sh.y-o.ear.y)*0.62};o.floor={x:o.an.x,y:floor};return o}
+  p.onResults(r=>{clearTimeout(t);let mask=null;try{if(r.segmentationMask){const W=cv.width,H=cv.height,m=document.createElement('canvas');m.width=W;m.height=H;const c=m.getContext('2d');c.drawImage(r.segmentationMask,0,0,W,H);
+      const d=c.getImageData(0,0,W,H).data;let rs=0;for(let i=0;i<d.length;i+=400)rs+=d[i];const ch=rs>0?0:3;mask={W,H,at:(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H)return 0;return d[(y*W+x)*4+ch]/255}}}}catch(e){mask=null}
+    ok(r.poseLandmarks?{lm:r.poseLandmarks,mask}:null)});p.send({image:cv}).catch(e=>{clearTimeout(t);ng(e)})}))}
+const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2}),lerp=(a,b,k)=>({x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k});
+function initPts(kind,ai,W,H){const lm=ai.lm||ai,mask=ai.mask||null,P=i=>({x:lm[i].x*W,y:lm[i].y*H});
+  if(kind==='F'){const o={};['shR','shL','elR','elL','wrR','wrL','hipR','hipL','knR','knL','anR','anL','toR','toL'].forEach(k=>o[k]=P(LM[k]));
+    const e=mid(P(LM.earL),P(LM.earR)),s=mid(o.shL,o.shR),h=mid(o.hipL,o.hipR),n=P(LM.nose),mo=mid(P(LM.mouthL),P(LM.mouthR)),T=h.y-s.y;
+    o.top={x:e.x,y:e.y-(s.y-e.y)*0.62};
+    o.chin={x:mo.x+(mo.x-n.x)*1.6,y:mo.y+Math.max(T*0.05,(mo.y-n.y)*1.6)};
+    o.jug={x:s.x,y:s.y+T*0.02};
+    o.asR={x:o.hipR.x+(o.hipR.x-h.x)*0.05,y:o.hipR.y-T*0.20};o.asL={x:o.hipL.x+(o.hipL.x-h.x)*0.05,y:o.hipL.y-T*0.20};
+    o.pub={x:h.x,y:h.y-T*0.04};return o}
+  // 側面：見えている側。f＝顔の向き（画像のx）
+  const vis=(a,b)=>(lm[a].visibility||0)>=(lm[b].visibility||0)?a:b,Q=(a,b)=>P(vis(LM[a],LM[b]));
+  const ear=Q('earL','earR'),sh=Q('shL','shR'),gt=Q('hipL','hipR'),nose=P(LM.nose),eye=Q('eyeL','eyeR'),mo=Q('mouthL','mouthR');
+  const f=nose.x>=ear.x?1:-1,T=Math.max(20,gt.y-sh.y);
+  const o={eye,sh,gt,el:Q('elL','elR'),wr:Q('wrL','wrR'),kn:Q('knL','knR'),an:Q('anL','anR'),toe:Q('toL','toR')};
+  o.top={x:ear.x+f*T*0.02,y:ear.y-(sh.y-ear.y)*0.62};
+  o.chin={x:mo.x-f*T*0.02,y:Math.max(mo.y+T*0.06,eye.y+T*0.18)};
+  o.cor={x:sh.x+f*T*0.11,y:sh.y-T*0.01};
+  o.asis={x:gt.x+f*T*0.042,y:gt.y-T*0.09};   // 最初は骨盤の傾き「ふつう（25度）」の位置。前傾・後傾は点かグラフで直す
+  // 頭の後ろと背中：肩→大転子の長さ（T）を物差しにした目安。体の形がわかるときは背中の線に合わせる
+  const back=(dy,base,off)=>{const y=sh.y+dy*T,x0=base(dy);let p={x:x0-f*off*T,y};
+    if(mask){let x=x0,lastIn=null;for(let i=0;i<T*0.6;i++){x=x0-f*i;if(mask.at(x,y)>0.5)lastIn=x;else if(lastIn!=null&&i>T*0.02)break}
+      if(lastIn!=null)p={x:lastIn+f*T*0.012,y}}
+    return p};
+  const spine=dy=>sh.x+(gt.x-sh.x)*Math.max(0,Math.min(1,dy)),head=()=>ear.x;
+  o.occ=back((eye.y-sh.y)/T,head,0.16);o.occF=back((ear.y-sh.y)/T+0.07,head,0.10);
+  o.c4=back(-0.16,spine,0.05);o.c7=back(-0.10,spine,0.06);o.th5=back(0.04,spine,0.12);o.th8=back(0.21,spine,0.13);o.th12=back(0.44,spine,0.10);o.l5=back(0.68,spine,0.12);o.coc=back(0.90,spine,0.21);
+  return o}
 // ---- 計算 ----
 const deg=r=>r*180/Math.PI;
 const tiltV=(a,b)=>deg(Math.atan2(b.x-a.x,a.y-b.y));   // a（下）→b（上）の線が、縦からどれだけ傾くか（＋＝画像の右）
-function scale(p){const ht=parseFloat($('#ht').value)||165,px=Math.abs(p.floor.y-p.top.y);return px>10?ht/px:0}
-function calcF(p){const s=scale(p),eM=mid(p.earL,p.earR),sM=mid(p.shL,p.shR),hM=mid(p.hipL,p.hipR),aM=mid(p.anL,p.anR);
-  const lineTilt=(r,l)=>deg(Math.atan2(r.y-l.y,l.x-r.x));   // ＋＝右が下がる（右に傾く）
+const floorY=(p,kind)=>kind==='F'?Math.max(p.toR.y,p.toL.y,p.anR.y,p.anL.y):Math.max(p.toe.y,p.an.y);
+function scale(p,kind){const ht=parseFloat($('#ht').value)||165,px=Math.abs(floorY(p,kind)-p.top.y);return px>10?ht/px:0}
+// 正面：グラフは カルティと同じく 左＝右、右＝左（写真の向きのまま）。＋＝体の左
+function calcF(p){const s=scale(p,'F'),hd=mid(p.top,p.chin),aM=mid(p.anL,p.anR);
+  const lineTilt=(r,l)=>deg(Math.atan2(r.y-l.y,l.x-r.x));   // ＋＝右が下がる
   const kneeGap=Math.abs(p.knL.x-p.knR.x),ankGap=Math.abs(p.anL.x-p.anR.x);
-  // 正面の写真は鏡ではない：画像の右＝体の左。＋は「左」へ
   return [
-    {id:'all',name:'全身の左右傾き',v:tiltV(aM,eM),u:'度',side:['右','左']},
-    {id:'up',name:'上半身の左右傾き',v:tiltV(hM,sM),u:'度',side:['右','左']},
-    {id:'low',name:'下半身の左右傾き',v:tiltV(aM,hM),u:'度',side:['右','左']},
-    {id:'head',name:'頭の左右傾き',v:-lineTilt(p.earR,p.earL),u:'度',side:['右','左']},
-    {id:'neck',name:'首の左右位置ずれ',v:(eM.x-sM.x)*s,u:'cm',side:['右','左']},
-    {id:'sh',name:'肩の高さずれ',v:(p.shR.y-p.shL.y)*s,u:'cm',side:['右が上','左が上'],hi:true},
-    {id:'chest',name:'胸の左右位置ずれ',v:(sM.x-hM.x)*s,u:'cm',side:['右','左']},
-    {id:'hipT',name:'腰の左右傾き',v:-lineTilt(p.hipR,p.hipL),u:'度',side:['右','左']},
-    {id:'hipS',name:'腰の左右位置ずれ',v:(hM.x-aM.x)*s,u:'cm',side:['右','左']},
-    {id:'ox',name:'O脚・X脚の度合い',v:(kneeGap-ankGap)*s,u:'cm',side:['X脚','O脚'],ox:true}]}
-function calcS(p){const s=scale(p),f=p.nose.x>=p.ear.x?1:-1,fw=v=>v*f;   // ＋＝前
+    {id:'all',name:'全身の左右傾き',v:tiltV(aM,hd),u:'度',side:['右','左']},
+    {id:'up',name:'上半身の左右傾き',v:tiltV(p.pub,p.jug),u:'度',side:['右','左']},
+    {id:'low',name:'下半身の左右傾き',v:tiltV(aM,p.pub),u:'度',side:['右','左']},
+    {id:'head',name:'頭の左右傾き',v:tiltV(p.chin,p.top),u:'度',side:['右','左']},
+    {id:'neck',name:'首の左右位置ずれ',v:(p.chin.x-p.jug.x)*s,u:'cm',side:['右','左']},
+    {id:'sh',name:'肩の高さずれ',v:(p.shR.y-p.shL.y)*s,u:'cm',side:['右が上','左が上']},
+    {id:'chest',name:'胸の左右位置ずれ',v:(p.jug.x-p.pub.x)*s,u:'cm',side:['右','左']},
+    {id:'hipT',name:'腰の左右傾き',v:-lineTilt(p.asR,p.asL),u:'度',side:['右','左']},
+    {id:'hipS',name:'腰の左右位置ずれ',v:(p.pub.x-aM.x)*s,u:'cm',side:['右','左']},
+    {id:'ox',name:'O脚・X脚の度合い',v:(kneeGap-ankGap)*s,u:'cm',side:['X脚','O脚']}]}
+// 側面：グラフは カルティと同じく 左＝前、右＝後。＋＝後ろ
+function calcS(p){const s=scale(p,'S'),f=p.eye.x>=p.occ.x?1:-1,bk=v=>-v*f,ear=lerp(p.occ,p.eye,0.45);
   const ang=(a,b,c)=>{const v1={x:a.x-b.x,y:a.y-b.y},v2={x:c.x-b.x,y:c.y-b.y};return deg(Math.acos(Math.max(-1,Math.min(1,(v1.x*v2.x+v1.y*v2.y)/Math.hypot(v1.x,v1.y)/Math.hypot(v2.x,v2.y)))))};
-  const bend=180-ang(p.hip,p.kn,p.an),knFw=fw(p.kn.x-(p.hip.x+p.an.x)/2);
+  const bend=180-ang(p.gt,p.kn,p.an),knFw=(p.kn.x-(p.gt.x+p.an.x)/2)*f;
+  // 猫背：C7〜Th12を結んだ線から、Th8がどれだけ後ろに出ているか（ふつうは約2.5cm）
+  const xl=p.c7.x+(p.th12.x-p.c7.x)*(p.th8.y-p.c7.y)/((p.th12.y-p.c7.y)||1),kyph=(p.th8.x-xl)*(-f)*s;
+  // 骨盤：大転子→上前腸骨棘の線の前への傾き（ふつうは約25度）。大きい＝前傾
+  const pel=deg(Math.atan2((p.asis.x-p.gt.x)*f,p.gt.y-p.asis.y));
   return [
-    {id:'all',name:'全身の前後傾き',v:fw(tiltV(p.an,p.ear)),u:'度',side:['後','前']},
-    {id:'up',name:'上半身の前後傾き',v:fw(tiltV(p.hip,p.sh)),u:'度',side:['後','前']},
-    {id:'low',name:'下半身の前後傾き',v:fw(tiltV(p.an,p.hip)),u:'度',side:['後','前']},
-    {id:'head',name:'頭の前後傾き',v:fw(tiltV(p.sh,p.ear)),u:'度',side:['後','前']},
-    {id:'headS',name:'頭の前後位置ずれ',v:fw(p.ear.x-p.sh.x)*s,u:'cm',side:['後','前']},
-    {id:'knee',name:'膝の曲がり度合い',v:knFw>=0?bend:-bend,u:'度',side:['伸びすぎ','曲がり']}]}
-// しきい値（目安）：[気になる, はっきり]
-const TH={'度':[1.5,4],'cm':[1.0,2.5]},THX={knee:[5,10],ox:[2,4],headS:[3,6]};
-function nw(m){const t=THX[m.id]||TH[m.u];return Math.abs(m.v)/t[1]+lev(m)}
-function lev(m){const t=THX[m.id]||TH[m.u],a=Math.abs(m.v);return a>=t[1]?2:a>=t[0]?1:0}
+    {id:'all',name:'全身の前後傾き',v:bk(tiltV(p.an,ear)),u:'度',side:['前','後']},
+    {id:'up',name:'上半身の前後傾き',v:bk(tiltV(p.gt,p.sh)),u:'度',side:['前','後']},
+    {id:'low',name:'下半身の前後傾き',v:bk(tiltV(p.an,p.gt)),u:'度',side:['前','後']},
+    {id:'head',name:'頭の前後傾き',v:-deg(Math.atan2(p.eye.y-p.occ.y,Math.abs(p.eye.x-p.occ.x)||1)),u:'度',side:['前','後']},
+    {id:'headS',name:'頭の前後位置ずれ',v:bk(ear.x-p.sh.x)*s,u:'cm',side:['前','後']},
+    {id:'kyph',name:'猫背の度合い',v:kyph-2.5,u:'cm',side:['反り','猫背']},
+    {id:'pel',name:'骨盤の前後傾き',v:25-pel,u:'度',side:['前傾','後傾']},
+    {id:'hipS',name:'腰の前後位置ずれ',v:bk(p.gt.x-(p.an.x+f*1.5/(s||1)))*s,u:'cm',side:['前','後']},
+    {id:'knee',name:'膝の曲がり度合い',v:knFw>=0?-bend:bend,u:'度',side:['曲がり','伸びすぎ']}]}
+// グラフの目盛り：ずれなし＋左右3段（カルティと同じ7マス）。[1段目, 2段目, 3段目]
+const TH={'度':[0.3,1.0,2.0],'cm':[0.5,1.0,2.0]},THX={head:[1,3,6],ox:[1,2,4],headS:[1.5,3,5],kyph:[0.7,1.5,2.5],pel:[3,6,10],knee:[3,6,10]};
+const thr=m=>THX[m.id]||TH[m.u];
+function lev(m){if(m.ov!=null)return Math.abs(m.ov);const t=thr(m),a=Math.abs(m.v);return a>=t[2]?3:a>=t[1]?2:a>=t[0]?1:0}
+const sgn=m=>m.ov!=null?Math.sign(m.ov):Math.sign(m.v);
+function nw(m){return lev(m)+Math.min(1,Math.abs(m.v)/thr(m)[2]/3)}
+// 施術者がグラフで直した段（V[kind].ov）を数字に重ねる
+function applyOv(kind,L){if(!L)return L;const ov=V[kind].ov||{};L.forEach(m=>{if(ov[m.id]!=null)m.ov=ov[m.id]});return L}
 // ---- 気になる点（代表の考え：現在地と癖を伝えて、どこに意識を向けるか） ----
 function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===id);
-  const side=m=>m.v>0?m.side[1]:m.side[0];
-  const sh=g(F,'sh');if(sh&&lev(sh)){out.push({w:nw(sh),t:`${side(sh).replace('が上','')}肩が ${Math.abs(sh.v).toFixed(1)}cm 上がっています`,d:'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。'});use.add('stand')}
-  const up=g(F,'up');if(up&&lev(up)){out.push({w:nw(up),t:`上半身が${side(up)}に ${Math.abs(up.v).toFixed(1)}度 傾いています`,d:'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。'});use.add('sit')}
-  const hp=g(F,'hipT');if(hp&&lev(hp)){out.push({w:nw(hp),t:`骨盤が${side(hp)}に ${Math.abs(hp.v).toFixed(1)}度 傾いています`,d:'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。'});use.add('stand')}
-  const hs=g(F,'hipS');if(hs&&lev(hs)){out.push({w:nw(hs),t:`腰が${side(hs)}に ${Math.abs(hs.v).toFixed(1)}cm ずれています`,d:'立っているとき、片方の足に体重をかけていませんか？重心が片側に寄ると、その側の腰や股関節に負担がかかります。'});use.add('stand')}
-  const hd=g(F,'head');if(hd&&lev(hd)){out.push({w:nw(hd),t:`頭が${side(hd)}に ${Math.abs(hd.v).toFixed(1)}度 傾いています`,d:'スマホやテレビを見る向き、寝るときの向きに偏りはありませんか？首の片側の筋肉が縮んで硬くなりやすい状態です。'});use.add('sit')}
-  const ox=g(F,'ox');if(ox&&lev(ox)){out.push({w:nw(ox),t:`${side(ox)}の傾向があります（${Math.abs(ox.v).toFixed(1)}cm）`,d:'歩くときに足の外側（または内側）ばかりに体重がかかっている可能性があります。つま先とひざを同じ向きにそろえて歩きましょう。'});use.add('walk')}
-  const hS=g(S,'headS');if(hS&&lev(hS)&&hS.v>0){out.push({s:'S',w:nw(hS),t:`頭が肩より ${hS.v.toFixed(1)}cm 前に出ています`,d:'スマホやデスクワークで首が前に出る癖があります。首や肩がこりやすく、呼吸も浅くなりがちです。耳と肩が縦にそろう位置を意識しましょう。'});use.add('sit');use.add('abs')}
-  const su=g(S,'up');if(su&&lev(su)&&su.v>0){out.push({s:'S',w:nw(su),t:`上半身が ${su.v.toFixed(1)}度 前に傾いています`,d:'腰や太ももの裏に負担がかかりやすい状態です。おなかに力を入れて、体をまっすぐ起こす意識を持ちましょう。'});use.add('abs');use.add('stand')}
-  const kn=g(S,'knee');if(kn&&lev(kn)&&kn.v>0){out.push({s:'S',w:nw(kn),t:`ひざが ${kn.v.toFixed(1)}度 曲がっています`,d:'太ももの裏やふくらはぎが硬くなっている可能性があります。立つときは、ひざを軽く伸ばして、足の裏全体で床を押す意識を持ちましょう。'});use.add('stand');use.add('walk')}
-  /* w＝ずれ÷はっきりの目安＋段階（度とcmを同じ物差しで比べる） */
-  out.sort((a,b)=>b.w-a.w);   // 正面から2つ・側面から2つまで（カルティと同じ数）
-  return {top:[...out.filter(x=>x.s!=='S').slice(0,2),...out.filter(x=>x.s==='S').slice(0,2)],use:[...use]}}
+  const dir=m=>sgn(m)>0?m.side[1]:m.side[0],num=(m,x)=>m.ov!=null?'':` ${Math.abs(m.v).toFixed(1)}${x||m.u}`;
+  const add=(L,id,ok,s,t,d,u)=>{const m=g(L,id);if(m&&lev(m)>=2&&ok(m)){out.push({s,w:nw(m),t:t(m),d});u.forEach(k=>use.add(k))}};
+  add(F,'sh',()=>1,'F',m=>`${dir(m).replace('が上','')}肩が${num(m)} 上がっています`,'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。',['stand']);
+  add(F,'up',()=>1,'F',m=>`上半身が${dir(m)}に${num(m)} 傾いています`,'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。荷物の持ち手を入れ替えましょう。',['sit']);
+  add(F,'chest',()=>1,'F',m=>`胸が${dir(m)}に${num(m)} ずれています`,'背骨の曲がりや骨盤のゆがみが影響している可能性があります。立っているとき、左右の重心が均等になるよう意識しましょう。',['stand']);
+  add(F,'hipT',()=>1,'F',m=>`骨盤が${dir(m)}に${num(m)} 傾いています`,'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。',['stand']);
+  add(F,'hipS',()=>1,'F',m=>`腰が${dir(m)}に${num(m)} ずれています`,'立っているとき、片方の足に体重をかけていませんか？重心が片側に寄ると、その側の腰や股関節に負担がかかります。',['stand']);
+  add(F,'neck',()=>1,'F',m=>`首が${dir(m)}に${num(m)} ずれています`,'スマホやテレビを見る向きが、いつも同じになっていませんか？首の片側の筋肉に負担がかかります。',['sit']);
+  add(F,'head',()=>1,'F',m=>`頭が${dir(m)}に${num(m)} 傾いています`,'寝るときの向きや、画面を見る向きに偏りはありませんか？首の片側の筋肉が縮んで硬くなりやすい状態です。',['sit']);
+  add(F,'ox',()=>1,'F',m=>`${dir(m)}の傾向があります${m.ov!=null?'':`（${Math.abs(m.v).toFixed(1)}cm）`}`,'歩くときに足の外側（または内側）ばかりに体重がかかっている可能性があります。つま先とひざを同じ向きにそろえて歩きましょう。',['walk']);
+  add(S,'headS',m=>sgn(m)<0,'S',m=>`頭が肩より${num(m)} 前に出ています`,'スマホやデスクワークで首が前に出る癖があります。首や肩がこりやすく、呼吸も浅くなりがちです。耳と肩が縦にそろう位置を意識しましょう。',['sit','abs']);
+  add(S,'kyph',m=>sgn(m)>0,'S',m=>`背中が丸くなっています（猫背）`,'座っているときに背中が丸まっていませんか？胸を軽く開いて、おなかに力を入れて体を起こしましょう。',['sit','abs']);
+  add(S,'pel',()=>1,'S',m=>sgn(m)<0?'骨盤が前に傾いています（前傾）':'骨盤が後ろに傾いています（後傾）','骨盤の傾きは、腰の反りすぎや丸まりにつながります。腰ではなく、下腹部に力を入れることを意識しましょう。',['abs','sit']);
+  add(S,'hipS',m=>sgn(m)>0,'S',m=>'骨盤が後ろに位置しています','腰に力が入りすぎている可能性があります。腰ではなく、下腹部に力を入れることを意識しましょう。',['abs','stand']);
+  add(S,'hipS',m=>sgn(m)<0,'S',m=>'骨盤が前に出ています','おなかを突き出して立つ癖があるかもしれません。下腹部を軽くへこませて、体をまっすぐに保ちましょう。',['abs','stand']);
+  add(S,'all',m=>sgn(m)>0,'S',m=>`全身の重心が後ろに傾いています`,'体の前側に負担がかかりやすい状態です。太ももの前側の筋肉が張りやすくありませんか？日頃からまっすぐな姿勢を意識しましょう。',['stand','walk']);
+  add(S,'all',m=>sgn(m)<0,'S',m=>`全身の重心が前に傾いています`,'つま先側に体重がのりやすく、ふくらはぎや腰に負担がかかります。かかとにも体重をのせて立ちましょう。',['stand','walk']);
+  add(S,'up',m=>sgn(m)<0,'S',m=>`上半身が${num(m)} 前に傾いています`,'腰や太ももの裏に負担がかかりやすい状態です。おなかに力を入れて、体をまっすぐ起こす意識を持ちましょう。',['abs','stand']);
+  add(S,'knee',m=>sgn(m)<0,'S',m=>`ひざが${num(m)} 曲がっています`,'太ももの裏やふくらはぎが硬くなっている可能性があります。立つときは、ひざを軽く伸ばして、足の裏全体で床を押す意識を持ちましょう。',['stand','walk']);
+  add(S,'knee',m=>sgn(m)>0,'S',m=>`ひざが伸びすぎています`,'ひざを後ろに押しこんで立つ癖があります。ひざの力を少しゆるめて、足の裏全体で立ちましょう。',['stand','walk']);
+  /* w＝段（1〜3）＋はみ出し。正面から2つ・側面から2つまで（カルティと同じ数） */
+  out.sort((a,b)=>b.w-a.w);
+  return {top:[...out.filter(x=>x.s==='F').slice(0,2),...out.filter(x=>x.s==='S').slice(0,2)],use:[...use]}}
 const USE={sit:['座り方','骨盤を立てて座り、耳・肩・骨盤が縦にそろう位置に。脚は組まずに、両足の裏を床につけます。'],
   stand:['立ち方','両足に均等に体重をのせて、ひざは軽く伸ばします。頭のてっぺんを上から引っぱられるように。'],
   walk:['歩き方','つま先とひざを同じ向きに。かかとから着いて、足の指で地面を押して進みます。'],
   abs:['腹筋の正しい使い方','おへその下を軽くへこませたまま、呼吸を止めずに。院ではEMSも使いながら、正しい使い方を一緒に練習します。']};
-// ---- 描く ----
+// ---- 描く（カルティと同じ：点を線でつなぐ・縦の基準線・肩と腰の高さの横線） ----
+const LINKS={F:[['top','chin'],['chin','jug'],['jug','shR'],['jug','shL'],['shR','elR'],['elR','wrR'],['shL','elL'],['elL','wrL'],['jug','pub'],['asR','pub'],['asL','pub'],['hipR','pub'],['hipL','pub'],['asR','hipR'],['asL','hipL'],
+    ['hipR','knR'],['knR','anR'],['anR','toR'],['hipL','knL'],['knL','anL'],['anL','toL']],
+  S:[['top','occ'],['top','eye'],['eye','chin'],['occ','occF'],['occF','c4'],['chin','c4'],['c4','c7'],['c7','cor'],['c7','sh'],['cor','sh'],['c7','th5'],['th5','th8'],['th8','th12'],['th12','l5'],['l5','coc'],
+    ['sh','el'],['el','wr'],['coc','gt'],['gt','asis'],['asis','l5'],['gt','kn'],['kn','an'],['an','toe']]};
 function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
-  let cv=box.querySelector('canvas');if(!cv){box.innerHTML='';cv=document.createElement('canvas');box.appendChild(cv);bindDrag(kind,cv)}
-  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,u=W/600;
-  c.drawImage(v.img,0,0);if(!v.pts)return;const p=v.pts;
-  c.lineWidth=2.2*u;c.lineCap='round';
-  const ln=(a,b,col,dash)=>{c.strokeStyle=col;c.setLineDash(dash?[6*u,6*u]:[]);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.setLineDash([])};
-  if(kind==='F'){const aM=mid(p.anL,p.anR);ln({x:aM.x,y:p.floor.y},{x:aM.x,y:p.top.y},'rgba(43,140,255,.9)',1);
-    [['earR','earL'],['shR','shL'],['hipR','hipL']].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,90,54,.95)'));
-    ln(mid(p.anL,p.anR),mid(p.hipL,p.hipR),'rgba(255,214,0,.95)');ln(mid(p.hipL,p.hipR),mid(p.shL,p.shR),'rgba(255,214,0,.95)');ln(mid(p.shL,p.shR),mid(p.earL,p.earR),'rgba(255,214,0,.95)');
-    [['hipR','knR'],['knR','anR'],['hipL','knL'],['knL','anL']].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,255,255,.85)'))}
-  else{ln({x:p.an.x,y:p.floor.y},{x:p.an.x,y:p.top.y},'rgba(43,140,255,.9)',1);
-    ln(p.an,p.kn,'rgba(255,214,0,.95)');ln(p.kn,p.hip,'rgba(255,214,0,.95)');ln(p.hip,p.sh,'rgba(255,214,0,.95)');ln(p.sh,p.ear,'rgba(255,214,0,.95)')}
-  c.strokeStyle='rgba(43,140,255,.9)';ln({x:0,y:p.floor.y},{x:W,y:p.floor.y},'rgba(43,140,255,.6)',1);ln({x:0,y:p.top.y},{x:W,y:p.top.y},'rgba(43,140,255,.6)',1);
-  (kind==='F'?PF:PS).forEach(([k])=>{const q=p[k];c.beginPath();c.arc(q.x,q.y,(k===v.drag?9:6.5)*u,0,7);c.fillStyle=k==='top'||k==='floor'?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=2*u;c.strokeStyle='#fff';c.stroke()});
+  let cv=box.querySelector('canvas');if(!cv){box.innerHTML='';cv=document.createElement('canvas');box.appendChild(cv);bindDrag(kind,cv);
+    const lab=document.createElement('div');lab.className='lr';box.appendChild(lab)}
+  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600;
+  c.drawImage(v.img,0,0);
+  const lr=box.querySelector('.lr');
+  if(!v.pts){lr.innerHTML='';return}const p=v.pts;
+  const f=kind==='S'?(p.eye.x>=p.occ.x?1:-1):0;
+  lr.innerHTML=kind==='F'?'<span>右</span><span>左</span>':(f<0?'<span>前</span><span>後</span>':'<span>後</span><span>前</span>');
+  c.lineCap='round';
+  const ln=(a,b,col,w,dash)=>{c.strokeStyle=col;c.lineWidth=(w||2)*u;c.setLineDash(dash?[6*u,6*u]:[]);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.setLineDash([])};
+  // 縦の基準線（正面：両足の真ん中／側面：外果）と横の線（肩・腰）
+  const bx=kind==='F'?mid(p.anL,p.anR).x:p.an.x;ln({x:bx,y:0},{x:bx,y:H},'rgba(30,200,190,.9)',1.6);
+  const hl=y=>ln({x:0,y},{x:W,y},'rgba(30,200,190,.75)',1.4);
+  if(kind==='F'){hl(mid(p.shR,p.shL).y);hl(p.pub.y)}
+  LINKS[kind].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,214,90,.95)',1.8));
+  (kind==='F'?PF:PS).forEach(([k,,blue])=>{const q=p[k];c.beginPath();c.arc(q.x,q.y,(k===v.drag?8:4.6)*u,0,7);c.fillStyle=blue?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=1.4*u;c.strokeStyle='#fff';c.stroke()});
   if(v.drag){const q=p[v.drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
 function bindDrag(kind,cv){const v=V[kind];
   const at=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height,k:cv.width/r.width}};
-  cv.addEventListener('pointerdown',e=>{if(!v.pts||document.body.classList.contains('pt'))return;const m=at(e);let best=null,bd=34*m.k;
+  cv.addEventListener('pointerdown',e=>{if(!v.pts||document.body.classList.contains('pt'))return;const m=at(e);let best=null,bd=26*m.k;
     Object.keys(v.pts).forEach(k=>{const d=Math.hypot(v.pts[k].x-m.x,v.pts[k].y-m.y);if(d<bd){bd=d;best=k}});
     if(best){v.drag=best;cv.setPointerCapture(e.pointerId);e.preventDefault();draw(kind)}});
   cv.addEventListener('pointermove',e=>{if(!v.drag)return;const m=at(e);v.pts[v.drag]={x:m.x,y:m.y};draw(kind);renderNums()});
   const up=()=>{if(!v.drag)return;v.drag=null;draw(kind);renderNums()};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
-// ---- 表と文 ----
-function table(title,L){if(!L)return `<div class="note">${title}の写真がまだありません</div>`;
-  return `<table class="m"><caption style="text-align:left;font-weight:700;padding-bottom:4px">${title}</caption><tbody>${L.map(m=>{const lv=lev(m),a=Math.abs(m.v),full=(THX[m.id]||TH[m.u])[1]*2,w=Math.min(50,a/full*50);
-    const lab=a<0.05?'ずれなし':`${m.v>0?m.side[1]:m.side[0]} ${a.toFixed(1)}${m.u}`;
-    return `<tr><th>${m.name}</th><td style="width:40%"><div class="ends"><span>${m.side[0].replace('が上','')}</span><span>${m.side[1].replace('が上','')}</span></div><div class="bar"><i class="${lv===2?'r':lv?'w':''}" style="${m.v>=0?'left:50%':'right:50%'};width:${w}%"></i></div></td><td class="v">${lab}</td></tr>`}).join('')}</tbody></table>`}
-function renderNums(){const F=V.F.pts?calcF(V.F.pts):null,S=V.S.pts?calcS(V.S.pts):null;
-  $('#tF').innerHTML=table('正面',F);$('#tS').innerHTML=table('左側面',S);
+// ---- グラフ（7マス）：押すとその段に直せる（施術者の調整）。もう一度押すとAIの値に戻る ----
+function table(kind,L){if(!L)return `<div class="note">写真を撮ると、ここに出ます。</div>`;
+  const hd=kind==='F'?['右','左']:['前','後'];
+  return `<div class="gr"><div class="gh"><span></span><span>${hd[0]}</span><span>ずれなし</span><span>${hd[1]}</span></div>${L.map(m=>{const k=sgn(m)*lev(m),a=Math.abs(m.v);
+    const lab=k===0?'':(m.ov!=null?`${k<0?'← ':''}${k<0?m.side[0]:m.side[1]}${k>0?' →':''}`:`${k<0?'← ':''}${a.toFixed(1)}${m.u}${k>0?' →':''}`);
+    const cells=[-3,-2,-1,0,1,2,3].map(i=>`<b data-k="${kind}" data-id="${m.id}" data-i="${i}" class="${i===k?'on':''}${i===0?' z':''}"></b>`).join('');
+    return `<div class="gl"><span class="gn">${m.name}${m.ov!=null?' <i class="ovm">✎</i>':''}</span><span class="gc"><em class="${k<0?'l':'r'}" style="${k<0?'left:0':'right:0'}">${lab}</em>${cells}</span></div>`}).join('')}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('.gr b[data-id]');if(!b||document.body.classList.contains('pt'))return;
+  const v=V[b.dataset.k],id=b.dataset.id,i=+b.dataset.i;v.ov=v.ov||{};
+  const L=(b.dataset.k==='F'?calcF:calcS)(v.pts),m=L.find(x=>x.id===id),ai=Math.sign(m.v)*lev(m);
+  if(v.ov[id]===i||(v.ov[id]==null&&i===ai))delete v.ov[id];else if(i===ai&&v.ov[id]!=null)delete v.ov[id];else v.ov[id]=i;renderNums()});
+function fdHTML(list){return list.length?list.map((x,i)=>`<div class="fd"><b>気になる点${'①②③④'[i]}　${x.t}</b>${x.d}</div>`).join(''):'<div class="fd ok"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>'}
+function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts?applyOv('S',calcS(V.S.pts)):null;
+  $('#tF').innerHTML=table('F',F);$('#tS').innerHTML=table('S',S);
   const r=findings(F,S);
-  $('#fd').innerHTML=r.top.length?r.top.map(x=>`<div class="fd"><b>${x.t}</b>${x.d}</div>`).join(''):(F||S?'<div class="fd" style="border-color:var(--teal);background:var(--teal2)"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>':'<div class="note">写真を撮ると、ここに出ます。</div>');
+  $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
   $('#use').innerHTML=us.length?us.map(k=>`<div><b>${USE[k][0]}</b><br>${USE[k][1]}</div>`).join(''):'<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
   window.__last={F,S,find:r}}
@@ -232,10 +310,10 @@ function renderNums(){const F=V.F.pts?calcF(V.F.pts):null,S=V.S.pts?calcS(V.S.pt
 function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
   const url=URL.createObjectURL(file),im=new Image();
   im.onload=async()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
-    V[kind]={img:cv,pts:null,ai:null};draw(kind);renderNums();await runAI(kind)};
+    V[kind]={img:cv,pts:null,ai:null,ov:{}};draw(kind);renderNums();await runAI(kind)};
   im.onerror=()=>{st.textContent='写真を開けませんでした。もう一度撮ってください。'};im.src=url}
 async function runAI(kind){const v=V[kind],st=$('#s'+kind);st.textContent='AIが体の点を探しています…（初回は少し時間がかかります）';
-  try{const lm=await detect(v.img);if(!lm){st.textContent='体が見つかりませんでした。全身が入るように撮り直してください。';return}
+  try{const lm=await detect(v.img);if(!lm||!lm.lm){st.textContent='体が見つかりませんでした。全身が入るように撮り直してください。';return}
     v.ai=lm;v.pts=initPts(kind,lm,v.img.width,v.img.height);st.textContent='';$('#r'+kind).disabled=false;draw(kind);renderNums()}
   catch(e){st.textContent=String(e&&e.message||e)}}
 /* ---- カメラ（線つき）：カルティと同じ。人の形の枠・中心線・体の中心の高さの線。傾きセンサーで黄色の線が動き、まっすぐになると赤 ----
@@ -258,7 +336,7 @@ async function camOpen(kind){CAM.kind=kind;CAM.gv=null;CAM.okH=false;try{documen
   catch(e){$('#s'+kind).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください（線つきのカメラは、姿勢チェックのページを直接開いたときに使えます）。';return}
   const v=$('#cv');v.srcObject=CAM.st;$('#cam').hidden=false;camText();try{await v.play()}catch(e){}
   cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-3）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-4）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -302,13 +380,13 @@ function camShoot(){const v=$('#cv');if(!v.videoWidth)return;const vw=v.videoWid
   const cv=document.createElement('canvas');cv.width=Math.round(vw*k);cv.height=Math.round(vh*k);const c=cv.getContext('2d');
   const rot=CAM.g&&Math.abs(CAM.roll)<=5?CAM.roll:0;   // 撮ったときの傾きで、写真をまっすぐに直す
   c.translate(cv.width/2,cv.height/2);c.rotate(rot*Math.PI/180);c.drawImage(v,-cv.width/2,-cv.height/2,cv.width,cv.height);
-  const kind=CAM.kind;V[kind]={img:cv,pts:null,ai:null,tilt:{roll:CAM.roll,pitch:CAM.pitch,fixed:rot}};draw(kind);renderNums();runAI(kind);
+  const kind=CAM.kind;V[kind]={img:cv,pts:null,ai:null,ov:{},tilt:{roll:CAM.roll,pitch:CAM.pitch,fixed:rot}};draw(kind);renderNums();runAI(kind);
   if(kind==='F'&&!V.S.img){CAM.kind='S';camText()}else camClose()}
 function camPress(){if(!$('#camTm').checked){camShoot();return}
   let n=3;const el=$('#camC');el.hidden=false;el.textContent=n;clearInterval(CAM.tm);CAM.tm=setInterval(()=>{n--;if(n<=0){clearInterval(CAM.tm);el.hidden=true;camShoot()}else el.textContent=n},1000)}
 $('#camShot').onclick=camPress;$('#camX').onclick=camClose;$('#cmF').onclick=()=>camOpen('F');$('#cmS').onclick=()=>camOpen('S');
 ['F','S'].forEach(k=>{$('#f'+k).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)loadFile(k,f);e.target.value=''});
-  $('#r'+k).addEventListener('click',()=>{const v=V[k];if(v.ai){v.pts=initPts(k,v.ai,v.img.width,v.img.height);draw(k);renderNums()}})});
+  $('#r'+k).addEventListener('click',()=>{const v=V[k];if(v.ai){v.pts=initPts(k,v.ai,v.img.width,v.img.height);v.ov={};draw(k);renderNums()}})});
 $('#ht').addEventListener('input',renderNums);
 const mode=pt=>{document.body.classList.toggle('pt',pt);$('#vPt').setAttribute('aria-pressed',pt);$('#vStaff').setAttribute('aria-pressed',!pt)};
 $('#vPt').onclick=()=>mode(true);$('#vStaff').onclick=()=>mode(false);
