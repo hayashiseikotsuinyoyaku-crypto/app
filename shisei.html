@@ -68,6 +68,14 @@ body.pt .gc b{cursor:default}
 .cmpi{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cmph{font-weight:700;margin-bottom:4px}.cmpimg img,.cmpimg canvas{width:100%;border-radius:10px;display:block}
 table.cmp{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}table.cmp th,table.cmp td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp tr.worse td.b{color:var(--red)}
+#xtra{display:grid;gap:14px}.xg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.xrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:start}.xrow.fut{grid-template-columns:minmax(0,300px) minmax(0,1fr)}
+@media (max-width:620px){.xrow,.xrow.fut{grid-template-columns:1fr}}
+.xfig svg{width:100%;display:block;border:1px solid var(--line);border-radius:10px;background:#fff}.xtxt{line-height:1.75}.xtxt p{margin:10px 0 0}
+.futfig{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}.futfig svg,.gait svg{width:100%;display:block}
+.fl{font-size:13px;color:var(--sub);font-weight:700;text-align:center}.ft{font-size:17px;display:block}.ft em{font-style:normal;color:var(--red)}
+.lg{margin-top:10px;font-size:13px;color:var(--sub)}.lg span{display:inline-block;width:22px;height:10px;border-radius:5px;vertical-align:middle;margin-right:4px}.lg .st{background:#ef5b6b}.lg .fa{background:#f4c95d;margin-left:8px}
+.gait{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gait>div{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff;max-width:220px;justify-self:center;width:100%}
 .find{display:grid;gap:10px}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
@@ -105,7 +113,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-10</span>
+  <h1>骨ぴかチェック</h1><span class="tag">試作 10/16-11</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -135,6 +143,14 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
     <div class="find" id="fdS"></div>
     <div class="note staff" style="margin-top:8px">角度は「度」、ずれは身長から計算した「cm」の目安です。骨盤の前後傾き・猫背は、点を見て必要なら直してください（✎＝グラフで直した項目）。</div>
   </section>
+  <div id="xtra" hidden>
+  <div class="xg">
+    <section class="card"><h2>重心位置</h2><div class="xrow"><div id="cogFig" class="xfig"></div><div id="cogT" class="xtxt"></div></div></section>
+    <section class="card"><h2>歩き方</h2><div id="gaitT" class="xtxt" style="margin-bottom:8px"></div>
+      <div class="gait"><div><div class="fl">今の歩き方</div><div id="gaitA"></div></div><div><div class="fl">理想の歩き方</div><div id="gaitB"></div></div></div></section>
+  </div>
+  <section class="card"><h2>未来姿勢 <small>今のくせがこのまま続いたら</small></h2><div class="xrow fut"><div id="futFig" class="futfig"></div><div id="futT" class="xtxt"></div></div></section>
+  </div>
   <section class="card"><h2>毎日の3つのポイント</h2>
     <ul class="keep" style="margin:0;padding:0">
       <li>脚を組んでいることに気が付いたら、直す</li>
@@ -349,6 +365,7 @@ function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts
   $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
   $('#use').innerHTML=us.length?us.map(k=>`<div><b>${USE[k][0]}</b><br>${USE[k][1]}</div>`).join(''):'<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
+  try{extraRender(F,S)}catch(e){console.warn(e)}
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
 function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
@@ -386,7 +403,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-10）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-11）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -449,6 +466,132 @@ $('#ht').addEventListener('input',renderNums);
 const mode=pt=>{document.body.classList.toggle('pt',pt);$('#vPt').setAttribute('aria-pressed',pt);$('#vStaff').setAttribute('aria-pressed',!pt)};
 $('#vPt').onclick=()=>mode(true);$('#vStaff').onclick=()=>mode(false);
 
+/* ---- 重心位置・未来姿勢・歩き方（代表 10/16：患者さんが面白く見てくれるもの） ----
+   ・重心：正面の「全身の左右傾き」と側面の「全身の前後傾き」から、足の裏のどこに重心があるか
+   ・未来姿勢：今の偏りがこのまま続いたときになりやすい型（正面の型×側面の型）。体の絵で、硬くなりやすい筋肉と脂肪がつきやすい所
+   ・歩き方：側面の型から、今の歩き方の目安と理想の歩き方（動く絵） */
+const gI=(L,id)=>L&&L.find(m=>m.id===id);
+const kOf=m=>m?sgn(m)*lev(m):0;   // −3〜3（グラフのマス）
+function cogOf(F,S){const ax=kOf(gI(F,'all')),ay=kOf(gI(S,'all')),bx=kOf(gI(F,'hipS')),by=kOf(gI(S,'hipS'));
+  const x=Math.max(-1,Math.min(1,(ax*0.7+bx*0.3)/3)),y=Math.max(-1,Math.min(1,(ay*0.7+by*0.3)/3));   // x：＋＝左、y：＋＝後ろ
+  const lr=Math.abs(x)>=0.2?(x>0?'左':'右'):'',fb=Math.abs(y)>=0.2?(y>0?'後ろ':'前'):'';
+  const T={'':'重心は、ほぼ真ん中です。この状態を保てるように、両足に均等に体重をのせて立ちましょう。',
+    '後ろ':'重心が後ろ（かかと側）に偏っています。体の前側の筋肉（太ももの前など）に負担がかかりやすい状態です。',
+    '前':'重心が前（つま先側）に偏っています。ふくらはぎや腰の筋肉が休めず、疲れやすい状態です。',
+    '右':'重心が右に偏っています。右足ばかりに体重をかける癖があると、右の腰や股関節に負担がかかります。',
+    '左':'重心が左に偏っています。左足ばかりに体重をかける癖があると、左の腰や股関節に負担がかかります。'};
+  const key=lr&&fb?null:(lr||fb);
+  const t=key!=null?T[key]:`重心が${lr}${fb}に偏っています。${T[fb].replace(/^重心が.+?偏っています。/,'')}片足に体重をかける癖にも気をつけましょう。`;
+  return {x,y,t,lr,fb}}
+// 未来姿勢の型（正面×側面）
+const FT={rUp:['右片あがり','右肩が上がり、体が左に傾いていく型','左右アンバランスな姿勢が続くと、全身のゆがみにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。'],
+  lUp:['左片あがり','左肩が上がり、体が右に傾いていく型','左右アンバランスな姿勢が続くと、全身のゆがみにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。']};
+const ST={sori:['反り腰','腰が反り、おなかが前に出る型','腰と太ももの前の筋肉が緊張し続け、腰に負担が大きい姿勢です。腰・太もものストレッチで緊張をほぐし、腹筋で体幹のバランスを整えましょう（院ではEMSも使います）。'],
+  neko:['猫背','背中が丸まり、頭が前に出る型','首・肩・背中の筋肉が引っぱられ続け、こりや頭痛が出やすい姿勢です。胸を開くストレッチと、背中を起こす意識を続けましょう。'],
+  sway:['スウェイバック','骨盤が前に出て、上半身が後ろにもたれる型','おなかの力が抜けて、腰と太ももの裏に負担がかかる姿勢です。下腹部に力を入れて、骨盤の真上に上半身をのせる意識を持ちましょう。'],
+  heihai:['平背','骨盤が後ろに倒れ、背中が平らになる型','背骨のクッションが減り、腰や背中が疲れやすい姿勢です。座るときに骨盤を立てて、太ももの裏をストレッチしましょう。'],
+  hiza:['膝曲がり','膝が曲がり、重心が下がっていく型','太ももの前とふくらはぎが休めない姿勢です。膝を軽く伸ばして立ち、太ももの裏とふくらはぎをストレッチしましょう。']};
+function futureOf(F,S){const sc=(L,id,want)=>{const m=gI(L,id);return m&&lev(m)>=2&&(!want||sgn(m)===want)?lev(m)+Math.min(1,Math.abs(m.v)/thr(m)[2]/3):0};
+  let f=null,fw=0;const sh=gI(F,'sh'),up=gI(F,'up');
+  [[sc(F,'sh',-1),'rUp'],[sc(F,'sh',1),'lUp'],[sc(F,'up',1),'rUp'],[sc(F,'up',-1),'lUp'],[sc(F,'hipT',1)*0.8,'rUp'],[sc(F,'hipT',-1)*0.8,'lUp']].forEach(([w,k])=>{if(w>fw){fw=w;f=k}});
+  let s=null,sw=0;
+  [[sc(S,'pel',-1),'sori'],[sc(S,'hipS',1)*0.9,'sori'],[sc(S,'kyph',1),'neko'],[sc(S,'headS',-1)*0.9,'neko'],[Math.min(sc(S,'hipS',-1),sc(S,'up',1)||sc(S,'all',1))*1.0,'sway'],[sc(S,'pel',1),'heihai'],[sc(S,'knee',-1),'hiza']].forEach(([w,k])=>{if(w>sw){sw=w;s=k}});
+  const name=[f&&FT[f][0],s&&ST[s][0]].filter(Boolean).join('×');
+  return {f,s,title:name?`将来、${name}型姿勢になる可能性があります`:'今の姿勢を続ければ、大きく崩れる心配は少なそうです',
+    tf:f?FT[f][2]:'',ts:s?ST[s][2]:'',sub:[f&&FT[f][1],s&&ST[s][1]].filter(Boolean).join('、')}}
+const GAIT={sori:['反り腰歩行','腰を反らせて、おなかを突き出して歩く'],neko:['猫背歩行','背中を丸めて、頭から前に出て歩く'],sway:['もたれ歩行','上半身を後ろにもたれさせ、骨盤から前に出て歩く'],
+  heihai:['ペタペタ歩行','骨盤が後ろに倒れ、歩幅が小さくなる'],hiza:['膝曲がり歩行','膝が伸びきらず、すり足ぎみに歩く'],lr:['左右ゆれ歩行','体が左右にゆれながら歩く'],ok:['ほぼ理想に近い歩き方','今の歩き方を続けましょう']};
+// ---- 体の絵（オリジナルの簡単な人形）。p：姿勢のくせ。side＝横向き（左向き） ----
+const BODY={cur:'#8b93a8',ideal:'#2a9d8f',stiff:'#ef5b6b',fat:'#f4c95d'};
+function figSVG(o){const W=120,H=230,c=o.col||BODY.cur,side=!!o.side,P=o.p||{},ph=o.ph;
+  const lw={leg:13,arm:9,body:30};let s='';const cap=(x1,y1,x2,y2,w,col,op)=>`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"${op?` opacity="${op}"`:''}/>`;
+  const rot=(x,y,cx,cy,a)=>{const r=a*Math.PI/180,dx=x-cx,dy=y-cy;return [cx+dx*Math.cos(r)-dy*Math.sin(r),cy+dx*Math.sin(r)+dy*Math.cos(r)]};
+  const mark=[];   // 硬くなりやすい・脂肪がつきやすい所
+  if(!side){const tilt=P.tilt||0,hx=60,hy=118,ft=210;   // 正面：tilt＋＝体が右（画面の左）に傾く…画面の右肩が上
+    const [shx,shy]=rot(60,58,hx,hy,-tilt*0.5),sa=-tilt;   // 肩の線の傾き
+    const sR=rot(shx-24,shy,shx,shy,sa),sL=rot(shx+24,shy,shx,shy,sa),hR=[hx-14,hy+2-(P.hip||0)],hL=[hx+14,hy+2+(P.hip||0)];
+    const kR=[hR[0]-1,165],kL=[hL[0]+1,165],aR=[hR[0]-2,ft],aL=[hL[0]+2,ft];
+    s+=cap(hR[0],hR[1],kR[0],kR[1],lw.leg,c)+cap(kR[0],kR[1],aR[0],aR[1],lw.leg-1,c)+cap(hL[0],hL[1],kL[0],kL[1],lw.leg,c)+cap(kL[0],kL[1],aL[0],aL[1],lw.leg-1,c);
+    s+=`<path d="M${sR[0]},${sR[1]} L${sL[0]},${sL[1]} L${hL[0]+4},${hL[1]+4} L${hR[0]-4},${hR[1]+4} Z" fill="${c}" stroke="${c}" stroke-width="14" stroke-linejoin="round"/>`;
+    s+=cap(sR[0],sR[1],sR[0]-6,sR[1]+40,lw.arm,c)+cap(sR[0]-6,sR[1]+40,sR[0]-7,sR[1]+74,lw.arm-1,c)+cap(sL[0],sL[1],sL[0]+6,sL[1]+40,lw.arm,c)+cap(sL[0]+6,sL[1]+40,sL[0]+7,sL[1]+74,lw.arm-1,c);
+    const nk=[(sR[0]+sL[0])/2,(sR[1]+sL[1])/2],hd=rot(nk[0],nk[1]-26,nk[0],nk[1],-tilt*0.6);
+    s+=cap(nk[0],nk[1],nk[0],nk[1]-12,10,c)+`<ellipse cx="${hd[0]}" cy="${hd[1]}" rx="13" ry="15.5" fill="${c}"/>`;
+    (o.marks||[]).forEach(m=>{const C=m.t==='fat'?BODY.fat:BODY.stiff,sd=m.side==='L'?1:-1;
+      if(m.at==='neckSh'){const sp=sd<0?sR:sL;mark.push(cap(nk[0]+sd*4,nk[1]-6,sp[0]-sd*4,sp[1],8,C,.85))}
+      if(m.at==='waist'){mark.push(cap(hx+sd*15,hy-30,hx+sd*14,hy-6,9,C,.85))}
+      if(m.at==='belly'){mark.push(`<ellipse cx="${hx}" cy="${hy-14}" rx="13" ry="9" fill="${C}" opacity=".8"/>`)}
+      if(m.at==='thighF'){[-1,1].forEach(q=>mark.push(cap(hx+q*14,hy+12,hx+q*14,hy+40,8,C,.85)))}
+      if(m.at==='calf'){[-1,1].forEach(q=>mark.push(cap(hx+q*15,175,hx+q*15,198,7,C,.85)))}
+      if(m.at==='side'){mark.push(cap(hx+sd*16,hy-26,hx+sd*16,hy-4,8,C,.85))}
+      if(m.at==='hip'){mark.push(cap(hx+sd*12,hy+6,hx+sd*16,hy+14,9,C,.85))}})}
+  else{   // 横向き（左向き）。lean＋＝前かがみ、sori＝腰の反り、knee＝膝の曲がり、head＝頭が前、back＝上半身が後ろ
+    const f=-1,ft=210,lean=(P.lean||0)-(P.back||0),kb=P.knee||0;
+    const sw=ph==null?0:Math.sin(ph),sw2=ph==null?0:Math.sin(ph+Math.PI),bob=ph==null?0:Math.abs(Math.cos(ph))*2;
+    const hip=[60+(P.sway||0)*f,118+kb*0.3+bob];
+    const leg=(phase,front)=>{const a=phase*24*(o.stride||1),ka=Math.max(0,-Math.cos(phase*0+0))*0;const th=[hip[0]+f*Math.sin(a*Math.PI/180)*47,hip[1]+Math.cos(a*Math.PI/180)*47];
+      const k=[th[0]+f*kb*0.6,th[1]];const bend=ph==null?0:Math.max(0,Math.sin((front?ph:ph+Math.PI)+0.6))*22;
+      const sh=[k[0]+f*Math.sin((a-bend-kb*0.8)*Math.PI/180)*45,k[1]+Math.cos((a-bend-kb*0.8)*Math.PI/180)*45];return [th,k,sh]};
+    const [t1,k1,a1]=leg(sw,true),[t2,k2,a2]=leg(sw2,false);
+    const foot=(k,a)=>cap(a[0],a[1]+2,a[0]+f*13,a[1]+4,8,c);
+    s+=cap(hip[0],hip[1],k2[0],k2[1],lw.leg,c,.75)+cap(k2[0],k2[1],a2[0],a2[1],lw.leg-1,c,.75)+foot(k2,a2).replace('/>',' opacity=".75"/>');
+    const ang=lean*1.4,sori=P.sori||0,neko=P.neko||0;
+    const waist=rot(hip[0]-f*sori*0.9,hip[1]-26,hip[0],hip[1],-ang*f),chest=rot(hip[0]+f*neko*0.4,hip[1]-52,hip[0],hip[1],-ang*f),nk=rot(hip[0]+f*neko*1.2,hip[1]-66,hip[0],hip[1],-ang*f);
+    s+=`<path d="M${hip[0]+f*4},${hip[1]+4} Q${waist[0]-f*(9+sori*0.5)},${waist[1]} ${chest[0]-f*4},${chest[1]} L${chest[0]+f*6},${chest[1]} Q${waist[0]+f*(6+sori*0.9)},${waist[1]} ${hip[0]-f*5},${hip[1]+6} Z" fill="${c}" stroke="${c}" stroke-width="15" stroke-linejoin="round"/>`;
+    s+=cap(hip[0],hip[1],k1[0],k1[1],lw.leg,c)+cap(k1[0],k1[1],a1[0],a1[1],lw.leg-1,c)+foot(k1,a1);
+    const hd=[nk[0]+f*(P.head||0)*1.2,nk[1]-18];
+    s+=cap(chest[0],chest[1],nk[0],nk[1],10,c)+`<ellipse cx="${hd[0]}" cy="${hd[1]}" rx="14" ry="15.5" fill="${c}"/>`+`<path d="M${hd[0]+f*13},${hd[1]-2} l${f*4},5 l${-f*4},1" fill="${c}"/>`;
+    const arm=ph==null?0:Math.sin(ph+Math.PI)*22,el=rot(chest[0],chest[1]+34,chest[0],chest[1],arm*f),wr=rot(el[0],el[1]+30,el[0],el[1],arm*f*1.2-10*f);
+    s+=cap(chest[0],chest[1],el[0],el[1],lw.arm,c)+cap(el[0],el[1],wr[0],wr[1],lw.arm-1,c);
+    (o.marks||[]).forEach(m=>{const C=m.t==='fat'?BODY.fat:BODY.stiff;
+      if(m.at==='lowback')mark.push(cap(waist[0]-f*12,waist[1]-8,waist[0]-f*12,waist[1]+12,9,C,.85));
+      if(m.at==='belly')mark.push(`<ellipse cx="${waist[0]+f*10}" cy="${waist[1]+8}" rx="9" ry="12" fill="${C}" opacity=".8"/>`);
+      if(m.at==='thighF')mark.push(cap(hip[0]+f*6,hip[1]+8,k1[0]+f*5,k1[1]-8,8,C,.85));
+      if(m.at==='thighB')mark.push(cap(hip[0]-f*6,hip[1]+8,k1[0]-f*5,k1[1]-8,8,C,.85));
+      if(m.at==='neck')mark.push(cap(nk[0]-f*5,nk[1]-6,chest[0]-f*9,chest[1]+6,9,C,.85));
+      if(m.at==='upback')mark.push(cap(chest[0]-f*12,chest[1]+2,chest[0]-f*11,chest[1]+24,9,C,.85));
+      if(m.at==='chest')mark.push(cap(chest[0]+f*9,chest[1]+4,chest[0]+f*9,chest[1]+16,8,C,.85));
+      if(m.at==='calf')mark.push(cap(k1[0]-f*4,k1[1]+10,a1[0]-f*3,a1[1]-14,7,C,.85));
+      if(m.at==='hipB')mark.push(`<ellipse cx="${hip[0]-f*10}" cy="${hip[1]+2}" rx="8" ry="10" fill="${C}" opacity=".8"/>`)})}
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="fig">${s}${mark.join('')}<line x1="10" y1="${H-6}" x2="${W-10}" y2="${H-6}" stroke="#c9d3d1" stroke-width="2"/></svg>`}
+// 型ごとの絵のくせ（少し大げさに）と、硬くなりやすい筋肉・脂肪がつきやすい所
+const FUT_P={rUp:{tilt:-6},lUp:{tilt:6}};   // tilt−＝画面の左（＝体の右）の肩が上がる
+const FUT_PS={sori:{sori:9,lean:-1},neko:{neko:10,head:8,lean:5},sway:{sway:8,back:5},heihai:{sori:-5,knee:4},hiza:{knee:12,lean:3}};
+const FUT_MF={rUp:[{at:'neckSh',side:'R',t:'stiff'},{at:'waist',side:'L',t:'stiff'},{at:'side',side:'R',t:'fat'}],lUp:[{at:'neckSh',side:'L',t:'stiff'},{at:'waist',side:'R',t:'stiff'},{at:'side',side:'L',t:'fat'}]};
+const FUT_MS={sori:[{at:'lowback',t:'stiff'},{at:'thighF',t:'stiff'},{at:'belly',t:'fat'}],neko:[{at:'neck',t:'stiff'},{at:'upback',t:'stiff'},{at:'belly',t:'fat'}],
+  sway:[{at:'thighB',t:'stiff'},{at:'lowback',t:'stiff'},{at:'belly',t:'fat'}],heihai:[{at:'thighB',t:'stiff'},{at:'hipB',t:'fat'}],hiza:[{at:'thighF',t:'stiff'},{at:'calf',t:'stiff'},{at:'belly',t:'fat'}]};
+const GAIT_P={sori:{sori:8,lean:-1},neko:{neko:9,head:7,lean:6},sway:{sway:6,back:5},heihai:{sori:-4,knee:5},hiza:{knee:11,lean:3},lr:{},ok:{}};
+function extraRender(F,S){const box=$('#xtra');if(!box)return;if(!F&&!S){box.hidden=true;return}box.hidden=false;
+  const cg=cogOf(F,S),fu=futureOf(F,S),gk=fu.s||(fu.f?'lr':'ok'),G=GAIT[gk];
+  // 重心：足の裏の絵（オリジナル）
+  const fx=60+cg.x*30,fy=78+cg.y*40;
+  const sole=(x,m)=>`<path d="M${x},40 C${x+m*16},40 ${x+m*18},70 ${x+m*14},100 C${x+m*12},118 ${x+m*4},126 ${x},124 C${x-m*8},122 ${x-m*10},104 ${x-m*9},80 C${x-m*8},56 ${x-m*10},40 ${x},40 Z" fill="#f6d2b8"/>`+[0,1,2,3,4].map(i=>`<circle cx="${x+m*(-6+i*4.2)}" cy="${33-Math.abs(i-1.5)*1.6+(i===0?-1:0)}" r="${i===0?4.4:3.1}" fill="#f6d2b8"/>`).join('');
+  $('#cogFig').innerHTML=`<svg viewBox="0 0 120 150" class="cog">${sole(42,-1)}${sole(78,1)}<line x1="60" y1="10" x2="60" y2="145" stroke="#e8a3a3" stroke-width="1.2"/><line x1="8" y1="78" x2="112" y2="78" stroke="#e8a3a3" stroke-width="1.2"/><circle cx="60" cy="78" r="4.5" fill="none" stroke="#e8534a" stroke-width="1.4"/><circle cx="${fx.toFixed(1)}" cy="${fy.toFixed(1)}" r="5.5" fill="#e8534a"/><text x="4" y="146" font-size="9" fill="#5a6b70">右</text><text x="106" y="146" font-size="9" fill="#5a6b70">左</text><text x="52" y="8" font-size="8" fill="#5a6b70">つま先</text></svg>`;
+  $('#cogT').textContent=cg.t;
+  // 未来姿勢
+  const pf=Object.assign({},fu.f?FUT_P[fu.f]:{}),ps=Object.assign({},fu.s?FUT_PS[fu.s]:{});
+  $('#futFig').innerHTML=`<div><div class="fl">正面</div>${figSVG({p:pf,marks:fu.f?FUT_MF[fu.f]:[]})}</div><div><div class="fl">横から</div>${figSVG({side:1,p:ps,marks:fu.s?FUT_MS[fu.s]:[]})}</div>`;
+  $('#futT').innerHTML=`<b class="ft">${fu.title.replace(/(将来、)(.+)(型姿勢)/,'$1<em>$2$3</em>')}</b>${fu.sub?`<div class="note">${fu.sub}</div>`:''}${fu.tf?`<p><b>正面</b><br>${fu.tf}</p>`:''}${fu.ts?`<p><b>横から</b><br>${fu.ts}</p>`:''}${fu.f||fu.s?'<div class="lg"><span class="st"></span>筋肉が硬くなりやすい所　<span class="fa"></span>脂肪がつきやすい所</div>':''}`;
+  // 歩き方（動く絵）
+  $('#gaitT').innerHTML=`今の歩き方の目安：<b>${G[0]}</b>（${G[1]}）`;
+  window.__xtra={cg,fu,gk};gaitStart(GAIT_P[gk]||{})}
+let gaitRAF=0;
+function gaitStart(p){cancelAnimationFrame(gaitRAF);const a=$('#gaitA'),b=$('#gaitB');if(!a||!b)return;const t0=performance.now();
+  const step=t=>{const ph=(t-t0)/1000*Math.PI*1.6;a.innerHTML=figSVG({side:1,p,ph,col:BODY.cur,stride:p.knee>8?0.7:p.neko?0.85:1});b.innerHTML=figSVG({side:1,p:{},ph,col:BODY.ideal});
+    if(!document.hidden&&$('#xtra')&&!$('#xtra').hidden)gaitRAF=requestAnimationFrame(step)};gaitRAF=requestAnimationFrame(step)}
+// 保存用：重心・未来姿勢・歩き方を1枚の画像に（絵は止まった形）
+async function extraImg(){const X=window.__xtra;if(!X||$('#xtra').hidden)return null;
+  const W=1200,H=820,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,W,H);
+  const svgImg=s=>new Promise(ok=>{const im=new Image();im.onload=()=>ok(im);im.onerror=()=>ok(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '))});
+  c.fillStyle='#1f6f63';c.font='bold 30px sans-serif';c.fillText('重心位置',30,50);c.fillText('未来姿勢',330,50);c.fillText('歩き方',30,490);
+  const cog=await svgImg($('#cogFig').innerHTML);if(cog)c.drawImage(cog,30,70,240,300);
+  const figs=[...$('#futFig').querySelectorAll('svg')];for(let i=0;i<figs.length;i++){const im=await svgImg(figs[i].outerHTML);if(im)c.drawImage(im,330+i*170,70,150,288)}
+  const wrap=(t,x,y,w,lh,max)=>{c.font='22px sans-serif';let line='',n=0;for(const ch of t){if(c.measureText(line+ch).width>w){c.fillText(line,x,y);y+=lh;line='';if(++n>=max)return y}line+=ch}if(line){c.fillText(line,x,y);y+=lh}return y};
+  c.fillStyle='#b23a3a';c.font='bold 24px sans-serif';let y=wrap(X.fu.title,680,90,490,32,2);c.fillStyle='#1f2a30';y=wrap(X.fu.tf,680,y+8,490,30,4);wrap(X.fu.ts,680,y+8,490,30,4);
+  c.fillStyle='#1f2a30';wrap(X.cg.t,30,395,280,28,2);
+  const ga=await svgImg(figSVG({side:1,p:GAIT_P[X.gk]||{},ph:0.6,col:BODY.cur})),gb=await svgImg(figSVG({side:1,p:{},ph:0.6,col:BODY.ideal}));
+  c.font='22px sans-serif';c.fillStyle='#1f2a30';c.fillText('今：'+GAIT[X.gk][0],30,525);c.fillText('理想の歩き方',330,525);if(ga)c.drawImage(ga,60,540,140,268);if(gb)c.drawImage(gb,360,540,140,268);
+  return cv}
+
 /* ---- 予約システムとつなぐ（?t=チケット&a=予約システムのURL）：保存・前回と比べる・LINEで送る ---- */
 var KP=(()=>{const q=new URLSearchParams(location.search),t=q.get('t')||'',a=q.get('a')||'';
   return /^[0-9a-f]{40}$/.test(t)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(a)?{t,a,info:null,saved:null,dirty:true}:null})();
@@ -472,8 +615,8 @@ const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
 const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
 async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(L.F||L.S))return;
   ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
-  const rep=kpReport();$('#kpSave').disabled=true;kpSt('保存しています…');
-  try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),
+  const rep=kpReport(),xi=await extraImg().catch(()=>null),X=window.__xtra;$('#kpSave').disabled=true;kpSt('保存しています…');
+  try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
       find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:(L.find.use.length?L.find.use:['stand','sit']).map(k=>USE[k])});
     if(r.error){kpSt(r.error);kpButtons();return}
