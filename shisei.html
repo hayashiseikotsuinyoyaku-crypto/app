@@ -85,12 +85,12 @@ body.pt .staff{display:none}
 .camshot span{display:block;width:56px;height:56px;margin:auto;border-radius:50%;background:#e8534a}
 .camshot.ok{box-shadow:0 0 0 6px rgba(232,83,74,.55)}
 .camflip{position:absolute;top:calc(env(safe-area-inset-top,0px) + 66px);right:12px;width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px}
-.campv{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px)}
-.campv canvas{max-width:100%;max-height:calc(100% - 140px);border-radius:8px}
-.campv p{color:#fff;margin:0;font-size:17px;font-weight:700}
+.campv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.campv p{color:#fff;margin:0;font-size:17px;font-weight:700;text-align:center}
 .campv div{display:flex;gap:12px}
-.campv button{font:inherit;font-size:18px;font-weight:800;border-radius:12px;padding:14px 26px;border:2px solid #fff;background:transparent;color:#fff}
+.campv button{font:inherit;font-size:18px;font-weight:800;border-radius:12px;padding:14px 26px;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff}
 .campv button.ok{background:#1f6f63;border-color:#1f6f63}
+#cam.pv .camshot,#cam.pv .camflip,#cam.pv .camtm,#cam.pv .camsens{display:none}
 .camcount{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:120px;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
 body.pt .card h2{font-size:20px}
 body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
@@ -98,7 +98,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>姿勢チェック</h1><span class="tag">試作 10/16-5</span>
+  <h1>姿勢チェック</h1><span class="tag">試作 10/16-6</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -352,8 +352,8 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-5）';$('#camH').textContent=T[2]}
-function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/16-6）';$('#camH').textContent=T[2]}
+function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
 // 人の形の枠（カルティと同じ：細い白い線の人の輪郭。腕は体から少し離して下ろす・足はそろえる）
@@ -396,13 +396,15 @@ function camShoot(){const v=$('#cv');if(!v.videoWidth)return;const vw=v.videoWid
   const cv=document.createElement('canvas');cv.width=Math.round(vw*k);cv.height=Math.round(vh*k);const c=cv.getContext('2d');
   const rot=CAM.g&&Math.abs(CAM.roll)<=5?CAM.roll:0;   // 撮ったときの傾きで、写真をまっすぐに直す
   c.translate(cv.width/2,cv.height/2);c.rotate(rot*Math.PI/180);c.drawImage(v,-cv.width/2,-cv.height/2,cv.width,cv.height);
-  // 撮った写真を確認してから（撮り直す／OK）
-  CAM.pv={img:cv,tilt:{roll:CAM.roll,pitch:CAM.pitch,fixed:rot}};const pv=$('#camPv');pv.querySelector('canvas')&&pv.querySelector('canvas').remove();
-  cv.className='';pv.insertBefore(cv,pv.querySelector('div'));$('#camPvT').textContent=(CAM.kind==='F'?'立位正面':'立位左側面')+'：この写真でよろしいですか？';pv.hidden=false}
-function camOk(){if(!CAM.pv)return;const kind=CAM.kind,img=CAM.pv.img;img.remove();V[kind]={img,pts:null,ai:null,ov:{},tilt:CAM.pv.tilt};CAM.pv=null;$('#camPv').hidden=true;
+  // 撮った写真を確認してから（撮り直す／OK）。画面は撮った瞬間のまま止める（人の枠・線も撮ったときのまま）
+  CAM.pv={img:cv,tilt:{roll:CAM.roll,pitch:CAM.pitch,fixed:rot}};cancelAnimationFrame(CAM.raf);try{v.pause()}catch(e){}
+  $('#camPvT').textContent=(CAM.kind==='F'?'立位正面':'立位左側面')+'：この写真でよろしいですか？';$('#camPv').hidden=false;$('#cam').classList.add('pv')}
+function camResume(){$('#camPv').hidden=true;$('#cam').classList.remove('pv');const v=$('#cv');try{v.play()}catch(e){}
+  cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
+function camOk(){if(!CAM.pv)return;const kind=CAM.kind,img=CAM.pv.img;V[kind]={img,pts:null,ai:null,ov:{},tilt:CAM.pv.tilt};CAM.pv=null;
   draw(kind);renderNums();runAI(kind);
-  if(kind==='F'&&!V.S.img){CAM.kind='S';CAM.okH=false;camText()}else camClose()}
-function camRe(){if(CAM.pv&&CAM.pv.img)CAM.pv.img.remove();CAM.pv=null;$('#camPv').hidden=true}
+  if(kind==='F'&&!V.S.img){CAM.kind='S';CAM.okH=false;camText();camResume()}else camClose()}
+function camRe(){CAM.pv=null;camResume()}
 function camPress(){if(CAM.pv)return;const el=$('#camC');if(!el.hidden){clearInterval(CAM.tm);el.hidden=true;return}   // 数えている間にもう一度押すと止める
   if(!$('#camTm').checked){camShoot();return}
   let n=10;el.hidden=false;el.textContent=n;clearInterval(CAM.tm);CAM.tm=setInterval(()=>{n--;if(n<=0){clearInterval(CAM.tm);el.hidden=true;camShoot()}else el.textContent=n},1000)}
