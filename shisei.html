@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja"><head><base target="_top"><meta charset="utf-8">
+<title>姿勢チェック</title>
+<style>
+/* iPadで撮って、その場で患者さんに見せる。左：写真と点、右：数字と「意識すること」 */
+:root{--bg:#f4f7f6;--card:#ffffff;--ink:#1f2a30;--sub:#5a6b70;--line:#d6e0de;--teal:#1f6f63;--teal2:#e3f0ed;--warn:#b5651d;--warn2:#fbefe3;--red:#b23a3a;--pt:#ff5a36;--pt2:#2b8cff;
+  --f:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;-webkit-text-size-adjust:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.02em}
+header .tag{font-size:12px;background:var(--teal2);color:var(--teal);padding:2px 8px;border-radius:99px;font-weight:700}
+header label{display:flex;align-items:center;gap:6px;font-size:15px}
+header input{font-size:17px;width:86px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:flex;border:1px solid var(--teal);border-radius:10px;overflow:hidden;margin-left:auto}
+.seg button{border:0;background:var(--card);color:var(--teal);font:inherit;font-weight:700;padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{padding:14px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:14px}
+.views{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.card h2{font-size:17px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 small{font-weight:400;color:var(--sub);font-size:13px}
+.shot{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.shot{grid-template-columns:1fr}}
+.cv{position:relative;background:#eef2f1;border-radius:10px;overflow:hidden;touch-action:none;min-height:240px;display:flex;align-items:center;justify-content:center}
+.cv canvas{display:block;width:100%;height:auto}
+.cv .empty{color:var(--sub);text-align:center;padding:30px 12px;line-height:1.7}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:10px 14px;border:1px solid var(--teal);background:var(--card);color:var(--teal);cursor:pointer}
+.btn.pri{background:var(--teal);color:#fff}
+.btn:disabled{opacity:.5}
+.btn input{display:none}
+.hint{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px}
+.status{font-size:14px;color:var(--warn);margin-top:6px;min-height:1.2em}
+table.m{width:100%;border-collapse:collapse;font-size:15px}
+table.m th{font-weight:500;text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.m td{padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.m td.v{text-align:right;white-space:nowrap;font-weight:700}
+.bar{position:relative;height:10px;background:#eef2f1;border-radius:99px;min-width:90px}
+.bar::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--sub);opacity:.45}
+.bar i{position:absolute;top:0;bottom:0;border-radius:99px;background:var(--teal)}
+.bar i.w{background:var(--warn)}.bar i.r{background:var(--red)}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:2px}
+.find{display:grid;gap:10px}
+.fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
+.fd b{display:block;font-size:16px}
+.keep{display:grid;gap:8px;counter-reset:k}
+.keep li{list-style:none;background:var(--teal2);border-radius:10px;padding:10px 12px 10px 46px;position:relative;line-height:1.6;font-size:16px}
+.keep li::before{counter-increment:k;content:counter(k);position:absolute;left:12px;top:9px;width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.use{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.use div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.65}
+.use b{color:var(--teal)}
+.note{font-size:12.5px;color:var(--sub);line-height:1.7}
+body.pt .staff{display:none}
+#cam{position:fixed;inset:0;background:#000;z-index:50}
+.camwrap{position:absolute;inset:0}
+#cv,#co{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.camtop{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:70px;color:#fff;background:rgba(0,0,0,.45);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:15px}
+.camtop b{font-size:17px}.camtop div{grid-column:1/3;font-size:14px;opacity:.9}
+.camsens{position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);color:#fff;font-size:13px;background:rgba(0,0,0,.45);border-radius:8px;padding:6px 10px;max-width:60%}
+.camx{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px}
+.camtm{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);color:#fff;font-size:14px;background:rgba(0,0,0,.45);border-radius:8px;padding:8px 10px;display:flex;gap:6px;align-items:center}
+.camshot{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0}
+.camshot span{display:block;width:56px;height:56px;margin:auto;border-radius:50%;background:#e8534a}
+.camshot.ok{box-shadow:0 0 0 6px rgba(232,83,74,.55)}
+.camcount{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:120px;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
+body.pt .card h2{font-size:20px}
+body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
+:focus-visible{outline:3px solid var(--pt2);outline-offset:2px}
+</style></head>
+<body>
+<header>
+  <h1>姿勢チェック</h1><span class="tag">試作</span>
+  <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
+  <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
+</header>
+<main>
+  <div class="note staff">写真はこのiPadの中だけで分析します。どこにも送らず、保存もしません（試作）。壁から少し離れて、全身が入るように、カメラは腰の高さで水平に。正面は両手を体の横に、左側面は体の左側をカメラに向けて立ってもらいます。</div>
+  <div class="views">
+    <section class="card" id="cF"><h2>立位正面 <small>AIの点がずれていたら、指で動かして直してください</small></h2>
+      <div class="cv" id="cvF"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
+      <div class="btns staff"><button class="btn pri" id="cmF">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fF"></label><button class="btn" id="rF" disabled>点を最初に戻す</button></div>
+      <div class="status" id="sF"></div>
+    </section>
+    <section class="card" id="cS"><h2>立位左側面 <small>体の左側をカメラに</small></h2>
+      <div class="cv" id="cvS"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
+      <div class="btns staff"><button class="btn pri" id="cmS">カメラで撮る（線つき）</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fS"></label><button class="btn" id="rS" disabled>点を最初に戻す</button></div>
+      <div class="status" id="sS"></div>
+    </section>
+  </div>
+  <section class="card"><h2>今日の姿勢（現在地）</h2>
+    <div class="shot"><div id="tF"></div><div id="tS"></div></div>
+    <div class="note staff" style="margin-top:8px">角度は「度」、ずれは身長から計算した「cm」の目安です。骨盤の前傾・後傾は写真の点ではわからないので、目で確認してください。</div>
+  </section>
+  <section class="card"><h2>気になる点</h2><div class="find" id="fd"><div class="note">写真を撮ると、ここに出ます。</div></div></section>
+  <section class="card"><h2>毎日の3つのポイント</h2>
+    <ul class="keep" style="margin:0;padding:0">
+      <li>脚を組んでいることに気が付いたら、直す</li>
+      <li>偏っている姿勢に気が付いたら、直す</li>
+      <li>寝るときに5〜10分だけでも、仰向けで寝る</li>
+    </ul></section>
+  <section class="card"><h2>今日意識する体の使い方</h2><div class="use" id="use"></div></section>
+</main>
+<div id="cam" hidden>
+  <div class="camwrap"><video id="cv" playsinline muted autoplay></video><canvas id="co"></canvas>
+    <div class="camtop"><b id="camT">立位正面</b><span id="camN">1/2</span><div id="camH">正面を向いて、かかとをつけて立ってください</div></div>
+    <div class="camsens" id="camS"></div>
+    <button class="camx" id="camX" aria-label="閉じる">✕</button>
+    <label class="camtm"><input type="checkbox" id="camTm"> セルフ撮影（3秒）</label>
+    <button class="camshot" id="camShot" aria-label="撮る"><span></span></button>
+    <div class="camcount" id="camC" hidden></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<script>
+/* 姿勢チェック（試作・代表 10/16）
+   ・MediaPipe Pose（Googleの無料のAI）で、写真から体の点を見つける。写真はこの端末の中だけ
+   ・点は指で動かして直せる（服・髪でずれるため）。動かすとすぐ計算し直す
+   ・数字はカルティと同じ項目（正面：傾き・ずれ／側面：前後の傾き・頭の位置・膝の曲がり）。点数・ランクは出さない */
+const $=s=>document.querySelector(s);
+const LM={nose:0,eyeL:2,eyeR:5,earL:7,earR:8,mouthL:9,mouthR:10,shL:11,shR:12,hipL:23,hipR:24,knL:25,knR:26,anL:27,anR:28,heL:29,heR:30};
+// 動かせる点（正面・側面）
+const PF=[['top','頭のてっぺん'],['earR','右耳'],['earL','左耳'],['shR','右肩'],['shL','左肩'],['hipR','右の骨盤'],['hipL','左の骨盤'],['knR','右ひざ'],['knL','左ひざ'],['anR','右くるぶし'],['anL','左くるぶし'],['floor','かかと（床）']];
+const PS=[['top','頭のてっぺん'],['nose','鼻'],['ear','耳'],['sh','肩'],['hip','骨盤（股関節）'],['kn','ひざ'],['an','くるぶし'],['floor','かかと（床）']];
+const V={F:{img:null,pts:null,ai:null},S:{img:null,pts:null,ai:null}};
+let pose=null,poseQ=Promise.resolve();
+function getPose(){if(window.__FAKE_POSE)return window.__FAKE_POSE;if(pose)return pose;
+  if(typeof Pose==='undefined')throw new Error('AIの読み込みに失敗しました。インターネットにつながっているか確認して、もう一度開いてください。');
+  pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+  pose.setOptions({modelComplexity:1,smoothLandmarks:false,enableSegmentation:false,minDetectionConfidence:.5});
+  return pose}
+function detect(cv){return poseQ=poseQ.then(()=>new Promise((ok,ng)=>{let p;try{p=getPose()}catch(e){ng(e);return}
+  const t=setTimeout(()=>ng(new Error('AIの準備に時間がかかっています。もう一度押してください。')),60000);
+  p.onResults(r=>{clearTimeout(t);ok(r.poseLandmarks||null)});p.send({image:cv}).catch(e=>{clearTimeout(t);ng(e)})}))}
+const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+function initPts(kind,lm,W,H){const P=i=>({x:lm[i].x*W,y:lm[i].y*H});
+  const floor=Math.max(lm[LM.heL].y,lm[LM.heR].y,lm[LM.anL].y,lm[LM.anR].y)*H;
+  if(kind==='F'){const o={};['earR','earL','shR','shL','hipR','hipL','knR','knL','anR','anL'].forEach(k=>o[k]=P(LM[k]));
+    const e=mid(o.earL,o.earR),s=mid(o.shL,o.shR);o.top={x:e.x,y:e.y-(s.y-e.y)*0.62};o.floor={x:mid(o.anL,o.anR).x,y:floor};return o}
+  // 側面：見えている側（左）。前＝鼻の向き
+  const vis=(a,b)=>(lm[a].visibility||0)>=(lm[b].visibility||0)?a:b;
+  const o={nose:P(LM.nose),ear:P(vis(LM.earL,LM.earR)),sh:P(vis(LM.shL,LM.shR)),hip:P(vis(LM.hipL,LM.hipR)),kn:P(vis(LM.knL,LM.knR)),an:P(vis(LM.anL,LM.anR))};
+  o.top={x:o.ear.x,y:o.ear.y-(o.sh.y-o.ear.y)*0.62};o.floor={x:o.an.x,y:floor};return o}
+// ---- 計算 ----
+const deg=r=>r*180/Math.PI;
+const tiltV=(a,b)=>deg(Math.atan2(b.x-a.x,a.y-b.y));   // a（下）→b（上）の線が、縦からどれだけ傾くか（＋＝画像の右）
+function scale(p){const ht=parseFloat($('#ht').value)||165,px=Math.abs(p.floor.y-p.top.y);return px>10?ht/px:0}
+function calcF(p){const s=scale(p),eM=mid(p.earL,p.earR),sM=mid(p.shL,p.shR),hM=mid(p.hipL,p.hipR),aM=mid(p.anL,p.anR);
+  const lineTilt=(r,l)=>deg(Math.atan2(r.y-l.y,l.x-r.x));   // ＋＝右が下がる（右に傾く）
+  const kneeGap=Math.abs(p.knL.x-p.knR.x),ankGap=Math.abs(p.anL.x-p.anR.x);
+  // 正面の写真は鏡ではない：画像の右＝体の左。＋は「左」へ
+  return [
+    {id:'all',name:'全身の左右傾き',v:tiltV(aM,eM),u:'度',side:['右','左']},
+    {id:'up',name:'上半身の左右傾き',v:tiltV(hM,sM),u:'度',side:['右','左']},
+    {id:'low',name:'下半身の左右傾き',v:tiltV(aM,hM),u:'度',side:['右','左']},
+    {id:'head',name:'頭の左右傾き',v:-lineTilt(p.earR,p.earL),u:'度',side:['右','左']},
+    {id:'neck',name:'首の左右位置ずれ',v:(eM.x-sM.x)*s,u:'cm',side:['右','左']},
+    {id:'sh',name:'肩の高さずれ',v:(p.shR.y-p.shL.y)*s,u:'cm',side:['右が上','左が上'],hi:true},
+    {id:'chest',name:'胸の左右位置ずれ',v:(sM.x-hM.x)*s,u:'cm',side:['右','左']},
+    {id:'hipT',name:'腰の左右傾き',v:-lineTilt(p.hipR,p.hipL),u:'度',side:['右','左']},
+    {id:'hipS',name:'腰の左右位置ずれ',v:(hM.x-aM.x)*s,u:'cm',side:['右','左']},
+    {id:'ox',name:'O脚・X脚の度合い',v:(kneeGap-ankGap)*s,u:'cm',side:['X脚','O脚'],ox:true}]}
+function calcS(p){const s=scale(p),f=p.nose.x>=p.ear.x?1:-1,fw=v=>v*f;   // ＋＝前
+  const ang=(a,b,c)=>{const v1={x:a.x-b.x,y:a.y-b.y},v2={x:c.x-b.x,y:c.y-b.y};return deg(Math.acos(Math.max(-1,Math.min(1,(v1.x*v2.x+v1.y*v2.y)/Math.hypot(v1.x,v1.y)/Math.hypot(v2.x,v2.y)))))};
+  const bend=180-ang(p.hip,p.kn,p.an),knFw=fw(p.kn.x-(p.hip.x+p.an.x)/2);
+  return [
+    {id:'all',name:'全身の前後傾き',v:fw(tiltV(p.an,p.ear)),u:'度',side:['後','前']},
+    {id:'up',name:'上半身の前後傾き',v:fw(tiltV(p.hip,p.sh)),u:'度',side:['後','前']},
+    {id:'low',name:'下半身の前後傾き',v:fw(tiltV(p.an,p.hip)),u:'度',side:['後','前']},
+    {id:'head',name:'頭の前後傾き',v:fw(tiltV(p.sh,p.ear)),u:'度',side:['後','前']},
+    {id:'headS',name:'頭の前後位置ずれ',v:fw(p.ear.x-p.sh.x)*s,u:'cm',side:['後','前']},
+    {id:'knee',name:'膝の曲がり度合い',v:knFw>=0?bend:-bend,u:'度',side:['伸びすぎ','曲がり']}]}
+// しきい値（目安）：[気になる, はっきり]
+const TH={'度':[1.5,4],'cm':[1.0,2.5]},THX={knee:[5,10],ox:[2,4],headS:[3,6]};
+function nw(m){const t=THX[m.id]||TH[m.u];return Math.abs(m.v)/t[1]+lev(m)}
+function lev(m){const t=THX[m.id]||TH[m.u],a=Math.abs(m.v);return a>=t[1]?2:a>=t[0]?1:0}
+// ---- 気になる点（代表の考え：現在地と癖を伝えて、どこに意識を向けるか） ----
+function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===id);
+  const side=m=>m.v>0?m.side[1]:m.side[0];
+  const sh=g(F,'sh');if(sh&&lev(sh)){out.push({w:nw(sh),t:`${side(sh).replace('が上','')}肩が ${Math.abs(sh.v).toFixed(1)}cm 上がっています`,d:'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。'});use.add('stand')}
+  const up=g(F,'up');if(up&&lev(up)){out.push({w:nw(up),t:`上半身が${side(up)}に ${Math.abs(up.v).toFixed(1)}度 傾いています`,d:'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。'});use.add('sit')}
+  const hp=g(F,'hipT');if(hp&&lev(hp)){out.push({w:nw(hp),t:`骨盤が${side(hp)}に ${Math.abs(hp.v).toFixed(1)}度 傾いています`,d:'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。'});use.add('stand')}
+  const hs=g(F,'hipS');if(hs&&lev(hs)){out.push({w:nw(hs),t:`腰が${side(hs)}に ${Math.abs(hs.v).toFixed(1)}cm ずれています`,d:'立っているとき、片方の足に体重をかけていませんか？重心が片側に寄ると、その側の腰や股関節に負担がかかります。'});use.add('stand')}
+  const hd=g(F,'head');if(hd&&lev(hd)){out.push({w:nw(hd),t:`頭が${side(hd)}に ${Math.abs(hd.v).toFixed(1)}度 傾いています`,d:'スマホやテレビを見る向き、寝るときの向きに偏りはありませんか？首の片側の筋肉が縮んで硬くなりやすい状態です。'});use.add('sit')}
+  const ox=g(F,'ox');if(ox&&lev(ox)){out.push({w:nw(ox),t:`${side(ox)}の傾向があります（${Math.abs(ox.v).toFixed(1)}cm）`,d:'歩くときに足の外側（または内側）ばかりに体重がかかっている可能性があります。つま先とひざを同じ向きにそろえて歩きましょう。'});use.add('walk')}
+  const hS=g(S,'headS');if(hS&&lev(hS)&&hS.v>0){out.push({s:'S',w:nw(hS),t:`頭が肩より ${hS.v.toFixed(1)}cm 前に出ています`,d:'スマホやデスクワークで首が前に出る癖があります。首や肩がこりやすく、呼吸も浅くなりがちです。耳と肩が縦にそろう位置を意識しましょう。'});use.add('sit');use.add('abs')}
+  const su=g(S,'up');if(su&&lev(su)&&su.v>0){out.push({s:'S',w:nw(su),t:`上半身が ${su.v.toFixed(1)}度 前に傾いています`,d:'腰や太ももの裏に負担がかかりやすい状態です。おなかに力を入れて、体をまっすぐ起こす意識を持ちましょう。'});use.add('abs');use.add('stand')}
+  const kn=g(S,'knee');if(kn&&lev(kn)&&kn.v>0){out.push({s:'S',w:nw(kn),t:`ひざが ${kn.v.toFixed(1)}度 曲がっています`,d:'太ももの裏やふくらはぎが硬くなっている可能性があります。立つときは、ひざを軽く伸ばして、足の裏全体で床を押す意識を持ちましょう。'});use.add('stand');use.add('walk')}
+  /* w＝ずれ÷はっきりの目安＋段階（度とcmを同じ物差しで比べる） */
+  out.sort((a,b)=>b.w-a.w);   // 正面から2つ・側面から2つまで（カルティと同じ数）
+  return {top:[...out.filter(x=>x.s!=='S').slice(0,2),...out.filter(x=>x.s==='S').slice(0,2)],use:[...use]}}
+const USE={sit:['座り方','骨盤を立てて座り、耳・肩・骨盤が縦にそろう位置に。脚は組まずに、両足の裏を床につけます。'],
+  stand:['立ち方','両足に均等に体重をのせて、ひざは軽く伸ばします。頭のてっぺんを上から引っぱられるように。'],
+  walk:['歩き方','つま先とひざを同じ向きに。かかとから着いて、足の指で地面を押して進みます。'],
+  abs:['腹筋の正しい使い方','おへその下を軽くへこませたまま、呼吸を止めずに。院ではEMSも使いながら、正しい使い方を一緒に練習します。']};
+// ---- 描く ----
+function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
+  let cv=box.querySelector('canvas');if(!cv){box.innerHTML='';cv=document.createElement('canvas');box.appendChild(cv);bindDrag(kind,cv)}
+  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,u=W/600;
+  c.drawImage(v.img,0,0);if(!v.pts)return;const p=v.pts;
+  c.lineWidth=2.2*u;c.lineCap='round';
+  const ln=(a,b,col,dash)=>{c.strokeStyle=col;c.setLineDash(dash?[6*u,6*u]:[]);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.setLineDash([])};
+  if(kind==='F'){const aM=mid(p.anL,p.anR);ln({x:aM.x,y:p.floor.y},{x:aM.x,y:p.top.y},'rgba(43,140,255,.9)',1);
+    [['earR','earL'],['shR','shL'],['hipR','hipL']].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,90,54,.95)'));
+    ln(mid(p.anL,p.anR),mid(p.hipL,p.hipR),'rgba(255,214,0,.95)');ln(mid(p.hipL,p.hipR),mid(p.shL,p.shR),'rgba(255,214,0,.95)');ln(mid(p.shL,p.shR),mid(p.earL,p.earR),'rgba(255,214,0,.95)');
+    [['hipR','knR'],['knR','anR'],['hipL','knL'],['knL','anL']].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,255,255,.85)'))}
+  else{ln({x:p.an.x,y:p.floor.y},{x:p.an.x,y:p.top.y},'rgba(43,140,255,.9)',1);
+    ln(p.an,p.kn,'rgba(255,214,0,.95)');ln(p.kn,p.hip,'rgba(255,214,0,.95)');ln(p.hip,p.sh,'rgba(255,214,0,.95)');ln(p.sh,p.ear,'rgba(255,214,0,.95)')}
+  c.strokeStyle='rgba(43,140,255,.9)';ln({x:0,y:p.floor.y},{x:W,y:p.floor.y},'rgba(43,140,255,.6)',1);ln({x:0,y:p.top.y},{x:W,y:p.top.y},'rgba(43,140,255,.6)',1);
+  (kind==='F'?PF:PS).forEach(([k])=>{const q=p[k];c.beginPath();c.arc(q.x,q.y,(k===v.drag?9:6.5)*u,0,7);c.fillStyle=k==='top'||k==='floor'?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=2*u;c.strokeStyle='#fff';c.stroke()});
+  if(v.drag){const q=p[v.drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
+function bindDrag(kind,cv){const v=V[kind];
+  const at=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height,k:cv.width/r.width}};
+  cv.addEventListener('pointerdown',e=>{if(!v.pts||document.body.classList.contains('pt'))return;const m=at(e);let best=null,bd=34*m.k;
+    Object.keys(v.pts).forEach(k=>{const d=Math.hypot(v.pts[k].x-m.x,v.pts[k].y-m.y);if(d<bd){bd=d;best=k}});
+    if(best){v.drag=best;cv.setPointerCapture(e.pointerId);e.preventDefault();draw(kind)}});
+  cv.addEventListener('pointermove',e=>{if(!v.drag)return;const m=at(e);v.pts[v.drag]={x:m.x,y:m.y};draw(kind);renderNums()});
+  const up=()=>{if(!v.drag)return;v.drag=null;draw(kind);renderNums()};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up)}
+// ---- 表と文 ----
+function table(title,L){if(!L)return `<div class="note">${title}の写真がまだありません</div>`;
+  return `<table class="m"><caption style="text-align:left;font-weight:700;padding-bottom:4px">${title}</caption><tbody>${L.map(m=>{const lv=lev(m),a=Math.abs(m.v),full=(THX[m.id]||TH[m.u])[1]*2,w=Math.min(50,a/full*50);
+    const lab=a<0.05?'ずれなし':`${m.v>0?m.side[1]:m.side[0]} ${a.toFixed(1)}${m.u}`;
+    return `<tr><th>${m.name}</th><td style="width:40%"><div class="ends"><span>${m.side[0].replace('が上','')}</span><span>${m.side[1].replace('が上','')}</span></div><div class="bar"><i class="${lv===2?'r':lv?'w':''}" style="${m.v>=0?'left:50%':'right:50%'};width:${w}%"></i></div></td><td class="v">${lab}</td></tr>`}).join('')}</tbody></table>`}
+function renderNums(){const F=V.F.pts?calcF(V.F.pts):null,S=V.S.pts?calcS(V.S.pts):null;
+  $('#tF').innerHTML=table('正面',F);$('#tS').innerHTML=table('左側面',S);
+  const r=findings(F,S);
+  $('#fd').innerHTML=r.top.length?r.top.map(x=>`<div class="fd"><b>${x.t}</b>${x.d}</div>`).join(''):(F||S?'<div class="fd" style="border-color:var(--teal);background:var(--teal2)"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>':'<div class="note">写真を撮ると、ここに出ます。</div>');
+  const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
+  $('#use').innerHTML=us.length?us.map(k=>`<div><b>${USE[k][0]}</b><br>${USE[k][1]}</div>`).join(''):'<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
+  window.__last={F,S,find:r}}
+// ---- 写真 ----
+function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
+  const url=URL.createObjectURL(file),im=new Image();
+  im.onload=async()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
+    V[kind]={img:cv,pts:null,ai:null};draw(kind);renderNums();await runAI(kind)};
+  im.onerror=()=>{st.textContent='写真を開けませんでした。もう一度撮ってください。'};im.src=url}
+async function runAI(kind){const v=V[kind],st=$('#s'+kind);st.textContent='AIが体の点を探しています…（初回は少し時間がかかります）';
+  try{const lm=await detect(v.img);if(!lm){st.textContent='体が見つかりませんでした。全身が入るように撮り直してください。';return}
+    v.ai=lm;v.pts=initPts(kind,lm,v.img.width,v.img.height);st.textContent='';$('#r'+kind).disabled=false;draw(kind);renderNums()}
+  catch(e){st.textContent=String(e&&e.message||e)}}
+/* ---- カメラ（線つき）：カルティと同じ。人の形の枠・中心線・へその高さの線。傾きセンサーで黄色の線が動き、まっすぐになると赤 ----
+   ・カメラはページを直接開いたときだけ使える（予約システムの中では使えない→「写真から選ぶ」）
+   ・撮った瞬間の左右の傾きで、写真を自動でまっすぐに直す（5度まで） */
+const CAM={st:null,kind:'F',g:null,roll:0,pitch:0,ok:false,raf:0,tm:null};
+const TXT={F:['立位正面','1/2','正面を向いて、かかとをつけて立ってください'],S:['立位左側面','2/2','体の左側をカメラに向けて、かかとをつけて立ってください']};
+function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
+  let x=a.x,y=a.y,z=a.z;const ang=(screen.orientation&&screen.orientation.angle)||window.orientation||0;
+  if(ang===90){[x,y]=[-y,x]}else if(ang===-90||ang===270){[x,y]=[y,-x]}else if(ang===180){x=-x;y=-y}
+  const r=deg(Math.atan2(x,-y)),pt=deg(Math.atan2(z,Math.hypot(x,y)));   // r：左右の傾き、pt：上下の傾き（＋＝下を向く）
+  const k=CAM.g?0.25:1;CAM.roll+=(r-CAM.roll)*k;CAM.pitch+=(pt-CAM.pitch)*k;CAM.g=Date.now()}
+async function camOpen(kind){CAM.kind=kind;
+  try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')await DeviceMotionEvent.requestPermission()}catch(e){}
+  window.addEventListener('devicemotion',onMotion);
+  try{if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))throw new Error('no');
+    CAM.st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1920}}})}
+  catch(e){$('#s'+kind).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください（線つきのカメラは、姿勢チェックのページを直接開いたときに使えます）。';return}
+  const v=$('#cv');v.srcObject=CAM.st;$('#cam').hidden=false;camText();try{await v.play()}catch(e){}
+  cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1];$('#camH').textContent=T[2]}
+function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;window.removeEventListener('devicemotion',onMotion);
+  if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
+function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
+function silhouette(c,b,side){const cx=b.x+b.w/2,top=b.y+b.h*0.12,ht=b.h*0.80,u=ht/100;c.beginPath();
+  if(!side){c.ellipse(cx,top+6*u,5.2*u,6.4*u,0,0,7);
+    c.moveTo(cx-3*u,top+12.5*u);c.lineTo(cx-3*u,top+15*u);c.quadraticCurveTo(cx-13*u,top+16*u,cx-13.5*u,top+21*u);c.lineTo(cx-14*u,top+46*u);c.lineTo(cx-11.5*u,top+47*u);c.lineTo(cx-10.5*u,top+26*u);c.lineTo(cx-10*u,top+44*u);
+    c.lineTo(cx-8.5*u,top+56*u);c.lineTo(cx-7*u,top+97*u);c.lineTo(cx-2.5*u,top+99*u);c.lineTo(cx-1*u,top+58*u);c.lineTo(cx+1*u,top+58*u);c.lineTo(cx+2.5*u,top+99*u);c.lineTo(cx+7*u,top+97*u);c.lineTo(cx+8.5*u,top+56*u);
+    c.lineTo(cx+10*u,top+44*u);c.lineTo(cx+10.5*u,top+26*u);c.lineTo(cx+11.5*u,top+47*u);c.lineTo(cx+14*u,top+46*u);c.lineTo(cx+13.5*u,top+21*u);c.quadraticCurveTo(cx+13*u,top+16*u,cx+3*u,top+15*u);c.lineTo(cx+3*u,top+12.5*u)}
+  else{c.ellipse(cx-0.5*u,top+6*u,5.6*u,6.4*u,0,0,7);
+    c.moveTo(cx-1.5*u,top+12.5*u);c.lineTo(cx-2*u,top+15*u);c.quadraticCurveTo(cx-7*u,top+17*u,cx-6.5*u,top+26*u);c.lineTo(cx-6*u,top+52*u);c.lineTo(cx-4.5*u,top+97*u);c.lineTo(cx+5.5*u,top+99*u);c.lineTo(cx+2.5*u,top+96*u);
+    c.lineTo(cx+4*u,top+58*u);c.quadraticCurveTo(cx+7.5*u,top+50*u,cx+5.5*u,top+38*u);c.quadraticCurveTo(cx+7*u,top+20*u,cx+2*u,top+15*u);c.lineTo(cx+1.5*u,top+12.5*u)}
+  c.lineWidth=Math.max(2,u*0.5);c.strokeStyle='rgba(255,255,255,.85)';c.stroke()}
+function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1;if(cv.width!==b.W*dpr){cv.width=b.W*dpr;cv.height=b.H*dpr}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,b.W,b.H);
+  silhouette(c,b,CAM.kind==='S');
+  const cx=b.x+b.w/2,ty=b.y+b.h*0.12+b.h*0.80*0.55,has=CAM.g&&Date.now()-CAM.g<1500;
+  c.setLineDash([5,6]);c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,b.y);c.lineTo(cx,b.y+b.h);c.stroke();
+  c.beginPath();c.arc(cx,ty,16,0,7);c.stroke();
+  if(!has){c.setLineDash([]);CAM.ok=true;$('#camS').textContent='傾きセンサーが使えないので、線は動きません。床や壁と線を目で合わせてください。';
+    c.strokeStyle='rgba(255,90,54,.95)';c.lineWidth=2;c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke();$('#camShot').classList.remove('ok');return}
+  const R=CAM.roll,P=CAM.pitch,ok=Math.abs(R)<1&&Math.abs(P)<2;CAM.ok=ok;
+  $('#camS').textContent=`左右 ${R>=0?'+':''}${R.toFixed(1)}°・上下 ${P>=0?'+':''}${P.toFixed(1)}°${ok?'　まっすぐです':''}`;
+  if(!ok){c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke()}   // 画面の基準（白い破線）
+  c.setLineDash([]);const dy=Math.max(-b.h/2,Math.min(b.h/2,P*b.h/40)),L=b.w;
+  c.save();c.translate(cx,ty+dy);c.rotate(-R*Math.PI/180);c.strokeStyle=ok?'rgba(255,70,40,1)':'rgba(255,214,0,1)';c.lineWidth=ok?2.5:2;c.beginPath();c.moveTo(-L,0);c.lineTo(L,0);c.stroke();c.restore();
+  c.beginPath();c.arc(cx,ty+dy,9,0,7);c.fillStyle=ok?'#ff4628':'#ffd600';c.fill();
+  $('#camShot').classList.toggle('ok',ok)}
+function camShoot(){const v=$('#cv');if(!v.videoWidth)return;const vw=v.videoWidth,vh=v.videoHeight,k=Math.min(1,1280/Math.max(vw,vh));
+  const cv=document.createElement('canvas');cv.width=Math.round(vw*k);cv.height=Math.round(vh*k);const c=cv.getContext('2d');
+  const rot=CAM.g&&Math.abs(CAM.roll)<=5?CAM.roll:0;   // 撮ったときの傾きで、写真をまっすぐに直す
+  c.translate(cv.width/2,cv.height/2);c.rotate(rot*Math.PI/180);c.drawImage(v,-cv.width/2,-cv.height/2,cv.width,cv.height);
+  const kind=CAM.kind;V[kind]={img:cv,pts:null,ai:null,tilt:{roll:CAM.roll,pitch:CAM.pitch,fixed:rot}};draw(kind);renderNums();runAI(kind);
+  if(kind==='F'&&!V.S.img){CAM.kind='S';camText()}else camClose()}
+function camPress(){if(!$('#camTm').checked){camShoot();return}
+  let n=3;const el=$('#camC');el.hidden=false;el.textContent=n;clearInterval(CAM.tm);CAM.tm=setInterval(()=>{n--;if(n<=0){clearInterval(CAM.tm);el.hidden=true;camShoot()}else el.textContent=n},1000)}
+$('#camShot').onclick=camPress;$('#camX').onclick=camClose;$('#cmF').onclick=()=>camOpen('F');$('#cmS').onclick=()=>camOpen('S');
+['F','S'].forEach(k=>{$('#f'+k).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)loadFile(k,f);e.target.value=''});
+  $('#r'+k).addEventListener('click',()=>{const v=V[k];if(v.ai){v.pts=initPts(k,v.ai,v.img.width,v.img.height);draw(k);renderNums()}})});
+$('#ht').addEventListener('input',renderNums);
+const mode=pt=>{document.body.classList.toggle('pt',pt);$('#vPt').setAttribute('aria-pressed',pt);$('#vStaff').setAttribute('aria-pressed',!pt)};
+$('#vPt').onclick=()=>mode(true);$('#vStaff').onclick=()=>mode(false);
+window.__shisei={CAM,camOpen,camShoot,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
+renderNums();
+</script>
+</body></html>
