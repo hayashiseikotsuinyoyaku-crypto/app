@@ -119,7 +119,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっTO</h1><span class="tag">試作 10/17-4</span>
+  <h1>ぴかっTO</h1><span class="tag">試作 10/17-5</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -149,14 +149,6 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
     <div class="find" id="fdS"></div>
     <div class="note staff" style="margin-top:8px">角度は「度」、ずれは身長から計算した「cm」の目安です。骨盤の前後傾き・猫背は、点を見て必要なら直してください（✎＝グラフで直した項目）。</div>
   </section>
-  <div id="xtra" hidden>
-  <div class="xg">
-    <section class="card"><h2>重心位置</h2><div class="xrow"><div id="cogFig" class="xfig"></div><div id="cogT" class="xtxt"></div></div></section>
-    <section class="card"><h2>歩き方</h2><div id="gaitT" class="xtxt" style="margin-bottom:8px"></div>
-      <div class="gait"><div><div class="fl">今の歩き方</div><div id="gaitA"></div></div><div><div class="fl">理想の歩き方</div><div id="gaitB"></div></div></div></section>
-  </div>
-  <section class="card"><h2>未来姿勢 <small>今のくせがこのまま続いたら</small></h2><div class="xrow fut"><div id="futFig" class="futfig"></div><div id="futT" class="xtxt"></div></div></section>
-  </div>
   <section class="card"><h2>毎日の3つのポイント</h2>
     <ul class="keep" style="margin:0;padding:0">
       <li>脚を組んでいることに気が付いたら、直す</li>
@@ -413,7 +405,6 @@ function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts
       `<div class="ustep"><span class="sn">STEP 1</span>まずは腹筋の使い方（すべての土台）</div><div class="s1">${blk('abs')}<div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></div>`+
       `<div class="ustep"><span class="sn">STEP 2</span>腹筋が使えるようになったら、ふだんの姿勢へ</div>`+['sit','stand','walk'].map(blk).join('')}
   else $('#use').innerHTML='<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
-  try{extraRender(F,S)}catch(e){console.warn(e)}
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
 function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
@@ -451,7 +442,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-4）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-5）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
