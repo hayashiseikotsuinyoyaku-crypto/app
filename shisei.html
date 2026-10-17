@@ -119,14 +119,14 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっTO</h1><span class="tag">試作 10/17-5</span>
+  <h1>ぴかっTO</h1><span class="tag">試作 10/17-6</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
   <section class="card kpbar" id="kpBar" hidden>
     <div class="kpn"><b id="kpName"></b><span id="kpPrev" class="note"></span></div>
-    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn" id="kpCmp" disabled>前回と比べる</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button></div>
+    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn" id="kpCmp" disabled>前回と比べる</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn staff" id="kpBack">← 予約システムに戻る</button></div>
     <div class="status" id="kpSt"></div>
   </section>
   <section class="card" id="cmpBox" hidden><h2>前回と比べる <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
@@ -682,7 +682,10 @@ async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.
   try{const r=await kpApi('kpImg',{id,kind:'R'});if(r.error){$('#cmpA').innerHTML='<div class="note">'+r.error+'</div>';return}
     $('#cmpA').innerHTML='';const im=new Image();im.alt='前回の写真';im.src='data:image/jpeg;base64,'+r.data;$('#cmpA').appendChild(im)}
   catch(e){$('#cmpA').innerHTML='<div class="note">前回の写真を読み込めませんでした。</div>'}}
-if(KP){$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
+function kpBack(){const b=$('#kpBack');if(KP.dirty&&(V.F.pts||V.S.pts)&&!b.dataset.sure){b.dataset.sure=1;b.textContent='保存していません。もう一度押すと戻ります';return}
+  delete b.dataset.sure;b.textContent='← 予約システムに戻る';try{window.close()}catch(e){}
+  setTimeout(()=>{if(!window.closed)kpSt('この画面（タブ）を閉じると、予約システムに戻れます。')},400)}
+if(KP){$('#kpBack').onclick=kpBack;$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
 window.__shisei={KP,kpReport,CAM,camOpen,camShoot,camOk,camRe,camFlip,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
 renderNums();
 </script>
