@@ -121,7 +121,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっTO</h1><span class="tag">試作 10/17-8</span>
+  <h1>ぴかっTO</h1><span class="tag">試作 10/17-9</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -133,7 +133,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
   </section>
   <section class="card" id="histBox" hidden><h2><span class="t">これまでの写真</span> <select id="histSel"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
     <div class="htab" id="histTab"><button class="btn" data-hk="R" aria-pressed="true">結果（点と線）</button><button class="btn" data-hk="F" aria-pressed="false">正面の写真</button><button class="btn" data-hk="S" aria-pressed="false">側面の写真</button></div>
-    <div class="note" id="histBy"></div><div id="histImg" class="cmpimg"></div><div id="histT"></div>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="note" id="histBy"></span><button class="btn staff" id="histLine" style="margin-left:auto">この日の結果をLINEで送る</button></div><div class="status" id="histSt"></div><div id="histImg" class="cmpimg"></div><div id="histT"></div>
   </section>
   <section class="card" id="cmpBox" hidden><h2><span class="t">前回と比べる</span> <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
     <div class="cmpi"><div><div class="cmph" id="cmpHa">前回</div><div id="cmpA" class="cmpimg"></div></div><div><div class="cmph">今回</div><div id="cmpB" class="cmpimg"></div></div></div>
@@ -696,6 +696,7 @@ function kpHist(){const P=(KP.info&&KP.info.list)||[];if(!P.length)return;$('#hi
   $('#histBox').hidden=false;$('#histBox').scrollIntoView({behavior:'smooth',block:'start'});kpHistShow()}
 async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;
   document.querySelectorAll('#histTab [data-hk]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hk===histK)));
+  const hl=$('#histLine');delete hl.dataset.sure;hl.textContent='この日の結果をLINEで送る';hl.disabled=!(KP.info&&KP.info.line);hl.title=hl.disabled?'LINEの登録がない方です':'';$('#histSt').textContent='';
   $('#histBy').textContent=kd(x.date)+(x.by?'　撮った人：'+x.by:'');
   const rows=[];[['正面',x.F],['左側面',x.S]].forEach(([vn,a])=>((a&&a.items)||[]).forEach(m=>rows.push(`<tr><td>${vn}</td><th>${m.name||''}</th><td>${labOf(m)}</td></tr>`)));
   $('#histT').innerHTML=rows.length?`<table class="cmp"><thead><tr><th></th><th>項目</th><th>この日</th></tr></thead><tbody>${rows.join('')}</tbody></table>`:'';
@@ -703,10 +704,16 @@ async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.li
   if(HIMG[key])return put(HIMG[key]);box.innerHTML='<div class="note">写真を読み込んでいます…</div>';
   try{const r=await kpApi('kpImg',{id,kind:histK});if(id!==$('#histSel').value)return;if(r.error){box.innerHTML='<div class="note">'+r.error+'</div>';return}HIMG[key]=r.data;put(r.data)}
   catch(e){box.innerHTML='<div class="note">写真を読み込めませんでした。</div>'}}
+/* これまでの写真：過去の結果をもう一度LINEで送る（見られる期限は送った日から90日・10/17） */
+async function kpHistLine(){const b=$('#histLine'),id=$('#histSel').value;if(!id||b.disabled)return;
+  if(!b.dataset.sure){b.dataset.sure=1;b.textContent='もう一度押すと送ります';return}
+  delete b.dataset.sure;b.textContent='この日の結果をLINEで送る';b.disabled=true;$('#histSt').textContent='LINEを送っています…';
+  try{const r=await kpApi('kpLine',{id});$('#histSt').textContent=r.error?r.error:'患者さんのLINEに、この日の結果を送りました。'}catch(e){$('#histSt').textContent='LINEを送れませんでした。もう一度押してください。'}
+  b.disabled=!(KP.info&&KP.info.line)}
 function kpBack(){const b=$('#kpBack');if(KP.dirty&&(V.F.pts||V.S.pts)&&!b.dataset.sure){b.dataset.sure=1;b.textContent='保存していません。もう一度押すと戻ります';return}
   delete b.dataset.sure;b.textContent='← 予約システムに戻る';try{window.close()}catch(e){}
   setTimeout(()=>{if(!window.closed)kpSt('この画面（タブ）を閉じると、予約システムに戻れます。')},400)}
-if(KP){$('#kpBack').onclick=kpBack;$('#kpHist').onclick=kpHist;$('#histSel').onchange=kpHistShow;$('#histX').onclick=()=>{$('#histBox').hidden=true};
+if(KP){$('#kpBack').onclick=kpBack;$('#kpHist').onclick=kpHist;$('#histSel').onchange=kpHistShow;$('#histLine').onclick=kpHistLine;$('#histX').onclick=()=>{$('#histBox').hidden=true};
   $('#histTab').onclick=e=>{const b=e.target.closest('[data-hk]');if(!b)return;histK=b.dataset.hk;kpHistShow()};$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
 window.__shisei={KP,kpReport,CAM,camOpen,camShoot,camOk,camRe,camFlip,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
 renderNums();
