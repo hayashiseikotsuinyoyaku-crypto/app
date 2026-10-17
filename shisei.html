@@ -119,7 +119,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっTO</h1><span class="tag">試作 10/17-3</span>
+  <h1>ぴかっTO</h1><span class="tag">試作 10/17-4</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -282,7 +282,7 @@ function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===
   const add=(L,id,ok,s,t,d,u)=>{const m=g(L,id);if(m&&lev(m)>=2&&ok(m)){out.push({s,w:nw(m),t:t(m),d});u.forEach(k=>use.add(k))}};
   add(F,'sh',()=>1,'F',m=>`${dir(m).replace('が上','')}肩が${num(m)} 上がっています`,'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。',['stand']);
   add(F,'up',()=>1,'F',m=>`上半身が${dir(m)}に${num(m)} 傾いています`,'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。荷物の持ち手を入れ替えましょう。',['sit']);
-  add(F,'chest',()=>1,'F',m=>`胸が${dir(m)}に${num(m)} ずれています`,'背骨の曲がりや骨盤のゆがみが影響している可能性があります。立っているとき、左右の重心が均等になるよう意識しましょう。',['stand']);
+  add(F,'chest',()=>1,'F',m=>`胸が${dir(m)}に${num(m)} ずれています`,'背骨の曲がりや骨盤のユガミが影響している可能性があります。立っているとき、左右の重心が均等になるよう意識しましょう。',['stand']);
   add(F,'hipT',()=>1,'F',m=>`骨盤が${dir(m)}に${num(m)} 傾いています`,'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。',['stand']);
   add(F,'hipS',()=>1,'F',m=>`腰が${dir(m)}に${num(m)} ずれています`,'立っているとき、片方の足に体重をかけていませんか？重心が片側に寄ると、その側の腰や股関節に負担がかかります。',['stand']);
   add(F,'neck',()=>1,'F',m=>`首が${dir(m)}に${num(m)} ずれています`,'スマホやテレビを見る向きが、いつも同じになっていませんか？首の片側の筋肉に負担がかかります。',['sit']);
@@ -329,7 +329,7 @@ const USE_ORDER=['abs','sit','stand','walk'];
 const USE_WHY=['筋肉には3つの特性があります。① 鍛えたら向上する　② 使っていると維持する　③ 使わないと衰退する。',
   '使わないと衰えやすいのは、まず腹筋。次に内もも・二の腕・お尻・あごです。使われない筋肉は脂肪を燃やさないので、そこに脂肪がたまりやすくなります。太っても、おなかと腕に同じだけ脂肪がつかないのはそのためです。鍛えているのにおなかの脂肪が取れないのは、日常生活で腹筋を使っていないからです。',
   '鍛えても使っていなければ、衰えをくり返すだけで効率がとても悪くなります。まず「使える筋肉」にすることで維持しやすくなり、筋トレの効率も上がります。',
-  '体幹の中心は腹筋です。体幹がしっかりすると、体がゆがみにくくなり、施術の後も安定しやすくなります。だから、腹筋をEMSで「使える筋肉」に育てていきましょう。'];
+  '体幹の中心は腹筋です。体幹がしっかりすると、体がユガミにくくなり、施術の後も安定しやすくなります。だから、腹筋をEMSで「使える筋肉」に育てていきましょう。'];
 // その方の型に合わせたひとこと（骨盤の向き・重心）
 function useNote(k,F,S){const pel=gI(S,'pel'),fu=futureOf(F,S),cg=cogOf(F,S);
   const fwd=(pel&&lev(pel)>=2&&sgn(pel)<0)||fu.s==='sori',bwd=(pel&&lev(pel)>=2&&sgn(pel)>0)||fu.s==='neko'||fu.s==='heihai';
@@ -340,7 +340,7 @@ function useNote(k,F,S){const pel=gI(S,'pel'),fu=futureOf(F,S),cg=cogOf(F,S);
   if(k==='stand'&&(cg.lr||cg.fb))return `今は重心が${cg.lr}${cg.fb}に偏っています。`;
   if(k==='sit'&&(fu.s==='neko'||fu.s==='sori'))return fu.s==='neko'?'背中が丸まりやすいので、ONの時間を少しずつ増やしましょう。':'ONのときに腰を反らせすぎないよう、腹筋で起こしましょう。';
   return ''}
-const USE_PRE='骨ぴか整体でゆがみを整えているからこそ、正しい体の使い方がしやすくなります。ゆがんだままだと、そのゆがみが「その人にとっての正しい姿勢」になってしまいます。\n良い姿勢をずっと続けられる人はいません。大切なのは、良い姿勢の時間を少しずつ長くすること。ゆがみにくい体になり、余計な負担がかかる時間が減るので、回復力も上がりやすくなります。\n今まで使ってこなかった筋肉は弱っているので、最初は続かなくて当たり前。続けることより、まずはチャレンジすることが大切です。';
+const USE_PRE='骨ぴか整体で歪み（ユガミ）を整えているからこそ、正しい体の使い方がしやすくなります。ゆがんだままだと、そのユガミが「その人にとっての正しい姿勢」になってしまいます。\n良い姿勢をずっと続けられる人はいません。大切なのは、良い姿勢の時間を少しずつ長くすること。ユガミにくい体になり、余計な負担がかかる時間が減るので、回復力も上がりやすくなります。\n今まで使ってこなかった筋肉は弱っているので、最初は続かなくて当たり前。続けることより、まずはチャレンジすることが大切です。';
 function useText(k,F,S){const U=USE[k],n=useNote(k,F,S);return (n?'★ '+n+'\n':'')+U[1]+'\n'+U[2].map(x=>'・'+x).join('\n')}
 // ---- 描く（カルティと同じ：点を線でつなぐ・縦の基準線・肩と腰の高さの横線） ----
 const LINKS={F:[['top','chin'],['chin','jug'],['jug','shR'],['jug','shL'],['shR','elR'],['elR','wrR'],['shL','elL'],['elL','wrL'],['jug','pub'],['asR','pub'],['asL','pub'],['hipR','pub'],['hipL','pub'],['asR','hipR'],['asL','hipL'],
@@ -451,7 +451,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-3）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-4）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -532,8 +532,8 @@ function cogOf(F,S){const ax=kOf(gI(F,'all')),ay=kOf(gI(S,'all')),bx=kOf(gI(F,'h
   const t=key!=null?T[key]:`重心が${lr}${fb}に偏っています。${T[fb].replace(/^重心が.+?偏っています。/,'')}片足に体重をかける癖にも気をつけましょう。`;
   return {x,y,t,lr,fb}}
 // 未来姿勢の型（正面×側面）
-const FT={rUp:['右片あがり','右肩が上がり、体が左に傾いていく型','左右アンバランスな姿勢が続くと、全身のゆがみにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。'],
-  lUp:['左片あがり','左肩が上がり、体が右に傾いていく型','左右アンバランスな姿勢が続くと、全身のゆがみにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。']};
+const FT={rUp:['右片あがり','右肩が上がり、体が左に傾いていく型','左右アンバランスな姿勢が続くと、全身のユガミにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。'],
+  lUp:['左片あがり','左肩が上がり、体が右に傾いていく型','左右アンバランスな姿勢が続くと、全身のユガミにつながります。荷物の持ち手や体重のかけ方など、左右に偏った癖を見直して、左右均等に体を使いましょう。']};
 const ST={sori:['反り腰','腰が反り、おなかが前に出る型','腰と太ももの前の筋肉が緊張し続け、腰に負担が大きい姿勢です。腰・太もものストレッチで緊張をほぐし、腹筋で体幹のバランスを整えましょう（院ではEMSも使います）。'],
   neko:['猫背','背中が丸まり、頭が前に出る型','首・肩・背中の筋肉が引っぱられ続け、こりや頭痛が出やすい姿勢です。胸を開くストレッチと、背中を起こす意識を続けましょう。'],
   sway:['スウェイバック','骨盤が前に出て、上半身が後ろにもたれる型','おなかの力が抜けて、腰と太ももの裏に負担がかかる姿勢です。下腹部に力を入れて、骨盤の真上に上半身をのせる意識を持ちましょう。'],
