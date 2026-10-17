@@ -19,6 +19,7 @@ main{padding:14px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-ar
 .views{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 .card h2{font-size:17px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+#histBox h2,#cmpBox h2{flex-wrap:wrap}#histBox h2 .t,#cmpBox h2 .t{white-space:nowrap}#histSel,#cmpSel{max-width:100%}
 .card h2 small{font-weight:400;color:var(--sub);font-size:13px}
 .shot{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
 @media (max-width:760px){.shot{grid-template-columns:1fr}}
@@ -120,7 +121,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっTO</h1><span class="tag">試作 10/17-7</span>
+  <h1>ぴかっTO</h1><span class="tag">試作 10/17-8</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -130,11 +131,11 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
     <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn" id="kpCmp" disabled>前回と比べる</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpHist" disabled>これまでの写真</button><button class="btn staff" id="kpBack">← 予約システムに戻る</button></div>
     <div class="status" id="kpSt"></div>
   </section>
-  <section class="card" id="histBox" hidden><h2>これまでの写真 <select id="histSel"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
+  <section class="card" id="histBox" hidden><h2><span class="t">これまでの写真</span> <select id="histSel"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
     <div class="htab" id="histTab"><button class="btn" data-hk="R" aria-pressed="true">結果（点と線）</button><button class="btn" data-hk="F" aria-pressed="false">正面の写真</button><button class="btn" data-hk="S" aria-pressed="false">側面の写真</button></div>
     <div class="note" id="histBy"></div><div id="histImg" class="cmpimg"></div><div id="histT"></div>
   </section>
-  <section class="card" id="cmpBox" hidden><h2>前回と比べる <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
+  <section class="card" id="cmpBox" hidden><h2><span class="t">前回と比べる</span> <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
     <div class="cmpi"><div><div class="cmph" id="cmpHa">前回</div><div id="cmpA" class="cmpimg"></div></div><div><div class="cmph">今回</div><div id="cmpB" class="cmpimg"></div></div></div>
     <div id="cmpT"></div>
   </section>
@@ -647,12 +648,13 @@ const kpSt=t=>{$('#kpSt').textContent=t||''};
 function kpButtons(){if(!KP)return;const has=!!(V.F.pts||V.S.pts);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
   $('#kpLine').disabled=!KP.saved||KP.dirty||!(KP.info&&KP.info.line);$('#kpLine').title=KP.info&&!KP.info.line?'LINEの登録がない方です':'';
   $('#kpCmp').disabled=!has||!kpPrevList().length}
+const kd=v=>{v=String(v||'');if(/^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10).replace(/-/g,'/');const d=new Date(v);return isNaN(d)?v:d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')};   // 日付の表示（10/17）
 const kpPrevList=()=>((KP&&KP.info&&KP.info.list)||[]).filter(x=>x.id!==KP.saved);
 async function kpInit(){if(!KP)return;$('#kpBar').hidden=false;$('#kpNote').textContent='写真はこのiPadの中で分析し、「保存する」を押すと予約システム（院のGoogleドライブ）に保存します。';
   kpSt('患者さんの情報を読み込んでいます…');
   try{const r=await kpApi('kpInfo');if(r.error){kpSt(r.error);return}KP.info=r;
     $('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
-    $('#kpPrev').textContent=r.list.length?'前回 '+r.list[0].date.replace(/-/g,'/')+'（これまで'+r.list.length+'回）':'はじめてのぴかっTOです';
+    $('#kpPrev').textContent=r.list.length?'前回 '+kd(r.list[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっTOです';
     $('#kpHist').disabled=!r.list.length;$('#kpHist').textContent=r.list.length?'これまでの写真（'+r.list.length+'回）':'これまでの写真';
     if(r.height)$('#ht').value=r.height;kpSt('');renderNums()}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}}
 // 結果の画像：正面と側面（点と線つき）を横に並べた1枚
@@ -669,17 +671,17 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
       find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
     KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
-    kpSt('保存しました（'+r.date.replace(/-/g,'/')+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
+    kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
   catch(e){kpSt('保存できませんでした。インターネットを確認して、もう一度押してください。');kpButtons()}}
 async function kpLine(){if(!KP||!KP.saved)return;if(!$('#kpLine').dataset.sure){$('#kpLine').dataset.sure=1;$('#kpLine').textContent='もう一度押すと送ります';return}
   delete $('#kpLine').dataset.sure;$('#kpLine').textContent='LINEで送る';$('#kpLine').disabled=true;kpSt('LINEを送っています…');
   try{const r=await kpApi('kpLine',{id:KP.saved});kpSt(r.error?r.error:'患者さんのLINEに結果を送りました。');}catch(e){kpSt('LINEを送れませんでした。もう一度押してください。')}kpButtons()}
 // 前回と比べる（希望された方だけ）：写真を並べて、項目ごとに前回→今回
 const labOf=m=>{if(!m)return '—';const k=m.sg*m.lev;if(!k)return 'ずれなし';const d=k<0?m.side[0]:m.side[1];return m.ov!=null?d+'（'+m.lev+'段）':d+' '+Math.abs(m.v).toFixed(1)+m.u};
-async function kpCmp(){const P=kpPrevList();if(!P.length)return;const sel=$('#cmpSel');sel.innerHTML=P.map(x=>`<option value="${x.id}">${x.date.replace(/-/g,'/')}</option>`).join('');
+async function kpCmp(){const P=kpPrevList();if(!P.length)return;const sel=$('#cmpSel');sel.innerHTML=P.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');
   $('#cmpBox').hidden=false;$('#cmpBox').scrollIntoView({behavior:'smooth',block:'start'});await kpCmpShow()}
 async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.id===id);if(!x)return;
-  $('#cmpHa').textContent='前回（'+x.date.replace(/-/g,'/')+'）';$('#cmpA').innerHTML='<div class="note">写真を読み込んでいます…</div>';
+  $('#cmpHa').textContent='前回（'+kd(x.date)+'）';$('#cmpA').innerHTML='<div class="note">写真を読み込んでいます…</div>';
   const rep=kpReport();$('#cmpB').innerHTML='';if(rep)$('#cmpB').appendChild(rep);
   const L=window.__last,rows=[];[['正面',x.F,L.F],['左側面',x.S,L.S]].forEach(([vn,a,b])=>{const A=(a&&a.items)||[],B=kpItems(b)||[];
     (B.length?B:A).forEach(m=>{const pa=A.find(y=>y.id===m.id),pb=B.find(y=>y.id===m.id);const la=pa?pa.lev:null,lb=pb?pb.lev:null;
@@ -690,11 +692,11 @@ async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.
   catch(e){$('#cmpA').innerHTML='<div class="note">前回の写真を読み込めませんでした。</div>'}}
 /* これまでの写真（開いたときから見られる・10/17） */
 const HIMG={};let histK='R';
-function kpHist(){const P=(KP.info&&KP.info.list)||[];if(!P.length)return;$('#histSel').innerHTML=P.map(x=>`<option value="${x.id}">${x.date.replace(/-/g,'/')}</option>`).join('');
+function kpHist(){const P=(KP.info&&KP.info.list)||[];if(!P.length)return;$('#histSel').innerHTML=P.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');
   $('#histBox').hidden=false;$('#histBox').scrollIntoView({behavior:'smooth',block:'start'});kpHistShow()}
 async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;
   document.querySelectorAll('#histTab [data-hk]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hk===histK)));
-  $('#histBy').textContent=x.date.replace(/-/g,'/')+(x.by?'　撮った人：'+x.by:'');
+  $('#histBy').textContent=kd(x.date)+(x.by?'　撮った人：'+x.by:'');
   const rows=[];[['正面',x.F],['左側面',x.S]].forEach(([vn,a])=>((a&&a.items)||[]).forEach(m=>rows.push(`<tr><td>${vn}</td><th>${m.name||''}</th><td>${labOf(m)}</td></tr>`)));
   $('#histT').innerHTML=rows.length?`<table class="cmp"><thead><tr><th></th><th>項目</th><th>この日</th></tr></thead><tbody>${rows.join('')}</tbody></table>`:'';
   const key=id+'_'+histK,box=$('#histImg'),put=d=>{box.innerHTML='';const im=new Image();im.alt='これまでの写真';im.src='data:image/jpeg;base64,'+d;box.appendChild(im)};
