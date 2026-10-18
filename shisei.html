@@ -680,7 +680,8 @@ const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
 const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
 async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(L.F||L.S))return;
   ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
-  const rep=kpReport(),xi=await extraImg().catch(()=>null),X=window.__xtra;$('#kpSave').disabled=true;kpSt('保存しています…');
+  const rep=kpReport(),xi=null,X=null;   // 重心位置・未来姿勢は使わない（代表）
+  $('#kpSave').disabled=true;kpSt('保存しています…');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
       find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
