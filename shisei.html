@@ -85,6 +85,12 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 #use .ustep,#use .s1{border:0!important;padding:0!important}#use .ustep{grid-column:1/-1;font-weight:800;font-size:17px;color:var(--ink);margin-top:6px}#use .sn{display:inline-block;background:var(--teal);color:#fff;border-radius:6px;padding:2px 8px;margin-right:8px;font-size:14px}
 #use .s1{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}#use .uwhy{background:#fff8ec;border:1px solid #f0dcc0;border-radius:10px;padding:10px 14px;line-height:1.75}#use .uwhy b{color:var(--warn);font-size:16px}#use .uwhy p{margin:6px 0}
 .find{display:grid;gap:10px}
+.fd .tip{font-weight:700;color:var(--teal);font-size:17px;margin-top:2px}.fd details{margin-top:4px;font-size:14px;color:var(--sub)}.fd summary{cursor:pointer;color:var(--sub);font-size:13px}
+#use{display:grid;grid-template-columns:1fr!important;gap:12px}#use .ulead{margin:0;font-size:17px}#use .ulead b{color:var(--teal)}
+#use .uc{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:center;border:1px solid var(--line);border-left:5px solid var(--teal);border-radius:12px;padding:12px;background:#fff}
+#use .uc img{width:100%;border-radius:8px;display:block}#use .ucb b{font-size:19px;color:var(--teal)}#use .ucb details{margin-top:6px}#use summary{cursor:pointer;color:var(--teal);font-weight:700}
+#use .umore{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}#use .umore>summary{color:var(--sub)}#use .umore .uc{margin-top:10px;border-left-color:var(--line)}#use .umore .upre,#use .umore .uwhy{margin-top:10px}
+@media (max-width:620px){#use .uc{grid-template-columns:1fr}}
 .fd{border-left:4px solid var(--warn);background:var(--warn2);border-radius:8px;padding:10px 12px;line-height:1.7}
 .fd b{display:block;font-size:16px}
 .keep{display:grid;gap:8px;counter-reset:k}
@@ -121,7 +127,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっto！</h1><span class="tag">試作 10/17-10</span>
+  <h1>ぴかっto！</h1><span class="tag">試作 10/18-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -274,10 +280,17 @@ const sgn=m=>m.ov!=null?Math.sign(m.ov):Math.sign(m.v);
 function nw(m){return lev(m)+Math.min(1,Math.abs(m.v)/thr(m)[2]/3)}
 // 施術者がグラフで直した段（V[kind].ov）を数字に重ねる
 function applyOv(kind,L){if(!L)return L;const ov=V[kind].ov||{};L.forEach(m=>{if(ov[m.id]!=null)m.ov=ov[m.id]});return L}
+// 気になる点の「ひとこと」（患者さんにはこれだけ見せる。くわしい説明は「くわしく」の中）
+function tipOf(s,id,m){const b=sgn(m)>0;const T={
+  F:{sh:'荷物は左右交互に持ちましょう',up:'片ひじ・もたれて座る癖に注意',chest:'左右均等に立ちましょう',hipT:'脚を組まない・片足重心に注意',hipS:'両足に均等に体重をのせましょう',
+     neck:'画面はまっすぐ正面で見ましょう',head:'寝る向き・見る向きを偏らせない',ox:'つま先とひざを同じ向きに'},
+  S:{headS:'耳と肩を縦にそろえましょう',kyph:'胸を軽く開いて体を起こしましょう',pel:'腰ではなく下腹部に力を入れる',hipS:b?'腰ではなく下腹部に力を入れる':'下腹部を軽くへこませて立つ',
+     all:b?'まっすぐ立つ意識を持ちましょう':'かかとにも体重をのせて立つ',up:'おなかに力を入れて体を起こす',knee:b?'ひざの力を少しゆるめて立つ':'ひざを軽く伸ばして立つ'}};
+  return (T[s]||{})[id]||''}
 // ---- 気になる点（代表の考え：現在地と癖を伝えて、どこに意識を向けるか） ----
 function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===id);
   const dir=m=>sgn(m)>0?m.side[1]:m.side[0],num=(m,x)=>m.ov!=null?'':` ${Math.abs(m.v).toFixed(1)}${x||m.u}`;
-  const add=(L,id,ok,s,t,d,u)=>{const m=g(L,id);if(m&&lev(m)>=2&&ok(m)){out.push({s,w:nw(m),t:t(m),d});u.forEach(k=>use.add(k))}};
+  const add=(L,id,ok,s,t,d,u)=>{const m=g(L,id);if(m&&lev(m)>=2&&ok(m)){out.push({s,w:nw(m),t:t(m),d,tip:tipOf(s,id,m)});u.forEach(k=>use.add(k))}};
   add(F,'sh',()=>1,'F',m=>`${dir(m).replace('が上','')}肩が${num(m)} 上がっています`,'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。',['stand']);
   add(F,'up',()=>1,'F',m=>`上半身が${dir(m)}に${num(m)} 傾いています`,'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。荷物の持ち手を入れ替えましょう。',['sit']);
   add(F,'chest',()=>1,'F',m=>`胸が${dir(m)}に${num(m)} ずれています`,'背骨の曲がりや骨盤のユガミが影響している可能性があります。立っているとき、左右の重心が均等になるよう意識しましょう。',['stand']);
@@ -323,6 +336,7 @@ const USE={abs:['腹筋の使い方','すべての基本。骨盤を「まん中
     'ふらつくのは、体幹が弱いか、太ももの外側か内側のどちらかを使いすぎているサインです。',
     '慣れないうちは、スーパーのカートを支えにして、正面を見ながら足の運びを練習しましょう。']]};
 const USE_ORDER=['abs','sit','stand','walk'];
+const USE_IMG={abs:'kp_abs.jpg',sit:'kp_sit.jpg',stand:'kp_stand.jpg',walk:'kp_walk.jpg'};
 // なぜ腹筋から？（代表 10/17：腹筋の使い方ができないと、ほかもうまくできない → だからEMS）
 const USE_WHY=['筋肉には3つの特性があります。① 鍛えたら向上する　② 使っていると維持する　③ 使わないと衰退する。',
   '使わないと衰えやすいのは、まず腹筋。次に内もも・二の腕・お尻・あごです。使われない筋肉は脂肪を燃やさないので、そこに脂肪がたまりやすくなります。太っても、おなかと腕に同じだけ脂肪がつかないのはそのためです。鍛えているのにおなかの脂肪が取れないのは、日常生活で腹筋を使っていないからです。',
@@ -399,17 +413,18 @@ document.addEventListener('click',e=>{const b=e.target.closest('.gr b[data-id]')
   const v=V[b.dataset.k],id=b.dataset.id,i=+b.dataset.i;v.ov=v.ov||{};
   const L=(b.dataset.k==='F'?calcF:calcS)(v.pts),m=L.find(x=>x.id===id),ai=Math.sign(m.v)*lev(m);
   if(v.ov[id]===i||(v.ov[id]==null&&i===ai))delete v.ov[id];else if(i===ai&&v.ov[id]!=null)delete v.ov[id];else v.ov[id]=i;renderNums()});
-function fdHTML(list){return list.length?list.map((x,i)=>`<div class="fd"><b>気になる点${'①②③④'[i]}　${x.t}</b>${x.d}</div>`).join(''):'<div class="fd ok"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>'}
+function fdHTML(list){return list.length?list.map((x,i)=>`<div class="fd"><b>${'①②③④'[i]} ${x.t}</b>${x.tip?`<div class="tip">→ ${x.tip}</div>`:''}<details><summary>くわしく</summary>${x.d}</details></div>`).join(''):'<div class="fd ok"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>'}
 function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts?applyOv('S',calcS(V.S.pts)):null;
   $('#tF').innerHTML=table('F',F);$('#tS').innerHTML=table('S',S);
   const r=findings(F,S);
   $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
-  if(F||S){const mine=new Set(us),blk=k=>{const U=USE[k],n=useNote(k,F,S);
-      return `<div class="ub${mine.has(k)?' mine':''}"><b>${U[0]}${mine.has(k)?' <i>特に意識</i>':''}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></div>`};
-    $('#use').innerHTML=`<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div>`+
-      `<div class="ustep"><span class="sn">STEP 1</span>まずは腹筋の使い方（すべての土台）</div><div class="s1">${blk('abs')}<div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></div>`+
-      `<div class="ustep"><span class="sn">STEP 2</span>腹筋が使えるようになったら、ふだんの姿勢へ</div>`+['sit','stand','walk'].map(blk).join('')}
+  if(F||S){const mine=us.filter(k=>USE_ORDER.includes(k)).sort((a,b)=>USE_ORDER.indexOf(a)-USE_ORDER.indexOf(b));
+    const card=k=>{const U=USE[k],n=useNote(k,F,S);
+      return `<div class="uc"><img src="img/${USE_IMG[k]}" alt="${U[0]}のイラスト"><div class="ucb"><b>${U[0]}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<details><summary>やり方を見る</summary><ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></details></div></div>`};
+    const rest=USE_ORDER.filter(k=>!mine.includes(k));
+    $('#use').innerHTML=`<p class="ulead">あなたが<b>特に意識すること</b>は、この${mine.length}つです。</p>`+mine.map(card).join('')+
+      `<details class="umore"><summary>ほかの体の使い方・くわしい説明</summary>${rest.map(card).join('')}<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div><div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></details>`}
   else $('#use').innerHTML='<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
@@ -668,7 +683,7 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
   const rep=kpReport(),xi=await extraImg().catch(()=>null),X=window.__xtra;$('#kpSave').disabled=true;kpSt('保存しています…');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
-      find:L.find.top.map(x=>({t:x.t,d:x.d,s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
+      find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
     KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
     kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
