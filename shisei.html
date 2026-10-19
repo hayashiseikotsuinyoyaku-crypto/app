@@ -102,7 +102,10 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 .note{font-size:12.5px;color:var(--sub);line-height:1.7}
 body.pt .staff{display:none}
 [hidden]{display:none!important}
-#cam{position:fixed;inset:0;background:#000;z-index:50}
+#cam{position:fixed;inset:0;background:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50}
+.cambrand{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 64px);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}.cambrand img{width:34px;height:34px}.cambrand b{color:#1f6f63;font-size:18px;letter-spacing:.02em}
+#cam.pv .cambrand{display:none}
+.brandh{display:inline-flex;align-items:center;gap:8px}.brandh img{width:40px;height:40px}
 .camwrap{position:absolute;inset:0}
 #cv,#co{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .camtop{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:70px;color:#fff;background:rgba(0,0,0,.45);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:15px}
@@ -127,7 +130,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1>ぴかっto！</h1><span class="tag">試作 10/18-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/19-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -171,6 +174,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </main>
 <div id="cam" hidden>
   <div class="camwrap"><video id="cv" playsinline muted autoplay></video><canvas id="co"></canvas>
+    <div class="cambrand"><img src="img/logo.png" alt=""><b>ぴかっto！</b></div>
     <div class="camtop"><b id="camT">立位正面</b><span id="camN">1/2</span><div id="camH">正面を向いて、かかとをつけて立ってください</div></div>
     <div class="camsens" id="camS"></div>
     <button class="camx" id="camX" aria-label="閉じる">✕</button>
@@ -463,7 +467,7 @@ async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());
   const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
 async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing==='user'?'environment':'user';
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
-function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/17-5）';$('#camH').textContent=T[2]}
+function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/19-1）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
   if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
@@ -485,11 +489,17 @@ function silhouette(c,b,side){const cx=b.x+b.w/2,top=b.y+b.h*SIL_TOP,u=b.h*SIL_H
     c.moveTo(cx-5.7*u,top+6*u);c.lineTo(cx-6.7*u,top+8.6*u);c.lineTo(cx-5.5*u,top+9*u);   // 鼻（顔の向きの目印）
     smoothPath(c,SIL_S.map(([x,y])=>T([x*(y>16&&y<56?1.18:1),y])),true);smoothPath(c,SIL_ARM.map(T),true)}
   c.lineJoin='round';c.lineCap='round';
-  c.shadowColor='rgba(255,255,255,.6)';c.shadowBlur=6;c.lineWidth=Math.max(1.5,u*0.32);c.strokeStyle='rgba(255,255,255,.75)';c.stroke();c.restore()}
+  // 外枠に色（代表 10/19：真っ黒で色味がない→カルティのように外枠に色）：太い水色のふち＋中に細い白い線
+  c.shadowColor='rgba(47,211,196,.8)';c.shadowBlur=10;c.lineWidth=Math.max(4,u*1.0);c.strokeStyle='rgba(47,211,196,.75)';c.stroke();
+  c.shadowBlur=0;c.lineWidth=Math.max(1.2,u*0.25);c.strokeStyle='rgba(255,255,255,.95)';c.stroke();c.restore()}
 const SIL_TOP=0.15,SIL_HT=0.80;
 const CENTER=0.42;   // 体の中心の高さ（頭の上から身長の42%）
 function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1;const cw=Math.round(b.W*dpr),ch=Math.round(b.H*dpr);if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch}
   const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,b.W,b.H);
+  // 写真の外側（黒い帯）を院の色に：写真の範囲には何も塗らない
+  {const g=c.createLinearGradient(0,0,b.W,b.H);g.addColorStop(0,'#0e3f39');g.addColorStop(1,'#1f6f63');c.fillStyle=g;
+   c.fillRect(0,0,b.W,b.y);c.fillRect(0,b.y+b.h,b.W,b.H-b.y-b.h);c.fillRect(0,b.y,b.x,b.h);c.fillRect(b.x+b.w,b.y,b.W-b.x-b.w,b.h);
+   c.strokeStyle='rgba(47,211,196,.9)';c.lineWidth=3;c.strokeRect(b.x+1.5,b.y+1.5,b.w-3,b.h-3)}
   silhouette(c,b,CAM.kind==='S');
   const cx=b.x+b.w/2,ty=b.y+b.h*SIL_TOP+b.h*SIL_HT*CENTER,has=CAM.g&&Date.now()-CAM.g<1500;
   c.setLineDash([5,6]);c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,b.y);c.lineTo(cx,b.y+b.h);c.stroke();
