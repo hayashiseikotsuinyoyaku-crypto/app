@@ -66,7 +66,7 @@ body.pt .gc b{cursor:default}
 .kpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}.kpbar .btns{margin-top:0;margin-left:auto}.kpn b{font-size:19px;margin-right:12px}
 .kpbar .status{flex-basis:100%;margin-top:0;min-height:0}
 #cmpBox h2 select{font:inherit;font-size:15px;padding:4px 8px;border-radius:8px;border:1px solid var(--line)}
-.htab{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.htab .btn[aria-pressed="true"]{background:#1f6f63;color:#fff;border-color:#1f6f63}#histImg img,#histImg canvas{max-height:75vh;width:auto;max-width:100%;margin:0 auto}
+.htab{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.htab .btn[aria-pressed="true"]{background:#1f6f63;color:#fff;border-color:#1f6f63}#histT .gtt{font-size:16px;margin:14px 0 4px}.gr.ro b{cursor:default}#histImg img,#histImg canvas{max-height:75vh;width:auto;max-width:100%;margin:0 auto}
 .cmpi{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.cmpi .cmpimg img,.cmpi .cmpimg canvas{max-height:72vh;width:auto;max-width:100%;margin:0 auto}.cmph{font-weight:700;margin-bottom:4px}.cmpimg img,.cmpimg canvas{width:100%;border-radius:10px;display:block}
 table.cmp{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}table.cmp th,table.cmp td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp tr.worse td.b{color:var(--red)}
@@ -130,7 +130,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-2</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -735,6 +735,12 @@ function ptsCanvas(b64d,kind,pts){return new Promise(ok=>{const im=new Image();i
   if(pts&&pts[kind==='F'?'shR':'ear']){try{paintPts(c,kind,pts,W,H,u,null);
     sideLab(c,kind,pts,W,u)}catch(e){}}
   ok(cv)};im.onerror=()=>ok(null);im.src='data:image/jpeg;base64,'+b64d})}
+// 保存した項目のグラフ（撮ったときと同じ見た目・押しても変わらない・10/21）
+function savedGraph(kind,L){if(!L||!L.length)return '';const hd=kind==='F'?['右','左']:['前','後'];
+  return `<div class="gr ro"><div class="gh"><span></span><span>${hd[0]}</span><span>ずれなし</span><span>${hd[1]}</span></div>${L.map(m=>{const k=(m.sg||0)*(m.lev||0),a=Math.abs(+m.v||0),sd=m.side||['',''];
+    const lab=k===0?'':(m.ov!=null?`${k<0?'← ':''}${k<0?sd[0]:sd[1]}${k>0?' →':''}`:`${k<0?'← ':''}${a.toFixed(1)}${m.u||''}${k>0?' →':''}`);
+    const cells=[-3,-2,-1,0,1,2,3].map(i=>`<b class="${i===k?'on':''}${i===0?' z':''}"></b>`).join('');
+    return `<div class="gl"><span class="gn">${m.name||''}${m.ov!=null?' <i class="ovm">✎</i>':''}</span><span class="gc"><em class="${k<0?'l':'r'}" style="${k<0?'left:0':'right:0'}">${lab}</em>${cells}</span></div>`}).join('')}</div>`}
 /* これまでの写真（開いたときから見られる・10/17） */
 const HIMG={};let histK='F',cmpK='F';
 function kpHist(){const P=(KP.info&&KP.info.list)||[];if(!P.length)return;$('#histSel').innerHTML=P.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');
@@ -743,8 +749,8 @@ async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.li
   document.querySelectorAll('#histTab [data-hk]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hk===histK)));
   const hl=$('#histLine');delete hl.dataset.sure;hl.textContent='この日の結果をLINEで送る';hl.disabled=!(KP.info&&KP.info.line);hl.title=hl.disabled?'LINEの登録がない方です':'';$('#histSt').textContent='';
   $('#histBy').textContent=kd(x.date)+(x.by?'　撮った人：'+x.by:'');
-  const rows=[];[['正面',x.F],['左側面',x.S]].forEach(([vn,a])=>((a&&a.items)||[]).forEach(m=>rows.push(`<tr><td>${vn}</td><th>${m.name||''}</th><td>${labOf(m)}</td></tr>`)));
-  $('#histT').innerHTML=rows.length?`<table class="cmp"><thead><tr><th></th><th>項目</th><th>この日</th></tr></thead><tbody>${rows.join('')}</tbody></table>`:'';
+  const gv=histK==='R'?['F','S']:[histK];
+  $('#histT').innerHTML=gv.map(k=>{const it=x[k]&&x[k].items;return it&&it.length?`<h3 class="gtt">${k==='F'?'正面':'側面'}のグラフ（この日）</h3>`+savedGraph(k,it):''}).join('');
   const k0=histK,key=id+'_'+k0,box=$('#histImg'),put=async d=>{if(k0==='R'){box.innerHTML='';const im=new Image();im.alt='これまでの写真';im.src='data:image/jpeg;base64,'+d;box.appendChild(im);return}
     const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts);if(id!==$('#histSel').value||k0!==histK)return;box.innerHTML='';if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label',(k0==='F'?'正面':'側面')+'の写真（点と線つき）');box.appendChild(cv)}else box.innerHTML='<div class="note">写真を表示できませんでした。</div>'};
   if(HIMG[key])return put(HIMG[key]);box.innerHTML='<div class="note">写真を読み込んでいます…</div>';
