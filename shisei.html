@@ -66,8 +66,8 @@ body.pt .gc b{cursor:default}
 .kpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}.kpbar .btns{margin-top:0;margin-left:auto}.kpn b{font-size:19px;margin-right:12px}
 .kpbar .status{flex-basis:100%;margin-top:0;min-height:0}
 #cmpBox h2 select{font:inherit;font-size:15px;padding:4px 8px;border-radius:8px;border:1px solid var(--line)}
-.htab{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.htab .btn[aria-pressed="true"]{background:#1f6f63;color:#fff;border-color:#1f6f63}#histImg img{max-height:70vh;width:auto;max-width:100%;margin:0 auto}
-.cmpi{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cmph{font-weight:700;margin-bottom:4px}.cmpimg img,.cmpimg canvas{width:100%;border-radius:10px;display:block}
+.htab{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.htab .btn[aria-pressed="true"]{background:#1f6f63;color:#fff;border-color:#1f6f63}#histImg img,#histImg canvas{max-height:75vh;width:auto;max-width:100%;margin:0 auto}
+.cmpi{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.cmpi .cmpimg img,.cmpi .cmpimg canvas{max-height:72vh;width:auto;max-width:100%;margin:0 auto}.cmph{font-weight:700;margin-bottom:4px}.cmpimg img,.cmpimg canvas{width:100%;border-radius:10px;display:block}
 table.cmp{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}table.cmp th,table.cmp td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp tr.worse td.b{color:var(--red)}
 #xtra{display:grid;gap:14px}.xg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
@@ -130,7 +130,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/19-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -141,10 +141,11 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
     <div class="status" id="kpSt"></div>
   </section>
   <section class="card" id="histBox" hidden><h2><span class="t">これまでの写真</span> <select id="histSel"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
-    <div class="htab" id="histTab"><button class="btn" data-hk="R" aria-pressed="true">結果（点と線）</button><button class="btn" data-hk="F" aria-pressed="false">正面の写真</button><button class="btn" data-hk="S" aria-pressed="false">側面の写真</button></div>
+    <div class="htab" id="histTab"><button class="btn" data-hk="F" aria-pressed="true">正面（点と線）</button><button class="btn" data-hk="S" aria-pressed="false">側面（点と線）</button><button class="btn" data-hk="R" aria-pressed="false">2枚を並べて</button></div>
     <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="note" id="histBy"></span><button class="btn staff" id="histLine" style="margin-left:auto">この日の結果をLINEで送る</button></div><div class="status" id="histSt"></div><div id="histImg" class="cmpimg"></div><div id="histT"></div>
   </section>
   <section class="card" id="cmpBox" hidden><h2><span class="t">前回と比べる</span> <select id="cmpSel"></select><button class="btn" id="cmpX" style="margin-left:auto">閉じる</button></h2>
+    <div class="htab" id="cmpTab"><button class="btn" data-ck="F" aria-pressed="true">正面</button><button class="btn" data-ck="S" aria-pressed="false">側面</button></div>
     <div class="cmpi"><div><div class="cmph" id="cmpHa">前回</div><div id="cmpA" class="cmpimg"></div></div><div><div class="cmph">今回</div><div id="cmpB" class="cmpimg"></div></div></div>
     <div id="cmpT"></div>
   </section>
@@ -372,6 +373,9 @@ function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
   if(!v.pts){lr.innerHTML='';return}const p=v.pts;
   const f=kind==='S'?(p.eye.x>=p.occ.x?1:-1):0;
   lr.innerHTML=kind==='F'?'<span>右</span><span>左</span>':(f<0?'<span>前</span><span>後</span>':'<span>後</span><span>前</span>');
+  paintPts(c,kind,p,W,H,u,v.drag)}
+// 点と線を描く（撮影中の画面と、これまでの写真・前回と比べるで同じ描き方・10/21）
+function paintPts(c,kind,p,W,H,u,drag){
   c.lineCap='round';
   const ln=(a,b,col,w,dash)=>{c.strokeStyle=col;c.lineWidth=(w||2)*u;c.setLineDash(dash?[6*u,6*u]:[]);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.setLineDash([])};
   // 縦の基準線（正面：両足の真ん中／側面：外果）と横の線（肩・腰）
@@ -379,8 +383,8 @@ function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
   const hl=y=>ln({x:0,y},{x:W,y},'rgba(30,200,190,.75)',1.4);
   if(kind==='F'){hl(mid(p.shR,p.shL).y);hl(p.pub.y)}
   LINKS[kind].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,214,90,.95)',1.8));
-  (kind==='F'?PF:PS).forEach(([k,,blue])=>{const q=p[k];c.beginPath();c.arc(q.x,q.y,(k===v.drag?8:4.6)*u,0,7);c.fillStyle=blue?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=1.4*u;c.strokeStyle='#fff';c.stroke()});
-  if(v.drag){const q=p[v.drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
+  (kind==='F'?PF:PS).forEach(([k,,blue])=>{const q=p[k];if(!q)return;c.beginPath();c.arc(q.x,q.y,(k===drag?8:4.6)*u,0,7);c.fillStyle=blue?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=1.4*u;c.strokeStyle='#fff';c.stroke()});
+  if(drag){const q=p[drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
 // 点を動かす（1本指）・拡大縮小（2本指でつまむ）・拡大中は何もない所を1本指でなぞると移動。縮小は元の大きさまで
 function zoomApply(kind){const v=V[kind],box=$('#cv'+kind),cv=box.querySelector('canvas');if(!cv)return;const z=v.z||(v.z={s:1,x:0,y:0});
   const bw=cv.offsetWidth,bh=cv.offsetHeight;z.s=Math.max(1,Math.min(5,z.s));z.x=Math.min(0,Math.max(bw-bw*z.s,z.x));z.y=Math.min(0,Math.max(bh-bh*z.s,z.y));
@@ -708,16 +712,31 @@ async function kpCmp(){const P=kpPrevList();if(!P.length)return;const sel=$('#cm
   $('#cmpBox').hidden=false;$('#cmpBox').scrollIntoView({behavior:'smooth',block:'start'});await kpCmpShow()}
 async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.id===id);if(!x)return;
   $('#cmpHa').textContent='前回（'+kd(x.date)+'）';$('#cmpA').innerHTML='<div class="note">写真を読み込んでいます…</div>';
-  const rep=kpReport();$('#cmpB').innerHTML='';if(rep)$('#cmpB').appendChild(rep);
+  document.querySelectorAll('#cmpTab [data-ck]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ck===cmpK)));
+  const k0=cmpK,cur=V[k0].pts?$('#cv'+k0+' canvas'):null;$('#cmpB').innerHTML='';
+  if(cur){const cp=document.createElement('canvas');cp.width=cur.width;cp.height=cur.height;const cx=cp.getContext('2d');cx.drawImage(cur,0,0);try{sideLab(cx,k0,V[k0].pts,cp.width,cp.width/600)}catch(e){}cp.setAttribute('role','img');cp.setAttribute('aria-label','今回の'+(k0==='F'?'正面':'側面')+'（点と線つき）');$('#cmpB').appendChild(cp)}
+  else $('#cmpB').innerHTML='<div class="note">今回の'+(k0==='F'?'正面':'側面')+'の写真はありません。</div>';
   const L=window.__last,rows=[];[['正面',x.F,L.F],['左側面',x.S,L.S]].forEach(([vn,a,b])=>{const A=(a&&a.items)||[],B=kpItems(b)||[];
     (B.length?B:A).forEach(m=>{const pa=A.find(y=>y.id===m.id),pb=B.find(y=>y.id===m.id);const la=pa?pa.lev:null,lb=pb?pb.lev:null;
       rows.push(`<tr class="${la!=null&&lb!=null&&la!==lb?(lb<la?'chg':'worse'):''}"><td>${vn}</td><th>${m.name}</th><td>${labOf(pa)}</td><td class="b">${labOf(pb)}${la!=null&&lb!=null&&lb<la?' ↓よくなっています':''}</td></tr>`)})});
   $('#cmpT').innerHTML=`<table class="cmp"><thead><tr><th></th><th>項目</th><th>前回</th><th>今回</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-  try{const r=await kpApi('kpImg',{id,kind:'R'});if(r.error){$('#cmpA').innerHTML='<div class="note">'+r.error+'</div>';return}
-    $('#cmpA').innerHTML='';const im=new Image();im.alt='前回の写真';im.src='data:image/jpeg;base64,'+r.data;$('#cmpA').appendChild(im)}
+  const key=id+'_'+k0,show=async d=>{const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts);if(id!==$('#cmpSel').value||k0!==cmpK)return;$('#cmpA').innerHTML='';
+    if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label','前回の'+(k0==='F'?'正面':'側面')+'（点と線つき）');$('#cmpA').appendChild(cv)}else $('#cmpA').innerHTML='<div class="note">前回の写真を表示できませんでした。</div>'};
+  if(HIMG[key])return show(HIMG[key]);
+  try{const r=await kpApi('kpImg',{id,kind:k0});if(r.error){$('#cmpA').innerHTML='<div class="note">'+r.error+'</div>';return}HIMG[key]=r.data;await show(r.data)}
   catch(e){$('#cmpA').innerHTML='<div class="note">前回の写真を読み込めませんでした。</div>'}}
+
+// 絵の上の角に「右・左」（側面は「前・後」）を書き込む
+function sideLab(c,kind,pts,W,u){const f=kind==='S'&&pts.eye&&pts.occ?(pts.eye.x>=pts.occ.x?1:-1):0,lab=kind==='F'?['右','左']:(f<0?['前','後']:['後','前']);
+  c.font=`bold ${22*u}px sans-serif`;c.textBaseline='top';[[lab[0],10*u,'left'],[lab[1],W-10*u,'right']].forEach(([t,x,al])=>{c.textAlign=al;c.lineWidth=4*u;c.strokeStyle='rgba(0,0,0,.6)';c.strokeText(t,x,10*u);c.fillStyle='#fff';c.fillText(t,x,10*u)})}
+// 保存した写真に、保存した点と線を重ねて描く（点がない古い記録は写真だけ）
+function ptsCanvas(b64d,kind,pts){return new Promise(ok=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;
+  const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600;c.drawImage(im,0,0);
+  if(pts&&pts[kind==='F'?'shR':'ear']){try{paintPts(c,kind,pts,W,H,u,null);
+    sideLab(c,kind,pts,W,u)}catch(e){}}
+  ok(cv)};im.onerror=()=>ok(null);im.src='data:image/jpeg;base64,'+b64d})}
 /* これまでの写真（開いたときから見られる・10/17） */
-const HIMG={};let histK='R';
+const HIMG={};let histK='F',cmpK='F';
 function kpHist(){const P=(KP.info&&KP.info.list)||[];if(!P.length)return;$('#histSel').innerHTML=P.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');
   $('#histBox').hidden=false;$('#histBox').scrollIntoView({behavior:'smooth',block:'start'});kpHistShow()}
 async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;
@@ -726,7 +745,8 @@ async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.li
   $('#histBy').textContent=kd(x.date)+(x.by?'　撮った人：'+x.by:'');
   const rows=[];[['正面',x.F],['左側面',x.S]].forEach(([vn,a])=>((a&&a.items)||[]).forEach(m=>rows.push(`<tr><td>${vn}</td><th>${m.name||''}</th><td>${labOf(m)}</td></tr>`)));
   $('#histT').innerHTML=rows.length?`<table class="cmp"><thead><tr><th></th><th>項目</th><th>この日</th></tr></thead><tbody>${rows.join('')}</tbody></table>`:'';
-  const key=id+'_'+histK,box=$('#histImg'),put=d=>{box.innerHTML='';const im=new Image();im.alt='これまでの写真';im.src='data:image/jpeg;base64,'+d;box.appendChild(im)};
+  const k0=histK,key=id+'_'+k0,box=$('#histImg'),put=async d=>{if(k0==='R'){box.innerHTML='';const im=new Image();im.alt='これまでの写真';im.src='data:image/jpeg;base64,'+d;box.appendChild(im);return}
+    const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts);if(id!==$('#histSel').value||k0!==histK)return;box.innerHTML='';if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label',(k0==='F'?'正面':'側面')+'の写真（点と線つき）');box.appendChild(cv)}else box.innerHTML='<div class="note">写真を表示できませんでした。</div>'};
   if(HIMG[key])return put(HIMG[key]);box.innerHTML='<div class="note">写真を読み込んでいます…</div>';
   try{const r=await kpApi('kpImg',{id,kind:histK});if(id!==$('#histSel').value)return;if(r.error){box.innerHTML='<div class="note">'+r.error+'</div>';return}HIMG[key]=r.data;put(r.data)}
   catch(e){box.innerHTML='<div class="note">写真を読み込めませんでした。</div>'}}
@@ -740,7 +760,7 @@ function kpBack(){const b=$('#kpBack');if(KP.dirty&&(V.F.pts||V.S.pts)&&!b.datas
   delete b.dataset.sure;b.textContent='← 予約システムに戻る';try{window.close()}catch(e){}
   setTimeout(()=>{if(!window.closed)kpSt('この画面（タブ）を閉じると、予約システムに戻れます。')},400)}
 if(KP){$('#kpBack').onclick=kpBack;$('#kpHist').onclick=kpHist;$('#histSel').onchange=kpHistShow;$('#histLine').onclick=kpHistLine;$('#histX').onclick=()=>{$('#histBox').hidden=true};
-  $('#histTab').onclick=e=>{const b=e.target.closest('[data-hk]');if(!b)return;histK=b.dataset.hk;kpHistShow()};$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
+  $('#histTab').onclick=e=>{const b=e.target.closest('[data-hk]');if(!b)return;histK=b.dataset.hk;kpHistShow()};$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;$('#kpCmp').onclick=kpCmp;$('#cmpSel').onchange=kpCmpShow;$('#cmpTab').onclick=e=>{const b=e.target.closest('[data-ck]');if(!b)return;cmpK=b.dataset.ck;kpCmpShow()};$('#cmpX').onclick=()=>{$('#cmpBox').hidden=true};kpInit()}
 window.__shisei={KP,kpReport,CAM,camOpen,camShoot,camOk,camRe,camFlip,onMotion,V,loadFile,initPts,calcF,calcS,findings,renderNums,draw};
 renderNums();
 </script>
