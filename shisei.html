@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-3</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/22-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -701,7 +701,7 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
       find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
-    KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:{items:kpItems(L.F)},S:{items:kpItems(L.S)}});
+    KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,S:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null});
     kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
   catch(e){kpSt('保存できませんでした。インターネットを確認して、もう一度押してください。');kpButtons()}}
 async function kpLine(){if(!KP||!KP.saved)return;if(!$('#kpLine').dataset.sure){$('#kpLine').dataset.sure=1;$('#kpLine').textContent='もう一度押すと送ります';return}
@@ -733,7 +733,7 @@ function sideLab(c,kind,pts,W,u){const f=kind==='S'&&pts.eye&&pts.occ?(pts.eye.x
 // 保存した写真に、保存した点と線を重ねて描く（点がない古い記録は写真だけ）
 function ptsCanvas(b64d,kind,pts){return new Promise(ok=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;
   const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600;c.drawImage(im,0,0);
-  if(pts&&pts[kind==='F'?'shR':'ear']){try{paintPts(c,kind,pts,W,H,u,null);
+  if(pts&&pts[kind==='F'?'shR':'an']){try{paintPts(c,kind,pts,W,H,u,null);
     sideLab(c,kind,pts,W,u)}catch(e){}}
   ok(cv)};im.onerror=()=>ok(null);im.src='data:image/jpeg;base64,'+b64d})}
 // 保存した項目のグラフ（撮ったときと同じ見た目・押しても変わらない・10/21）
