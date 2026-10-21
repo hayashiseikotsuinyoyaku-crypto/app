@@ -25,6 +25,7 @@ main{padding:14px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-ar
 @media (max-width:760px){.shot{grid-template-columns:1fr}}
 .cv{position:relative;background:#eef2f1;border-radius:10px;overflow:hidden;touch-action:none;min-height:240px;display:flex;align-items:center;justify-content:center}
 .cv canvas{display:block;width:100%;height:auto}
+.cv,.cv *,.gr,.gr *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .cv .empty{color:var(--sub);text-align:center;padding:30px 12px;line-height:1.7}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .btn{font:inherit;font-weight:700;border-radius:10px;padding:10px 14px;border:1px solid var(--teal);background:var(--card);color:var(--teal);cursor:pointer}
@@ -130,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-2</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/21-3</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -396,7 +397,7 @@ function bindDrag(kind,cv){const box=$('#cv'+kind),P=new Map();let pin=null,pan=
   const at=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height,k:cv.width/r.width}};
   const loc=e=>{const r=box.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
   const two=()=>{const [a,b]=[...P.values()];return {d:Math.hypot(a.x-b.x,a.y-b.y)||1,m:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}};
-  cv.addEventListener('pointerdown',e=>{const v=V[kind];if(!v.pts)return;try{cv.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();
+  cv.addEventListener('pointerdown',e=>{const v=V[kind];if(!v.pts)return;try{const sl=window.getSelection();if(sl&&sl.rangeCount)sl.removeAllRanges()}catch(_){}try{cv.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();
     P.set(e.pointerId,loc(e));const z=v.z||(v.z={s:1,x:0,y:0});
     if(P.size===2){if(v.drag&&orig){v.pts[v.drag]=orig;v.drag=null;renderNums()}pan=null;const t=two();pin={d0:t.d,m0:t.m,s0:z.s,x0:z.x,y0:z.y};return}
     if(P.size>2)return;
