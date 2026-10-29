@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/22-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/29-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -455,9 +455,11 @@ function onMotion(e){const a=e.accelerationIncludingGravity;if(!a||a.x==null)ret
   let x=a.x,y=a.y,z=a.z;const ang=(screen.orientation&&screen.orientation.angle)||window.orientation||0;
   if(ang===90){[x,y]=[-y,x]}else if(ang===-90||ang===270){[x,y]=[y,-x]}else if(ang===180){x=-x;y=-y}
   // 手ブレをならす：重力の向きだけを、ゆっくり追いかける（約0.5秒）
+  // 左右の傾きは、いちばん近い「まっすぐ」（0・90・180・270度）からのずれにする：iPadの縦・横の向きがうまく取れないときに、
+  // 線が90度回って中心の縦線に重なり、黄色のまま赤にならなかった（代表 10/29）
   const now=Date.now(),G=CAM.gv;
   if(!G||now-CAM.g>1500){CAM.gv={x,y,z}}else{const k=Math.min(0.1,(now-CAM.g)/500);G.x+=(x-G.x)*k;G.y+=(y-G.y)*k;G.z+=(z-G.z)*k}
-  const v=CAM.gv;CAM.roll=deg(Math.atan2(v.x,-v.y));CAM.pitch=deg(Math.atan2(v.z,Math.hypot(v.x,v.y)));CAM.g=now}   // roll：左右、pitch：上下（＋＝下を向く）
+  const v=CAM.gv,r0=deg(Math.atan2(v.x,-v.y));CAM.roll=((r0+45)%90+90)%90-45;CAM.pitch=deg(Math.atan2(v.z,Math.hypot(v.x,v.y)));CAM.g=now}   // roll：左右、pitch：上下（＋＝下を向く）
 async function camOpen(kind){CAM.kind=kind;CAM.gv=null;CAM.okH=false;try{document.activeElement&&document.activeElement.blur();window.scrollTo(0,0)}catch(e){}
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')await DeviceMotionEvent.requestPermission()}catch(e){}
   window.addEventListener('devicemotion',onMotion);
@@ -508,13 +510,13 @@ function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1;c
   silhouette(c,b,CAM.kind==='S');
   const cx=b.x+b.w/2,ty=b.y+b.h*SIL_TOP+b.h*SIL_HT*CENTER,has=CAM.g&&Date.now()-CAM.g<1500;
   c.setLineDash([5,6]);c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,b.y);c.lineTo(cx,b.y+b.h);c.stroke();
-  c.beginPath();c.arc(cx,ty,16,0,7);c.stroke();
+  const RING=12;c.beginPath();c.arc(cx,ty,RING,0,7);c.stroke();   // 中心の○（少し小さく・代表 10/29）。●の大きさは同じ
   if(!has){c.setLineDash([]);CAM.ok=true;$('#camS').textContent='傾きセンサーが使えないので、線は動きません。床や壁と線を目で合わせてください。';
     c.strokeStyle='rgba(255,90,54,.95)';c.lineWidth=2;c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke();$('#camShot').classList.remove('ok');return}
-  const R=CAM.roll,P=CAM.pitch,ok=CAM.okH?(Math.abs(R)<2&&Math.abs(P)<4.5):(Math.abs(R)<1&&Math.abs(P)<3);CAM.okH=ok;CAM.ok=ok;
+  const R=CAM.roll,P=CAM.pitch,ok=CAM.okH?(Math.abs(R)<1.3&&Math.abs(P)<3.5):(Math.abs(R)<1&&Math.abs(P)<3);CAM.okH=ok;CAM.ok=ok;   // 赤のあいだに少し傾くと、すぐ黄色に戻す（前は2度・4.5度まで赤のままで、●が○から出ていた・10/29）
   $('#camS').textContent=`左右 ${R>=0?'+':''}${R.toFixed(1)}°・上下 ${P>=0?'+':''}${P.toFixed(1)}°${ok?'　まっすぐです':''}`;
   if(!ok){c.beginPath();c.moveTo(b.x,ty);c.lineTo(b.x+b.w,ty);c.stroke()}   // 画面の基準（白い破線）
-  c.setLineDash([]);const dy=Math.max(-b.h/2,Math.min(b.h/2,P*b.h/60)),L=b.w;
+  c.setLineDash([]);const aP=Math.abs(P),dy0=aP<=3.5?aP/3.5*3:3+(aP-3.5)*b.h/60,dy=Math.sign(P)*Math.min(b.h/2,dy0),L=b.w;   // 赤になる範囲（上下3.5度まで）は●が○の中、外れると大きく動く
   c.save();c.translate(cx,ty+dy);c.rotate(-R*Math.PI/180);c.strokeStyle=ok?'rgba(255,70,40,1)':'rgba(255,214,0,1)';c.lineWidth=ok?2.5:2;c.beginPath();c.moveTo(-L,0);c.lineTo(L,0);c.stroke();c.restore();
   c.beginPath();c.arc(cx,ty+dy,9,0,7);c.fillStyle=ok?'#ff4628':'#ffd600';c.fill();
   $('#camShot').classList.toggle('ok',ok)}
