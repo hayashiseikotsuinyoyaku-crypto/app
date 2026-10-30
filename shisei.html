@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/29-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -205,7 +205,7 @@ let pose=null,poseQ=Promise.resolve();
 function getPose(){if(window.__FAKE_POSE)return window.__FAKE_POSE;if(pose)return pose;
   if(typeof Pose==='undefined')throw new Error('AIの読み込みに失敗しました。インターネットにつながっているか確認して、もう一度開いてください。');
   pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
-  pose.setOptions({modelComplexity:1,smoothLandmarks:false,enableSegmentation:true,minDetectionConfidence:.5});
+  pose.setOptions({modelComplexity:2,smoothLandmarks:false,enableSegmentation:true,minDetectionConfidence:.5});
   return pose}
 // AIの点＋体の形（背中の線を探すのに使う）
 function detect(cv){return poseQ=poseQ.then(()=>new Promise((ok,ng)=>{let p;try{p=getPose()}catch(e){ng(e);return}
@@ -231,10 +231,13 @@ function initPts(kind,ai,W,H){const lm=ai.lm||ai,mask=ai.mask||null,P=i=>({x:lm[
   o.chin={x:mo.x-f*T*0.02,y:Math.max(mo.y+T*0.06,eye.y+T*0.18)};
   o.cor={x:sh.x+f*T*0.11,y:sh.y-T*0.01};
   o.asis={x:gt.x+f*T*0.042,y:gt.y-T*0.09};   // 最初は骨盤の傾き「ふつう（25度）」の位置。前傾・後傾は点かグラフで直す
-  // 頭の後ろと背中：肩→大転子の長さ（T）を物差しにした目安。体の形がわかるときは背中の線に合わせる
-  const back=(dy,base,off)=>{const y=sh.y+dy*T,x0=base(dy);let p={x:x0-f*off*T,y};
+  // 頭の後ろと背中：肩→大転子の長さ（T）を物差しにした目安（骨格から推測）。体の形（輪郭）は、目安の近くにあるときだけ合わせる。
+  // ゆったりした服・フードは輪郭が大きく外へ出るので、目安から外へ 0.08T より出ていたら服とみなして使わない（代表 10/30：胴の広い服で服の輪郭に沿っていた）
+  const back=(dy,base,off)=>{const y=sh.y+dy*T,x0=base(dy),exp=off*T;let p={x:x0-f*exp,y};
     if(mask){let x=x0,lastIn=null;for(let i=0;i<T*0.6;i++){x=x0-f*i;if(mask.at(x,y)>0.5)lastIn=x;else if(lastIn!=null&&i>T*0.02)break}
-      if(lastIn!=null)p={x:lastIn+f*T*0.012,y}}
+      if(lastIn!=null){const d=(x0-lastIn)*f-T*0.012;   // 背骨の線から後ろへ何pxか
+        if(d<=exp+T*0.08){const dd=Math.max(exp*0.6,Math.min(exp+T*0.05,d));p={x:x0-f*dd,y}}   // 目安に近い：輪郭に合わせる（行き過ぎは少し戻す）
+        else p.cloth=true}}   // 服とみなした（目安の位置のまま）
     return p};
   const spine=dy=>sh.x+(gt.x-sh.x)*Math.max(0,Math.min(1,dy)),head=()=>ear.x;
   o.occ=back((eye.y-sh.y)/T,head,0.16);o.occF=back((ear.y-sh.y)/T+0.07,head,0.10);
