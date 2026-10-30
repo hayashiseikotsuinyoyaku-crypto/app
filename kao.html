@@ -298,7 +298,16 @@ async function kpLine(){if(!KP||!KP.saved)return;const b=$('#kpLine');if(!b.data
 async function kpInfo(quiet){if(!KP)return;$('#kpBar').hidden=false;if(!quiet){$('#kpNote').textContent='写真はこのiPadの中で分析し、「保存する」を押すと予約システム（院のGoogleドライブ）に保存します。真顔・正面・眼鏡なしで撮ってください。';kpSt('患者さんの情報を読み込んでいます…')}
   try{const r=await kpApi('kpfInfo');if(r.error){kpSt(r.error);return}KP.info=r;$('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
     const L=r.list.filter(x=>x.id!==KP.saved);$('#kpPrev').textContent=L.length?'前回 '+kd(L[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっto！フェイスです';
-    $('#kpHist').disabled=!L.length;if(!quiet)kpSt('')}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}kpButtons()}
+    $('#kpHist').disabled=!L.length;if(!quiet)kpSt('');
+    if(!quiet&&r.open&&!KP.saved&&!V.B.img)await kpResume(r.open)}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}kpButtons()}
+// 今日、施術前だけ保存してあるとき（画面を閉じた・読み込み直した）：その施術前を読み込んで、施術後を足せるようにする
+async function kpResume(o){kpSt('今日の施術前の写真を読み込んでいます…');
+  try{const r=await kpApi('kpfImg',{id:o.id,kind:'B'});if(r.error){kpSt('');return}
+    const im=await new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;i.src='data:image/jpeg;base64,'+r.data});
+    const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;cv.getContext('2d').drawImage(im,0,0);
+    const L=o.pB?o.pB.map(q=>({x:q[0],y:q[1],z:0})):null;V.B={img:cv,L,m:o.mB||(L?FM.measure(L,cv.width,cv.height):null),bs:null};
+    KP.saved=o.id;KP.dirty=false;draw('B');render();kpSt('今日の施術前（保存済み）を読み込みました。施術後を撮って「保存する」を押すと、同じ記録に足されます。')}
+  catch(e){kpSt('')}kpButtons()}
 // これまでの記録：数字の表と、その日の比べた画像
 async function histShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;$('#histSt').textContent='読み込んでいます…';$('#histBody').innerHTML='';
   const D=FM.diff(x.mB,x.mA),G=FM.highlights(D);
