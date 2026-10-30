@@ -61,7 +61,7 @@ body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{fon
 </style></head>
 <body>
 <header>
-  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/31-1</span>
+  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/31-2</span>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
@@ -78,7 +78,7 @@ body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{fon
     <div><h2>施術前 <small id="mtB"></small></h2><div class="cv" id="cvB"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
       <div class="btns staff"><button class="btn pri" id="cmB">カメラで撮る</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fB"></label></div><div class="status" id="sB"></div></div>
     <div><h2>施術後 <small id="mtA"></small></h2><div class="cv" id="cvA"><div class="empty">施術のあとに撮影してください</div></div>
-      <div class="btns staff"><button class="btn pri" id="cmA">カメラで撮る</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fA"></label></div><div class="status" id="sA"></div></div>
+      <div class="btns staff"><button class="btn pri" id="cmA" disabled>カメラで撮る</button><label class="btn" id="lfA" aria-disabled="true">写真から選ぶ<input type="file" accept="image/*" id="fA" disabled></label></div><div class="status" id="sA"></div></div>
   </div></section>
   <section class="card" id="goodBox" hidden><h2>変わったところ</h2><div class="good" id="good"></div></section>
   <section class="card" id="cmpBox" hidden><h2>並べて比べる <small>目の位置・大きさをそろえて並べています</small></h2>
@@ -199,7 +199,7 @@ function paint(c,L,W,H,u){if(!L)return;const p=i=>[L[i].x*W,L[i].y*H],P=FM.P;
   poly([P.fR,93,132,58,P.jR,136,150,149,176,148,P.chin,377,400,378,379,365,P.jL,288,361,323,P.fL],COL.jaw);[P.jR,P.jL,P.chin].forEach(i=>dot(i,COL.jaw,4));
   dot(P.nose,'#fff',3)}
 function sideLab(c,W,u){c.font=`700 ${16*u}px sans-serif`;c.textBaseline='top';[['右',8*u,'left'],['左',W-8*u,'right']].forEach(([t,x,al])=>{c.textAlign=al;c.fillStyle='rgba(60,60,60,.6)';const w=c.measureText(t).width+16*u;c.fillRect(al==='left'?0:W-w,0,w,26*u);c.fillStyle='#fff';c.fillText(t,x,5*u)})}
-function draw(k){const v=V[k],box=$('#cv'+k);if(!v.img){box.innerHTML='<div class="empty">'+(k==='B'?'「カメラで撮る」を押して撮影してください':'施術のあとに撮影してください')+'</div>';return}
+function draw(k){const v=V[k],box=$('#cv'+k);if(!v.img){box.innerHTML='<div class="empty">'+(k==='B'?'「カメラで撮る」を押して撮影してください':V.B.img?'施術のあとに撮影してください':'先に「施術前」を撮ってください。<br>施術のあとに、ここで施術後を撮ります。')+'</div>';return}
   const W=v.img.width,H=v.img.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');c.drawImage(v.img,0,0);const u=Math.max(W,H)/900;
   try{paint(c,v.L,W,H,u)}catch(e){}sideLab(c,W,u);cv.setAttribute('role','img');cv.setAttribute('aria-label',(k==='B'?'施術前':'施術後')+'の顔の写真（点と線つき）');box.innerHTML='';box.appendChild(cv);v.cv=cv}
 // ---- 目の位置をそろえて並べる・重ねる ----
@@ -215,7 +215,10 @@ function drawCmp(){const ok=V.B.L&&V.A.L;$('#cmpBox').hidden=!ok;if(!ok)return;c
   $('#cmpSide').hidden=cmpMode!=='side';$('#cmpOver').hidden=cmpMode!=='over'}
 // ---- 表 ----
 const fmt=(v,u)=>v==null?'—':v+(u?'<span class="u">'+u+'</span>':'');
-function render(){const mB=V.B.m,mA=V.A.m;
+// 施術後は、施術前を撮ってから（押し間違いを防ぐ・代表 10/31）
+function lockA(){const no=!V.B.img;$('#cmA').disabled=no;$('#fA').disabled=no;$('#lfA').setAttribute('aria-disabled',String(no));$('#lfA').style.opacity=no?.5:'';$('#lfA').style.pointerEvents=no?'none':'';
+  if(no&&!V.A.img)$('#cvA').innerHTML='<div class="empty">先に「施術前」を撮ってください。<br>施術のあとに、ここで施術後を撮ります。</div>'}
+function render(){lockA();const mB=V.B.m,mA=V.A.m;
   ['B','A'].forEach(k=>{const m=V[k].m;$('#mt'+k).textContent=m?`顔の向き：左右 ${m.yaw}°・上下 ${m.pitch}°`:''});
   if(!mB&&!mA){$('#tbl').innerHTML='<div class="note">写真を撮ると、ここに出ます。</div>';$('#goodBox').hidden=true;drawCmp();return}
   const both=mB&&mA,D=both?FM.diff(mB,mA):[];let g0='',h='<table class="fm"><thead><tr><th>項目</th>'+(mB?'<th>施術前</th>':'')+(mA?'<th>施術後</th>':'')+(both?'<th>変化</th>':'')+'</tr></thead><tbody>';
