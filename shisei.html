@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-2</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -678,7 +678,8 @@ async function extraImg(){const X=window.__xtra;if(!X||$('#xtra').hidden)return 
 /* ---- 予約システムとつなぐ（?t=チケット&a=予約システムのURL）：保存・前回と比べる・LINEで送る ---- */
 var KP=(()=>{const q=new URLSearchParams(location.search),t=q.get('t')||'',a=q.get('a')||'';
   return /^[0-9a-f]{40}$/.test(t)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(a)?{t,a,info:null,saved:null,dirty:true}:null})();
-async function kpApi(op,body){const r=await fetch(KP.a,{method:'POST',body:JSON.stringify(Object.assign({op,t:KP.t},body||{}))});return r.json()}
+async function kpApi(op,body){const ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(()=>ac.abort(),90000):0;   /* 90秒で止める（固まったままにしない） */
+  try{const r=await fetch(KP.a,{method:'POST',body:JSON.stringify(Object.assign({op,t:KP.t},body||{})),signal:ac?ac.signal:undefined});return r.json()}finally{clearTimeout(tm)}}
 const kpSt=t=>{$('#kpSt').textContent=t||''};
 function kpButtons(){if(!KP)return;const has=!!(V.F.pts||V.S.pts);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
   $('#kpLine').disabled=!KP.saved||KP.dirty||!(KP.info&&KP.info.line);$('#kpLine').title=KP.info&&!KP.info.line?'LINEの登録がない方です':'';
@@ -697,12 +698,20 @@ function kpReport(){const cs=['F','S'].map(k=>V[k].pts?$('#cv'+k+' canvas'):null
   const H=900,g=16,ws=cs.map(c=>Math.round(c.width*H/c.height)),out=document.createElement('canvas');out.width=ws.reduce((a,b)=>a+b,0)+g*(cs.length-1);out.height=H;
   const c=out.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,out.width,H);let x=0;cs.forEach((cv,i)=>{c.drawImage(cv,x,0,ws[i],H);x+=ws[i]+g});return out}
 const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
+/* 保存用：画面を止めずに写真を小さくしてJPEGにする（代表 10/30：保存が長く、iPadが固まった）。長い辺 max px・画質 q */
+const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
+  if(k<1){c=document.createElement('canvas');c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);c.getContext('2d').drawImage(cv,0,0,c.width,c.height)}
+  const done=b=>{if(!b){ok(b64(c,q));return}const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>ok(b64(c,q));fr.readAsDataURL(b)};
+  if(c.toBlob)c.toBlob(done,'image/jpeg',q||.8);else done(null)});
+const tick=()=>new Promise(r=>setTimeout(r,30));
 const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
 async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(L.F||L.S))return;
   ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
   const rep=kpReport(),xi=null,X=null;   // 重心位置・未来姿勢は使わない（代表）
-  $('#kpSave').disabled=true;kpSt('保存しています…');
-  try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:V.F.img?b64(V.F.img,.85):'',S:V.S.img?b64(V.S.img,.85):'',R:b64(rep),E:xi?b64(xi,.85):'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
+  $('#kpSave').disabled=true;kpSt('写真を準備しています…');await tick();
+  const iF=await b64a(V.F.img,.8,1080);await tick();const iS=await b64a(V.S.img,.8,1080);await tick();const iR=await b64a(rep,.8,1400);
+  kpSt('保存しています…（10秒ほどかかります。この画面のままお待ちください）');
+  try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:iF,S:iS,R:iR,E:'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
       find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
