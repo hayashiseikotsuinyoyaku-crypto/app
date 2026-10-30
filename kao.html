@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>ぴかっto！フェイス</title><meta name="apple-mobile-web-app-title" content="ぴかっto！フェイス">
+<style>
+/* ぴかっto！フェイス（美容鍼の前と後を顔の数字で比べる・代表 10/30）
+   iPadで施術の前と後に顔を撮る → 目・眉・口角・頬・フェイスライン・左右差を測って並べる → 保存・LINEで送る */
+:root{--bg:#f4f7f6;--card:#ffffff;--ink:#1f2a30;--sub:#5a6b70;--line:#d6e0de;--teal:#1f6f63;--teal2:#e3f0ed;--warn:#b5651d;--warn2:#fbefe3;--red:#b23a3a;--pink:#d4567a;
+  --f:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;-webkit-text-size-adjust:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:20px;margin:0;font-weight:800;display:inline-flex;align-items:center;gap:8px}header h1 img{width:40px;height:40px}
+header .tag{font-size:12px;background:var(--teal2);color:var(--teal);padding:2px 8px;border-radius:99px;font-weight:700}
+.seg{display:flex;border:1px solid var(--teal);border-radius:10px;overflow:hidden;margin-left:auto}
+.seg button{border:0;background:var(--card);color:var(--teal);font:inherit;font-weight:700;padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{padding:14px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.card h2{font-size:17px;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.card h2 small{font-weight:400;color:var(--sub);font-size:13px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.cv{position:relative;background:#eef2f1;border-radius:10px;overflow:hidden;min-height:240px;display:flex;align-items:center;justify-content:center}
+.cv canvas{display:block;width:100%;height:auto}.cv .empty{color:var(--sub);text-align:center;padding:30px 12px;line-height:1.7}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:10px 14px;border:1px solid var(--teal);background:var(--card);color:var(--teal);cursor:pointer}
+.btn.pri{background:var(--teal);color:#fff}.btn:disabled{opacity:.5}.btn input{display:none}
+.status{font-size:14px;color:var(--warn);margin-top:6px;min-height:1.2em}
+.note{font-size:12.5px;color:var(--sub);line-height:1.7}
+.kpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}.kpbar .btns{margin-top:0;margin-left:auto}.kpn b{font-size:19px;margin-right:12px}.kpbar .status{flex-basis:100%;margin-top:0;min-height:0}
+table.fm{width:100%;border-collapse:collapse;font-size:15px}
+table.fm th,table.fm td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.fm th:first-child,table.fm td:first-child{text-align:left;white-space:normal}
+table.fm thead th{font-size:13px;color:var(--sub);font-weight:700}
+table.fm tr.grp td{background:var(--teal2);font-weight:800;color:var(--teal);text-align:left}
+table.fm td.ch{font-weight:800}table.fm td.up{color:var(--teal)}table.fm td.dn{color:var(--pink)}
+table.fm .u{font-size:12px;color:var(--sub);font-weight:400;margin-left:2px}
+.fmw{overflow-x:auto}
+.good{display:grid;gap:8px}.good div{border-left:4px solid var(--teal);background:var(--teal2);border-radius:8px;padding:10px 12px;font-weight:700;line-height:1.6}
+.good div.w{border-left-color:var(--warn);background:var(--warn2)}
+.cmpv{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cmpv canvas{width:100%;border-radius:10px;display:block;background:#eef2f1}.cmph{font-weight:700;margin-bottom:4px;text-align:center}
+.ov{position:relative;max-width:520px;margin:0 auto}.ov canvas{width:100%;border-radius:10px;display:block}.cmpv{max-width:900px;margin:0 auto}.ovr{display:flex;align-items:center;gap:10px;margin-top:8px}.ovr input{flex:1}
+.htab{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.htab .btn[aria-pressed="true"]{background:var(--teal);color:#fff}
+body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{font-size:17px}
+[hidden]{display:none!important}
+#cam{position:fixed;inset:0;background:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50}
+.camwrap{position:absolute;inset:0}#cv,#co{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.camtop{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:70px;color:#fff;background:rgba(0,0,0,.45);border-radius:10px;padding:8px 12px;font-size:15px}.camtop b{font-size:17px;display:block}
+.camsens{position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);color:#fff;font-size:15px;font-weight:700;background:rgba(0,0,0,.5);border-radius:8px;padding:8px 12px;max-width:70%}
+.camx,.camflip{position:absolute;right:12px;width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px}
+.camx{top:calc(env(safe-area-inset-top,0px) + 10px)}.camflip{top:calc(env(safe-area-inset-top,0px) + 66px)}
+.camshot{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0}
+.camshot span{display:block;width:56px;height:56px;margin:auto;border-radius:50%;background:#e8534a}.camshot.ok{box-shadow:0 0 0 6px rgba(232,83,74,.55)}
+.campv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.campv p{color:#fff;margin:0;font-size:17px;font-weight:700;text-align:center}.campv div{display:flex;gap:12px}
+.campv button{font:inherit;font-size:18px;font-weight:800;border-radius:12px;padding:14px 26px;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff}.campv button.ok{background:#1f6f63;border-color:#1f6f63}
+#cam.pv .camshot,#cam.pv .camflip,#cam.pv .camsens{display:none}
+:focus-visible{outline:3px solid #2b8cff;outline-offset:2px}
+</style></head>
+<body>
+<header>
+  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/30-1</span>
+  <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
+</header>
+<main>
+  <section class="card kpbar" id="kpBar" hidden>
+    <div class="kpn"><b id="kpName"></b><span id="kpPrev" class="note"></span></div>
+    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpHist" disabled>これまでの記録</button></div>
+    <div class="status" id="kpSt"></div>
+  </section>
+  <section class="card" id="histBox" hidden><h2>これまでの記録 <select id="histSel" style="font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line)"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
+    <div class="status" id="histSt"></div><div id="histBody"></div>
+  </section>
+  <div class="note staff" id="kpNote">写真はこのiPadの中で分析します。顔の正面を、眼鏡をはずして、髪で眉や耳まわりが隠れないようにして撮ってください。表情は「真顔」で（笑うと口角・頬の数字が変わります）。</div>
+  <section class="card"><div class="pair">
+    <div><h2>施術前 <small id="mtB"></small></h2><div class="cv" id="cvB"><div class="empty">「カメラで撮る」を押して撮影してください</div></div>
+      <div class="btns staff"><button class="btn pri" id="cmB">カメラで撮る</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fB"></label></div><div class="status" id="sB"></div></div>
+    <div><h2>施術後 <small id="mtA"></small></h2><div class="cv" id="cvA"><div class="empty">施術のあとに撮影してください</div></div>
+      <div class="btns staff"><button class="btn pri" id="cmA">カメラで撮る</button><label class="btn">写真から選ぶ<input type="file" accept="image/*" id="fA"></label></div><div class="status" id="sA"></div></div>
+  </div></section>
+  <section class="card" id="goodBox" hidden><h2>変わったところ</h2><div class="good" id="good"></div></section>
+  <section class="card" id="cmpBox" hidden><h2>並べて比べる <small>目の位置・大きさをそろえて並べています</small></h2>
+    <div class="htab"><button class="btn" data-cm="side" aria-pressed="true">左右に並べる</button><button class="btn" data-cm="over" aria-pressed="false">重ねて比べる</button></div>
+    <div class="cmpv" id="cmpSide"><div><div class="cmph">施術前</div><canvas id="alB"></canvas></div><div><div class="cmph">施術後</div><canvas id="alA"></canvas></div></div>
+    <div class="ov" id="cmpOver" hidden><canvas id="alO"></canvas><div class="ovr"><span>施術前</span><input type="range" id="ovR" min="0" max="100" value="50" aria-label="施術前と施術後の重ね具合"><span>施術後</span></div></div>
+  </section>
+  <section class="card"><h2>顔の数字 <small>目と目の間の幅を100として測っています（写真の大きさが違っても比べられます）</small></h2><div class="fmw" id="tbl"><div class="note">写真を撮ると、ここに出ます。</div></div>
+    <div class="note" style="margin-top:8px">右・左は患者さんから見た右・左です。数字は写真から測った目安で、顔の向き・表情・光の当たり方でも少し変わります。</div></section>
+</main>
+<div id="cam" hidden>
+  <div class="camwrap"><video id="cv" playsinline muted autoplay></video><canvas id="co"></canvas>
+    <div class="camtop"><b id="camT">施術前</b><span id="camH">顔の枠に合わせて、まっすぐ正面を向いてください（真顔で）</span></div>
+    <div class="camsens" id="camS"></div>
+    <button class="camx" id="camX" aria-label="閉じる">✕</button><button class="camflip" id="camFlip" aria-label="内カメラ・外カメラを切り替え">⟲</button>
+    <button class="camshot" id="camShot" aria-label="撮る"><span></span></button>
+    <div class="campv" id="camPv" hidden><p id="camPvT">この写真でよろしいですか？</p><div><button id="camRe">撮り直す</button><button class="ok" id="camOk">OK</button></div></div>
+  </div>
+</div>
+<script>
+/* ---- 顔の点（MediaPipe Face Landmarker の478点）から数字を出す。ここは画面がなくても動く（テストできる） ----
+   ・目と目の中心を結ぶ線を横軸、その真ん中を原点、目と目の間（IPD）を100にした「顔の座標」に直してから測る
+     → 写真の大きさ・顔の傾き（カメラの傾き）が違っても比べられる
+   ・右・左は患者さんから見た右・左（写真では、患者さんの右は画面の左） */
+const FM=(()=>{
+  const RE=[33,246,161,160,159,158,157,173,133,155,154,153,145,144,163,7],LE=[263,466,388,387,386,385,384,398,362,382,381,380,374,373,390,249];
+  const RB=[70,63,105,66,107],LB=[300,293,334,296,336];
+  const P={reOut:33,reIn:133,reTop:159,reBot:145,leOut:263,leIn:362,leTop:386,leBot:374,mR:61,mL:291,lipU:13,lipD:14,lipTop:0,lipBot:17,
+    chR:50,chL:280,cbR:116,cbL:345,fR:234,fL:454,jR:172,jL:397,chin:152,top:10,nose:1,noseB:2};
+  const mean=(L,ix)=>{let x=0,y=0,z=0;ix.forEach(i=>{x+=L[i].x;y+=L[i].y;z+=L[i].z||0});return {x:x/ix.length,y:y/ix.length,z:z/ix.length}};
+  // 顔の座標：W,H は写真の幅・高さ（点は0〜1なので、縦横の比を合わせる）
+  function frame(L,W,H){const px=i=>({x:L[i].x*W,y:L[i].y*H,z:(L[i].z||0)*W});
+    const pr=mean(L.map(p=>({x:p.x*W,y:p.y*H,z:(p.z||0)*W})),RE),pl=mean(L.map(p=>({x:p.x*W,y:p.y*H,z:(p.z||0)*W})),LE);
+    const o={x:(pr.x+pl.x)/2,y:(pr.y+pl.y)/2},dx=pl.x-pr.x,dy=pl.y-pr.y,ipd=Math.hypot(dx,dy),c=dx/ipd,s=dy/ipd,k=100/ipd;
+    const T=p=>{const X=p.x-o.x,Y=p.y-o.y;return {x:(X*c+Y*s)*k,y:(-X*s+Y*c)*k,z:(p.z||0)*k}};
+    const Q=L.map(p=>T({x:p.x*W,y:p.y*H,z:(p.z||0)*W}));
+    return {Q,o,ipd,ang:Math.atan2(dy,dx)*180/Math.PI,c,s,k,T,px}}
+  const area=(Q,ix)=>{let a=0;for(let i=0;i<ix.length;i++){const p=Q[ix[i]],q=Q[ix[(i+1)%ix.length]];a+=p.x*q.y-q.x*p.y}return Math.abs(a)/2};
+  const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const r1=v=>Math.round(v*10)/10;
+  // 顔の向き（ずれていると数字が変わる）：左右の向き＝頬の端の奥行きの差、上下＝おでことあごの奥行きの差、傾き＝目の線
+  function pose(F){const Q=F.Q,yaw=Math.atan2(Q[P.fL].z-Q[P.fR].z,Q[P.fL].x-Q[P.fR].x)*180/Math.PI,pitch=Math.atan2(Q[P.top].z-Q[P.chin].z,Q[P.chin].y-Q[P.top].y)*180/Math.PI;
+    return {yaw:r1(yaw),pitch:r1(pitch),roll:r1(F.ang)}}
+  function measure(L,W,H,bs){if(!L||L.length<468)return null;const F=frame(L,W,H),Q=F.Q,m={};
+    m.eyeAreaR=r1(area(Q,RE)/10);m.eyeAreaL=r1(area(Q,LE)/10);   // 目の大きさ（面積・読みやすいように÷10）
+    m.eyeOpenR=r1(d(Q[P.reTop],Q[P.reBot])/d(Q[P.reOut],Q[P.reIn])*100);m.eyeOpenL=r1(d(Q[P.leTop],Q[P.leBot])/d(Q[P.leOut],Q[P.leIn])*100);   // 目の開き（縦÷横）
+    m.eyeWR=r1(d(Q[P.reOut],Q[P.reIn]));m.eyeWL=r1(d(Q[P.leOut],Q[P.leIn]));
+    const br=mean(Q,RB),bl=mean(Q,LB);m.browR=r1(Q[P.reTop].y-br.y);m.browL=r1(Q[P.leTop].y-bl.y);   // 眉の高さ（目の上から眉まで）
+    const mc=(Q[P.lipU].y+Q[P.lipD].y)/2;m.mouthR=r1(mc-Q[P.mR].y);m.mouthL=r1(mc-Q[P.mL].y);   // 口角の高さ（口の真ん中より上が＋）
+    m.cheekR=r1(Q[P.chR].y);m.cheekL=r1(Q[P.chL].y);   // 頬の位置（目の線から下へ。小さいほど高い）
+    m.cbR=r1(Q[P.cbR].y);m.cbL=r1(Q[P.cbL].y);   // 頬骨の高いところ
+    m.mouthTilt=r1(Math.atan2(Q[P.mL].y-Q[P.mR].y,Q[P.mL].x-Q[P.mR].x)*180/Math.PI);   // 口の線の傾き（目の線に対して。＋＝左の口角が下）
+    m.noseX=r1(Q[P.nose].x);m.chinX=r1(Q[P.chin].x);   // 鼻・あごの左右のずれ（＋＝患者さんの左へ）
+    m.faceW=r1(d(Q[P.fR],Q[P.fL]));m.jawW=r1(d(Q[P.jR],Q[P.jL]));m.lowH=r1(Q[P.chin].y-Q[P.noseB].y);m.faceH=r1(Q[P.chin].y-Q[P.top].y);
+    m.ratio=r1(m.faceH/m.faceW*100);
+    const po=pose(F);m.yaw=po.yaw;m.pitch=po.pitch;m.roll=po.roll;
+    if(bs){const g=n=>{const c=(bs.categories||bs).find(x=>x.categoryName===n);return c?c.score:0};m.smile=Math.round(Math.max(g('mouthSmileLeft'),g('mouthSmileRight'))*100);m.blink=Math.round(Math.max(g('eyeBlinkLeft'),g('eyeBlinkRight'))*100)}
+    return m}
+  // 撮るときの確かめ：まっすぐ・真顔・目を開けて・大きさ
+  function check(L,W,H,bs){if(!L)return {ok:false,msg:'顔が見つかりません。枠の中に顔を入れてください'};const m=measure(L,W,H,bs),F=frame(L,W,H),sz=F.ipd/Math.min(W,H);
+    if(sz<0.12)return {ok:false,msg:'もう少し近づいてください',m};if(sz>0.38)return {ok:false,msg:'少し離れてください',m};
+    if(Math.abs(m.yaw)>6)return {ok:false,msg:'顔を'+(m.yaw>0?'右':'左')+'に少し向けてください（正面に）',m};
+    if(Math.abs(m.roll)>4)return {ok:false,msg:'顔（またはカメラ）の傾きをまっすぐに',m};
+    if(Math.abs(m.pitch)>12)return {ok:false,msg:m.pitch>0?'あごを少し引いてください':'あごを少し上げてください',m};
+    if(m.smile>35)return {ok:false,msg:'笑わずに「真顔」でお願いします',m};if(m.blink>55)return {ok:false,msg:'目を開けてください',m};
+    return {ok:true,msg:'まっすぐです',m}}
+  // 表の行：[グループ, 名前, 右のキー, 左のキー, 単位, 増えると良い（1）/減ると良い（-1）/どちらでもない（0）, 説明]
+  const ROWS=[['目','目の大きさ','eyeAreaR','eyeAreaL','',1,'目のまわりの面積'],['目','目の開き','eyeOpenR','eyeOpenL','%',1,'目の縦の開き÷横の長さ'],['目','眉の高さ','browR','browL','',1,'目の上のふちから眉まで'],
+    ['口','口角の高さ','mouthR','mouthL','',1,'口の真ん中より上が＋','a'],['頬','頬の位置','cheekR','cheekL','',-1,'目の線から頬まで（小さいほど高い）'],['頬','頬骨の高さ','cbR','cbL','',-1,'目の線から頬骨まで（小さいほど高い）'],
+    ['輪郭','フェイスラインの幅','jawW',null,'',-1,'あごの角の幅'],['輪郭','顔の幅','faceW',null,'',0,'頬の外側の幅'],['輪郭','鼻の下からあごまで','lowH',null,'',0,''],['輪郭','顔の縦横の比','ratio',null,'%',0,'縦÷横'],
+    ['左右差','口の線の傾き','mouthTilt',null,'度',0,'目の線に対して。＋＝左の口角が下'],['左右差','鼻の左右のずれ','noseX',null,'',0,'＋＝左へ'],['左右差','あごの左右のずれ','chinX',null,'',0,'＋＝左へ']];
+  const pct=(a,b)=>a?Math.round((b-a)/Math.abs(a)*1000)/10:0;
+  // 前と後の差：%で出す（左右差の項目は差の大きさ）
+  function diff(mB,mA){const out=[];if(!mB||!mA)return out;
+    ROWS.forEach(([g,n,kr,kl,u,good,_d,mode])=>{(kl?[[kr,'右'],[kl,'左']]:[[kr,'']]).forEach(([k,sd])=>{const a=mB[k],b=mA[k];if(a==null||b==null)return;
+      const lr=g==='左右差',ab=lr||mode==='a',ch=lr?r1(Math.abs(b)-Math.abs(a)):mode==='a'?r1(b-a):pct(a,b),better=ch===0?null:lr?(ch<0):(good===0?null:(good>0?ch>0:ch<0));
+      out.push({g,n,sd,k,a,b,u,ch,lr,ab,better,good})})});
+    // 左右差（目の大きさ・口角・頬）
+    [['目の大きさの左右差','eyeAreaR','eyeAreaL'],['口角の左右差','mouthR','mouthL'],['頬の位置の左右差','cheekR','cheekL']].forEach(([n,r,l])=>{
+      const a=r1(Math.abs(mB[r]-mB[l])),b=r1(Math.abs(mA[r]-mA[l]));out.push({g:'左右差',n,sd:'',k:r+'-'+l,a,b,u:'',ch:r1(b-a),lr:true,ab:true,better:b===a?null:b<a})});
+    return out}
+  // 「変わったところ」：良くなった大きいものから（数字の小さな変化は出さない）
+  function highlights(D){const big=D.filter(x=>x.better===true&&(x.ab?Math.abs(x.ch)>=0.8:Math.abs(x.ch)>=2)).sort((a,b)=>(b.ab?Math.abs(b.ch)*3:Math.abs(b.ch))-(a.ab?Math.abs(a.ch)*3:Math.abs(a.ch)));
+    const said={},out=[];big.forEach(x=>{if(said[x.n])return;said[x.n]=1;
+      const two=!x.lr&&D.filter(y=>y.n===x.n&&y.better===true).length===2,sd=two?'両方の':(x.sd?x.sd+'の':''),pc=`（${x.ch>0?'+':''}${x.ch}%）`,pa=`（${Math.abs(x.ch)}%）`,k=x.k;
+      const t=x.lr?`${x.n}が小さくなりました（${x.a} → ${x.b}）`:
+        /^eyeArea/.test(k)?`${sd}目が大きくなりました${pc}`:/^eyeOpen/.test(k)?`${sd}目の開きが大きくなりました${pc}`:/^brow/.test(k)?`${sd}眉の位置が上がりました${pc}`:
+        /^mouth/.test(k)?`${sd}口角が上がりました（${x.a} → ${x.b}）`:/^cheek/.test(k)?`${sd}頬が上がりました${pa}`:/^cb/.test(k)?`${sd}頬骨の位置が上がりました${pa}`:
+        /^jaw/.test(k)?`フェイスラインがすっきりしました（幅 ${Math.abs(x.ch)}% 細く）`:`${sd}${x.n}が変わりました${pc}`;
+      out.push(t)});return out.slice(0,5)}
+  return {measure,check,frame,diff,highlights,ROWS,P,RE,LE,RB,LB,pose}})();
+if(typeof module!=='undefined')module.exports=FM;
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const V={B:{img:null,L:null,m:null,bs:null},A:{img:null,L:null,m:null,bs:null}};
+let FL=null,FLp=null;
+// 顔の点のAI（MediaPipe Face Landmarker）。最初に使うときに読み込む（数秒）
+function getFL(){if(window.__FL)return Promise.resolve(window.__FL);if(FL)return Promise.resolve(FL);if(FLp)return FLp;
+  FLp=(async()=>{const ver='0.10.14',{FaceLandmarker,FilesetResolver}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+ver+'/vision_bundle.mjs');
+    const fs=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+ver+'/wasm');
+    const opt=d=>({baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:d},runningMode:'IMAGE',numFaces:1,outputFaceBlendshapes:true});
+    try{FL=await FaceLandmarker.createFromOptions(fs,opt('GPU'))}catch(e){FL=await FaceLandmarker.createFromOptions(fs,opt('CPU'))}return FL})();
+  FLp.catch(()=>{FLp=null});return FLp}
+async function detect(cv){const fl=await getFL(),r=fl.detect(cv);const L=r&&r.faceLandmarks&&r.faceLandmarks[0];return {L:L||null,bs:r&&r.faceBlendshapes&&r.faceBlendshapes[0]||null}}
+// ---- 写真に点と線をかく ----
+const COL={eye:'#2fd3c4',brow:'#ffd23f',mouth:'#ff5a8a',cheek:'#ff9f1c',jaw:'#9b8cff',line:'rgba(255,255,255,.85)'};
+function paint(c,L,W,H,u){if(!L)return;const p=i=>[L[i].x*W,L[i].y*H],P=FM.P;
+  const poly=(ix,col,close)=>{c.beginPath();ix.forEach((i,j)=>{const [x,y]=p(i);j?c.lineTo(x,y):c.moveTo(x,y)});if(close)c.closePath();c.strokeStyle=col;c.lineWidth=2*u;c.stroke()};
+  const dot=(i,col,r)=>{const [x,y]=p(i);c.beginPath();c.arc(x,y,(r||4)*u,0,7);c.fillStyle=col;c.fill();c.lineWidth=1.5*u;c.strokeStyle='#fff';c.stroke()};
+  // 目の線（横）と顔の中心線（縦）
+  const F=FM.frame(L,W,H),ex=F.c*W*0.6,ey=F.s*W*0.6;c.setLineDash([6*u,6*u]);c.strokeStyle=COL.line;c.lineWidth=1.5*u;
+  c.beginPath();c.moveTo(F.o.x-ex,F.o.y-ey);c.lineTo(F.o.x+ex,F.o.y+ey);c.stroke();c.beginPath();c.moveTo(F.o.x+ey,F.o.y-ex);c.lineTo(F.o.x-ey*1.6,F.o.y+ex*1.6);c.stroke();c.setLineDash([]);
+  poly(FM.RE,COL.eye,1);poly(FM.LE,COL.eye,1);poly(FM.RB,COL.brow);poly(FM.LB,COL.brow);
+  c.beginPath();const a=p(P.mR),b=p(P.mL);c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.strokeStyle=COL.mouth;c.lineWidth=2*u;c.stroke();dot(P.mR,COL.mouth,5);dot(P.mL,COL.mouth,5);
+  [P.chR,P.chL].forEach(i=>dot(i,COL.cheek,5));[P.cbR,P.cbL].forEach(i=>dot(i,COL.cheek,3.5));
+  poly([P.fR,93,132,58,P.jR,136,150,149,176,148,P.chin,377,400,378,379,365,P.jL,288,361,323,P.fL],COL.jaw);[P.jR,P.jL,P.chin].forEach(i=>dot(i,COL.jaw,4));
+  dot(P.nose,'#fff',3)}
+function sideLab(c,W,u){c.font=`700 ${16*u}px sans-serif`;c.textBaseline='top';[['右',8*u,'left'],['左',W-8*u,'right']].forEach(([t,x,al])=>{c.textAlign=al;c.fillStyle='rgba(60,60,60,.6)';const w=c.measureText(t).width+16*u;c.fillRect(al==='left'?0:W-w,0,w,26*u);c.fillStyle='#fff';c.fillText(t,x,5*u)})}
+function draw(k){const v=V[k],box=$('#cv'+k);if(!v.img){box.innerHTML='<div class="empty">'+(k==='B'?'「カメラで撮る」を押して撮影してください':'施術のあとに撮影してください')+'</div>';return}
+  const W=v.img.width,H=v.img.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');c.drawImage(v.img,0,0);const u=Math.max(W,H)/900;
+  try{paint(c,v.L,W,H,u)}catch(e){}sideLab(c,W,u);cv.setAttribute('role','img');cv.setAttribute('aria-label',(k==='B'?'施術前':'施術後')+'の顔の写真（点と線つき）');box.innerHTML='';box.appendChild(cv);v.cv=cv}
+// ---- 目の位置をそろえて並べる・重ねる ----
+function aligned(k,S){const v=V[k];if(!v.img||!v.L)return null;const W=v.img.width,H=v.img.height,F=FM.frame(v.L,W,H),cv=document.createElement('canvas');cv.width=S;cv.height=Math.round(S*1.25);
+  const c=cv.getContext('2d'),sc=(S*0.30)/F.ipd;c.fillStyle='#eef2f1';c.fillRect(0,0,cv.width,cv.height);
+  c.translate(S/2,cv.height*0.40);c.rotate(-F.ang*Math.PI/180);c.scale(sc,sc);c.translate(-F.o.x,-F.o.y);c.drawImage(v.img,0,0);
+  c.setTransform(1,0,0,1,0,0);c.strokeStyle='rgba(255,255,255,.7)';c.setLineDash([6,6]);c.lineWidth=1.5;[0.40].forEach(f=>{c.beginPath();c.moveTo(0,cv.height*f);c.lineTo(S,cv.height*f);c.stroke()});
+  c.beginPath();c.moveTo(S/2,0);c.lineTo(S/2,cv.height);c.stroke();return cv}
+let cmpMode='side';
+function drawCmp(){const ok=V.B.L&&V.A.L;$('#cmpBox').hidden=!ok;if(!ok)return;const S=600,b=aligned('B',S),a=aligned('A',S);
+  const put=(id,src)=>{const t=$(id);t.width=src.width;t.height=src.height;t.getContext('2d').drawImage(src,0,0)};put('#alB',b);put('#alA',a);
+  const o=$('#alO');o.width=S;o.height=b.height;const c=o.getContext('2d'),r=+$('#ovR').value/100;c.globalAlpha=1;c.drawImage(b,0,0);c.globalAlpha=r;c.drawImage(a,0,0);c.globalAlpha=1;
+  $('#cmpSide').hidden=cmpMode!=='side';$('#cmpOver').hidden=cmpMode!=='over'}
+// ---- 表 ----
+const fmt=(v,u)=>v==null?'—':v+(u?'<span class="u">'+u+'</span>':'');
+function render(){const mB=V.B.m,mA=V.A.m;
+  ['B','A'].forEach(k=>{const m=V[k].m;$('#mt'+k).textContent=m?`顔の向き：左右 ${m.yaw}°・上下 ${m.pitch}°`:''});
+  if(!mB&&!mA){$('#tbl').innerHTML='<div class="note">写真を撮ると、ここに出ます。</div>';$('#goodBox').hidden=true;drawCmp();return}
+  const both=mB&&mA,D=both?FM.diff(mB,mA):[];let g0='',h='<table class="fm"><thead><tr><th>項目</th>'+(mB?'<th>施術前</th>':'')+(mA?'<th>施術後</th>':'')+(both?'<th>変化</th>':'')+'</tr></thead><tbody>';
+  const row=(n,sd,k,u,lr)=>{const a=mB&&mB[k],b=mA&&mA[k],x=D.find(y=>y.k===k);
+    let ch='';if(x){const s=x.ch>0?'+':'';ch=`<td class="ch ${x.better===true?'up':x.better===false?'dn':''}">${s}${x.ch}${x.ab?'':'%'}</td>`}else if(both)ch='<td></td>';
+    return `<tr><td>${esc(n)}${sd?'（'+sd+'）':''}</td>${mB?'<td>'+fmt(a,u)+'</td>':''}${mA?'<td>'+fmt(b,u)+'</td>':''}${ch}</tr>`};
+  FM.ROWS.forEach(([g,n,kr,kl,u])=>{if(g!==g0){h+=`<tr class="grp"><td colspan="4">${g}</td></tr>`;g0=g}
+    if(kl){h+=row(n,'右',kr,u,false)+row(n,'左',kl,u,false)}else h+=row(n,'',kr,u,g==='左右差')});
+  [['目の大きさの左右差','eyeAreaR','eyeAreaL'],['口角の左右差','mouthR','mouthL'],['頬の位置の左右差','cheekR','cheekL']].forEach(([n,r,l])=>{
+    const x=D.find(y=>y.k===r+'-'+l),a=mB?Math.round(Math.abs(mB[r]-mB[l])*10)/10:null,b=mA?Math.round(Math.abs(mA[r]-mA[l])*10)/10:null;
+    h+=`<tr><td>${n}</td>${mB?'<td>'+a+'</td>':''}${mA?'<td>'+b+'</td>':''}${x?`<td class="ch ${x.better===true?'up':x.better===false?'dn':''}">${x.ch>0?'+':''}${x.ch}</td>`:both?'<td></td>':''}</tr>`});
+  h+='</tbody></table>';$('#tbl').innerHTML=h;
+  const G=both?FM.highlights(D):[],warn=[];
+  if(both&&(Math.abs(mB.yaw-mA.yaw)>4||Math.abs(mB.pitch-mA.pitch)>6))warn.push('施術前と施術後で顔の向きが少し違います。数字の差が大きく出ることがあります。');
+  $('#goodBox').hidden=!both;$('#good').innerHTML=(G.length?G.map(t=>`<div>${esc(t)}</div>`).join(''):(both?'<div>大きな変化は見られませんでした。</div>':''))+warn.map(t=>`<div class="w">${esc(t)}</div>`).join('');
+  drawCmp();kpButtons()}
+// ---- 写真を読み込む・分析 ----
+async function setImg(k,img){const v=V[k];v.img=img;v.L=null;v.m=null;draw(k);render();$('#s'+k).textContent='顔の点を見つけています…（初めは数秒かかります）';
+  try{const r=await detect(img);if(!r.L){$('#s'+k).textContent='顔が見つかりませんでした。正面から、顔が大きめに写るように撮り直してください。';return}
+    v.L=r.L;v.bs=r.bs;v.m=FM.measure(r.L,img.width,img.height,r.bs);const ck=FM.check(r.L,img.width,img.height,r.bs);
+    $('#s'+k).textContent=ck.ok?'':'※ '+ck.msg+'（このままでも測れますが、数字が変わりやすくなります）';
+    if(KP){KP.dirty=true}draw(k);render()}catch(e){console.error(e);$('#s'+k).textContent='顔の分析を始められませんでした。インターネットを確認して、もう一度お試しください。'}}
+function fileImg(f){return new Promise((ok,ng)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);ok(cv)};im.onerror=ng;im.src=u})}
+['B','A'].forEach(k=>{$('#f'+k).addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{await setImg(k,await fileImg(f))}catch(x){$('#s'+k).textContent='写真を読み込めませんでした。'}});
+  $('#cm'+k).addEventListener('click',()=>camOpen(k))});
+document.querySelectorAll('[data-cm]').forEach(b=>b.onclick=()=>{cmpMode=b.dataset.cm;document.querySelectorAll('[data-cm]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));drawCmp()});
+$('#ovR').addEventListener('input',drawCmp);
+$('#vStaff').onclick=()=>{document.body.classList.remove('pt');$('#vStaff').setAttribute('aria-pressed','true');$('#vPt').setAttribute('aria-pressed','false')};
+$('#vPt').onclick=()=>{document.body.classList.add('pt');$('#vPt').setAttribute('aria-pressed','true');$('#vStaff').setAttribute('aria-pressed','false')};
+// ---- カメラ：顔の枠。顔の向き・真顔を見て、まっすぐなら赤いボタン ----
+const CAM={k:'B',facing:'environment',st:null,raf:0,busy:false,last:0,ck:null,pv:null};
+async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;CAM.st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:CAM.facing},width:{ideal:1920},height:{ideal:1920}}})}catch(e){return false}
+  const v=$('#cv');v.srcObject=CAM.st;try{await v.play()}catch(e){}return true}
+async function camOpen(k){CAM.k=k;$('#camT').textContent=k==='B'?'施術前':'施術後';
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||!(await camStart())){$('#s'+k).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください。';return}
+  $('#cam').hidden=false;$('#camPv').hidden=true;$('#cam').classList.remove('pv');getFL().catch(()=>{});loop()}
+function loop(){cancelAnimationFrame(CAM.raf);const f=()=>{camDraw();CAM.raf=requestAnimationFrame(f)};f()}
+function camClose(){cancelAnimationFrame(CAM.raf);if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;CAM.pv=null;$('#cam').hidden=true}
+function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H,s}}
+async function camCheck(){const v=$('#cv');if(CAM.busy||!v.videoWidth||Date.now()-CAM.last<300)return;CAM.busy=true;CAM.last=Date.now();
+  try{const k=Math.min(1,480/Math.max(v.videoWidth,v.videoHeight)),cv=document.createElement('canvas');cv.width=Math.round(v.videoWidth*k);cv.height=Math.round(v.videoHeight*k);cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+    const r=await detect(cv);CAM.ck=Object.assign(FM.check(r.L,cv.width,cv.height,r.bs),{L:r.L,w:cv.width,h:cv.height})}catch(e){CAM.ck={ok:false,msg:'顔の分析を読み込んでいます…'}}CAM.busy=false}
+function camDraw(){const cv=$('#co'),b=vidBox(),dpr=window.devicePixelRatio||1,cw=Math.round(b.W*dpr),ch=Math.round(b.H*dpr);if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,b.W,b.H);camCheck();
+  const cx=b.x+b.w/2,cy=b.y+b.h*0.46,rx=Math.min(b.w,b.h)*0.26,ry=rx*1.32,ok=CAM.ck&&CAM.ck.ok;
+  c.save();c.beginPath();c.rect(0,0,b.W,b.H);c.ellipse(cx,cy,rx,ry,0,0,7);c.fillStyle='rgba(14,63,57,.45)';c.fill('evenodd');c.restore();
+  c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,7);c.lineWidth=4;c.strokeStyle=ok?'rgba(255,70,40,1)':'rgba(47,211,196,.95)';c.stroke();
+  c.setLineDash([6,6]);c.lineWidth=1.5;c.strokeStyle='rgba(255,255,255,.85)';c.beginPath();c.moveTo(cx,cy-ry);c.lineTo(cx,cy+ry);c.moveTo(cx-rx,cy-ry*0.12);c.lineTo(cx+rx,cy-ry*0.12);c.stroke();c.setLineDash([]);
+  if(CAM.ck&&CAM.ck.L){const L=CAM.ck.L,sx=b.w,sy=b.h;c.fillStyle=ok?'#ff4628':'#ffd600';[...FM.RE,...FM.LE,FM.P.mR,FM.P.mL,FM.P.nose,FM.P.chin].forEach(i=>{c.beginPath();c.arc(b.x+L[i].x*sx,b.y+L[i].y*sy,2.2,0,7);c.fill()})}
+  $('#camS').textContent=CAM.ck?CAM.ck.msg:'顔の分析を読み込んでいます…';$('#camShot').classList.toggle('ok',!!ok)}
+function camShoot(){const v=$('#cv');if(!v.videoWidth)return;const k=Math.min(1,1600/Math.max(v.videoWidth,v.videoHeight)),cv=document.createElement('canvas');cv.width=Math.round(v.videoWidth*k);cv.height=Math.round(v.videoHeight*k);cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+  CAM.pv=cv;cancelAnimationFrame(CAM.raf);try{v.pause()}catch(e){}$('#camPvT').textContent=(CAM.k==='B'?'施術前':'施術後')+'：この写真でよろしいですか？'+(CAM.ck&&!CAM.ck.ok?'（'+CAM.ck.msg+'）':'');$('#camPv').hidden=false;$('#cam').classList.add('pv')}
+$('#camShot').onclick=camShoot;$('#camX').onclick=camClose;
+$('#camFlip').onclick=async()=>{CAM.facing=CAM.facing==='user'?'environment':'user';if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}};
+$('#camRe').onclick=()=>{$('#camPv').hidden=true;$('#cam').classList.remove('pv');try{$('#cv').play()}catch(e){}CAM.pv=null;loop()};
+$('#camOk').onclick=()=>{const img=CAM.pv,k=CAM.k;camClose();if(img)setImg(k,img)};
+// ---- 予約システムにつなぐ（ぴかっto！ボディと同じしくみ：6時間のチケット） ----
+var KP=(()=>{const q=new URLSearchParams(location.search),t=q.get('t')||'',a=q.get('a')||'';
+  return /^[0-9a-f]{40}$/.test(t)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(a)?{t,a,info:null,saved:null,dirty:true}:null})();
+async function kpApi(op,body){const ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(()=>ac.abort(),90000):0;
+  try{const r=await fetch(KP.a,{method:'POST',body:JSON.stringify(Object.assign({op,t:KP.t},body||{})),signal:ac?ac.signal:undefined});return r.json()}finally{clearTimeout(tm)}}
+const kpSt=t=>{$('#kpSt').textContent=t||''};
+const kd=v=>String(v||'').slice(0,10).replace(/-/g,'/');
+function kpButtons(){if(!KP)return;const has=!!(V.B.m||V.A.m);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
+  $('#kpLine').disabled=!KP.saved||KP.dirty||!(KP.info&&KP.info.line);$('#kpLine').title=KP.info&&!KP.info.line?'LINEの登録がない方です':''}
+const b64=(c,q)=>c.toDataURL('image/jpeg',q).split(',')[1];
+const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
+  if(k<1){c=document.createElement('canvas');c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);c.getContext('2d').drawImage(cv,0,0,c.width,c.height)}
+  const done=b=>{if(!b){ok(b64(c,q));return}const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>ok(b64(c,q));fr.readAsDataURL(b)};
+  try{c.toBlob(done,'image/jpeg',q)}catch(e){ok(b64(c,q))}});
+// 患者さん向けの比べた画像（目をそろえて前・後を並べた1枚）
+function report(){const S=500,b=V.B.L?aligned('B',S):null,a=V.A.L?aligned('A',S):null;if(!b&&!a)return null;const cv=document.createElement('canvas'),n=(b?1:0)+(a?1:0);cv.width=S*n+(n-1)*16;cv.height=(b||a).height+44;
+  const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.font='700 24px sans-serif';c.textAlign='center';c.fillStyle='#1f6f63';let x=0;
+  [[b,'施術前'],[a,'施術後']].forEach(([im,t])=>{if(!im)return;c.fillText(t,x+S/2,30);c.drawImage(im,x,44);x+=S+16});return cv}
+const lite=L=>L?L.map(p=>[Math.round(p.x*10000)/10000,Math.round(p.y*10000)/10000]):null;
+async function kpSave(){if(!KP||$('#kpSave').disabled)return;$('#kpSave').disabled=true;kpSt('保存しています…');
+  try{const B=await b64a(V.B.img,.8,1080),A=await b64a(V.A.img,.8,1080),R=await b64a(report(),.8,1200);
+    const D=V.B.m&&V.A.m?FM.diff(V.B.m,V.A.m):[],hl=D.length?FM.highlights(D):[];
+    const r=await kpApi('kpfSave',{id:KP.saved||'',B,A,R,mB:V.B.m,mA:V.A.m,pB:lite(V.B.L),pA:lite(V.A.L),diff:D,hl});
+    if(r.error){kpSt(r.error);$('#kpSave').disabled=false;return}KP.saved=r.id;KP.dirty=false;kpSt('保存しました。');kpInfo(true)}catch(e){kpSt('保存できませんでした。もう一度押してください。');$('#kpSave').disabled=false}kpButtons()}
+async function kpLine(){if(!KP||!KP.saved)return;const b=$('#kpLine');if(!b.dataset.sure){b.dataset.sure=1;b.textContent='もう一度押すと送ります';return}delete b.dataset.sure;b.textContent='LINEで送る';b.disabled=true;kpSt('LINEを送っています…');
+  try{const r=await kpApi('kpfLine',{id:KP.saved});kpSt(r.error?r.error:'患者さんのLINEに結果を送りました。')}catch(e){kpSt('LINEを送れませんでした。もう一度押してください。')}kpButtons()}
+async function kpInfo(quiet){if(!KP)return;$('#kpBar').hidden=false;if(!quiet){$('#kpNote').textContent='写真はこのiPadの中で分析し、「保存する」を押すと予約システム（院のGoogleドライブ）に保存します。真顔・正面・眼鏡なしで撮ってください。';kpSt('患者さんの情報を読み込んでいます…')}
+  try{const r=await kpApi('kpfInfo');if(r.error){kpSt(r.error);return}KP.info=r;$('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
+    const L=r.list.filter(x=>x.id!==KP.saved);$('#kpPrev').textContent=L.length?'前回 '+kd(L[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっto！フェイスです';
+    $('#kpHist').disabled=!L.length;if(!quiet)kpSt('')}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}kpButtons()}
+// これまでの記録：数字の表と、その日の比べた画像
+async function histShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;$('#histSt').textContent='読み込んでいます…';$('#histBody').innerHTML='';
+  const D=FM.diff(x.mB,x.mA),G=FM.highlights(D);
+  let h=G.length?'<div class="good">'+G.map(t=>`<div>${esc(t)}</div>`).join('')+'</div>':'';
+  try{const r=await kpApi('kpfImg',{id,kind:'R'});if(!r.error)h+=`<img src="data:image/jpeg;base64,${r.data}" alt="${esc(kd(x.date))}の施術前と施術後" style="width:100%;max-width:900px;display:block;margin:10px auto;border-radius:10px">`}catch(e){}
+  $('#histBody').innerHTML=h;$('#histSt').textContent=''}
+$('#kpHist').onclick=()=>{const L=((KP.info&&KP.info.list)||[]).filter(x=>x.id!==KP.saved);$('#histSel').innerHTML=L.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');$('#histBox').hidden=false;histShow()};
+$('#histSel').onchange=histShow;$('#histX').onclick=()=>{$('#histBox').hidden=true};
+$('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;
+if(KP)kpInfo();else $('#kpNote').textContent='写真はこのiPadの中だけで分析します（予約システムから開くと、保存とLINEで送ることができます）。真顔・正面・眼鏡なしで撮ってください。';
+render();
+</script>
+</body></html>
