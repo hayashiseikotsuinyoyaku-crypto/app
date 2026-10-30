@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-2</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-3</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -260,7 +260,7 @@ function calcF(p){const s=scale(p,'F'),hd=mid(p.top,p.chin),aM=mid(p.anL,p.anR);
     {id:'neck',name:'首の左右位置ずれ',v:(p.chin.x-p.jug.x)*s,u:'cm',side:['右','左']},
     {id:'sh',name:'肩の高さずれ',v:(p.shR.y-p.shL.y)*s,u:'cm',side:['右が上','左が上']},
     {id:'chest',name:'胸の左右位置ずれ',v:(p.jug.x-p.pub.x)*s,u:'cm',side:['右','左']},
-    {id:'hipT',name:'腰の左右傾き',v:-lineTilt(p.asR,p.asL),u:'度',side:['右','左']},
+    {id:'hipT',name:'骨盤の高さずれ',v:lineTilt(p.asR,p.asL),u:'度',side:['右が上','左が上']},   // グラフは上がっている側に出す（代表 10/30：肩と同じく↑）
     {id:'hipS',name:'腰の左右位置ずれ',v:(p.pub.x-aM.x)*s,u:'cm',side:['右','左']},
     {id:'ox',name:'O脚・X脚の度合い',v:(kneeGap-ankGap)*s,u:'cm',side:['X脚','O脚']}]}
 // 側面：グラフは カルティと同じく 左＝前、右＝後。＋＝後ろ
@@ -286,6 +286,9 @@ const TH={'度':[0.3,1.0,2.0],'cm':[0.5,1.0,2.0]},THX={head:[1,3,6],ox:[1,2,4],h
 const thr=m=>THX[m.id]||TH[m.u];
 function lev(m){if(m.ov!=null)return Math.abs(m.ov);const t=thr(m),a=Math.abs(m.v);return a>=t[2]?3:a>=t[1]?2:a>=t[0]?1:0}
 const sgn=m=>m.ov!=null?Math.sign(m.ov):Math.sign(m.v);
+/* グラフの文字：高さの項目（肩・骨盤＝「右が上」「左が上」）は上がっている側に ↑、ほかは向きの ← → （代表 10/30） */
+const gLab=(m,k,a,sd)=>{if(k===0)return '';const up=/が上/.test(sd[0]||''),t=m.ov!=null?(k<0?sd[0]:sd[1]):a.toFixed(1)+(m.u||'');
+  return up?`${t} ↑`:`${k<0?'← ':''}${t}${k>0?' →':''}`};
 function nw(m){return lev(m)+Math.min(1,Math.abs(m.v)/thr(m)[2]/3)}
 // 施術者がグラフで直した段（V[kind].ov）を数字に重ねる
 function applyOv(kind,L){if(!L)return L;const ov=V[kind].ov||{};L.forEach(m=>{if(ov[m.id]!=null)m.ov=ov[m.id]});return L}
@@ -303,7 +306,7 @@ function findings(F,S){const out=[],use=new Set(),g=(L,id)=>L&&L.find(m=>m.id===
   add(F,'sh',()=>1,'F',m=>`${dir(m).replace('が上','')}肩が${num(m)} 上がっています`,'荷物をいつも同じ側で持つ、片足に体重をかけて立つ、脚を組む。こうした左右の偏りの癖があると、片方の肩が上がりやすくなります。',['stand']);
   add(F,'up',()=>1,'F',m=>`上半身が${dir(m)}に${num(m)} 傾いています`,'座っているときに片方のひじや背もたれにもたれる癖はありませんか？体の片側ばかり使うと、背骨のまわりの筋肉に左右差が出ます。荷物の持ち手を入れ替えましょう。',['sit']);
   add(F,'chest',()=>1,'F',m=>`胸が${dir(m)}に${num(m)} ずれています`,'背骨の曲がりや骨盤のユガミが影響している可能性があります。立っているとき、左右の重心が均等になるよう意識しましょう。',['stand']);
-  add(F,'hipT',()=>1,'F',m=>`骨盤が${dir(m)}に${num(m)} 傾いています`,'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。',['stand']);
+  add(F,'hipT',()=>1,'F',m=>`骨盤の${dir(m).replace('が上','')}側が${num(m)} 上がっています`,'脚を組む・片足重心の癖が骨盤の傾きにつながります。気が付いたら両足に均等に体重をのせましょう。',['stand']);
   add(F,'hipS',()=>1,'F',m=>`腰が${dir(m)}に${num(m)} ずれています`,'立っているとき、片方の足に体重をかけていませんか？重心が片側に寄ると、その側の腰や股関節に負担がかかります。',['stand']);
   add(F,'neck',()=>1,'F',m=>`首が${dir(m)}に${num(m)} ずれています`,'スマホやテレビを見る向きが、いつも同じになっていませんか？首の片側の筋肉に負担がかかります。',['sit']);
   add(F,'head',()=>1,'F',m=>`頭が${dir(m)}に${num(m)} 傾いています`,'寝るときの向きや、画面を見る向きに偏りはありませんか？首の片側の筋肉が縮んで硬くなりやすい状態です。',['sit']);
@@ -418,7 +421,7 @@ function bindDrag(kind,cv){const box=$('#cv'+kind),P=new Map();let pin=null,pan=
 function table(kind,L){if(!L)return `<div class="note">写真を撮ると、ここに出ます。</div>`;
   const hd=kind==='F'?['右','左']:['前','後'];
   return `<div class="gr"><div class="gh"><span></span><span>${hd[0]}</span><span>ずれなし</span><span>${hd[1]}</span></div>${L.map(m=>{const k=sgn(m)*lev(m),a=Math.abs(m.v);
-    const lab=k===0?'':(m.ov!=null?`${k<0?'← ':''}${k<0?m.side[0]:m.side[1]}${k>0?' →':''}`:`${k<0?'← ':''}${a.toFixed(1)}${m.u}${k>0?' →':''}`);
+    const lab=gLab(m,k,a,m.side);
     const cells=[-3,-2,-1,0,1,2,3].map(i=>`<b data-k="${kind}" data-id="${m.id}" data-i="${i}" class="${i===k?'on':''}${i===0?' z':''}"></b>`).join('');
     return `<div class="gl"><span class="gn">${m.name}${m.ov!=null?' <i class="ovm">✎</i>':''}</span><span class="gc"><em class="${k<0?'l':'r'}" style="${k<0?'left:0':'right:0'}">${lab}</em>${cells}</span></div>`}).join('')}</div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('.gr b[data-id]');if(!b||document.body.classList.contains('pt'))return;
@@ -573,7 +576,7 @@ const ST={sori:['反り腰','腰が反り、おなかが前に出る型','腰と
   hiza:['膝曲がり','膝が曲がり、重心が下がっていく型','太ももの前とふくらはぎが休めない姿勢です。膝を軽く伸ばして立ち、太ももの裏とふくらはぎをストレッチしましょう。']};
 function futureOf(F,S){const sc=(L,id,want)=>{const m=gI(L,id);return m&&lev(m)>=2&&(!want||sgn(m)===want)?lev(m)+Math.min(1,Math.abs(m.v)/thr(m)[2]/3):0};
   let f=null,fw=0;const sh=gI(F,'sh'),up=gI(F,'up');
-  [[sc(F,'sh',-1),'rUp'],[sc(F,'sh',1),'lUp'],[sc(F,'up',1),'rUp'],[sc(F,'up',-1),'lUp'],[sc(F,'hipT',1)*0.8,'rUp'],[sc(F,'hipT',-1)*0.8,'lUp']].forEach(([w,k])=>{if(w>fw){fw=w;f=k}});
+  [[sc(F,'sh',-1),'rUp'],[sc(F,'sh',1),'lUp'],[sc(F,'up',1),'rUp'],[sc(F,'up',-1),'lUp'],[sc(F,'hipT',-1)*0.8,'rUp'],[sc(F,'hipT',1)*0.8,'lUp']].forEach(([w,k])=>{if(w>fw){fw=w;f=k}});
   let s=null,sw=0;
   [[sc(S,'pel',-1),'sori'],[sc(S,'hipS',1)*0.9,'sori'],[sc(S,'kyph',1),'neko'],[sc(S,'headS',-1)*0.9,'neko'],[Math.min(sc(S,'hipS',-1),sc(S,'up',1)||sc(S,'all',1))*1.0,'sway'],[sc(S,'pel',1),'heihai'],[sc(S,'knee',-1),'hiza']].forEach(([w,k])=>{if(w>sw){sw=w;s=k}});
   const name=[f&&FT[f][0],s&&ST[s][0]].filter(Boolean).join('×');
@@ -753,7 +756,7 @@ function ptsCanvas(b64d,kind,pts){return new Promise(ok=>{const im=new Image();i
 // 保存した項目のグラフ（撮ったときと同じ見た目・押しても変わらない・10/21）
 function savedGraph(kind,L){if(!L||!L.length)return '';const hd=kind==='F'?['右','左']:['前','後'];
   return `<div class="gr ro"><div class="gh"><span></span><span>${hd[0]}</span><span>ずれなし</span><span>${hd[1]}</span></div>${L.map(m=>{const k=(m.sg||0)*(m.lev||0),a=Math.abs(+m.v||0),sd=m.side||['',''];
-    const lab=k===0?'':(m.ov!=null?`${k<0?'← ':''}${k<0?sd[0]:sd[1]}${k>0?' →':''}`:`${k<0?'← ':''}${a.toFixed(1)}${m.u||''}${k>0?' →':''}`);
+    const lab=gLab(m,k,a,sd);
     const cells=[-3,-2,-1,0,1,2,3].map(i=>`<b class="${i===k?'on':''}${i===0?' z':''}"></b>`).join('');
     return `<div class="gl"><span class="gn">${m.name||''}${m.ov!=null?' <i class="ovm">✎</i>':''}</span><span class="gc"><em class="${k<0?'l':'r'}" style="${k<0?'left:0':'right:0'}">${lab}</em>${cells}</span></div>`}).join('')}</div>`}
 /* これまでの写真（開いたときから見られる・10/17） */
