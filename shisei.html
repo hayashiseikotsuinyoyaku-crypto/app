@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>ぴかっto！</title><meta name="apple-mobile-web-app-title" content="ぴかっto！">
+<title>ぴかっto！ボディ</title><meta name="apple-mobile-web-app-title" content="ぴかっto！ボディ">
 <style>
 /* iPadで撮って、その場で患者さんに見せる。左：写真と点、右：数字と「意識すること」 */
 :root{--bg:#f4f7f6;--card:#ffffff;--ink:#1f2a30;--sub:#5a6b70;--line:#d6e0de;--teal:#1f6f63;--teal2:#e3f0ed;--warn:#b5651d;--warn2:#fbefe3;--red:#b23a3a;--pt:#ff5a36;--pt2:#2b8cff;
@@ -131,7 +131,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！</h1><span class="tag">試作 10/30-3</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！ボディ</h1><span class="tag">試作 10/30-4</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -176,7 +176,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </main>
 <div id="cam" hidden>
   <div class="camwrap"><video id="cv" playsinline muted autoplay></video><canvas id="co"></canvas>
-    <div class="cambrand"><img src="img/logo.png" alt=""><b>ぴかっto！</b></div>
+    <div class="cambrand"><img src="img/logo.png" alt=""><b>ぴかっto！ボディ</b></div>
     <div class="camtop"><b id="camT">立位正面</b><span id="camN">1/2</span><div id="camH">正面を向いて、かかとをつけて立ってください</div></div>
     <div class="camsens" id="camS"></div>
     <button class="camx" id="camX" aria-label="閉じる">✕</button>
@@ -693,7 +693,7 @@ async function kpInit(){if(!KP)return;$('#kpBar').hidden=false;$('#kpNote').text
   kpSt('患者さんの情報を読み込んでいます…');
   try{const r=await kpApi('kpInfo');if(r.error){kpSt(r.error);return}KP.info=r;
     $('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
-    $('#kpPrev').textContent=r.list.length?'前回 '+kd(r.list[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっto！です';
+    $('#kpPrev').textContent=r.list.length?'前回 '+kd(r.list[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっto！ボディです';
     $('#kpHist').disabled=!r.list.length;$('#kpHist').textContent=r.list.length?'これまでの写真（'+r.list.length+'回）':'これまでの写真';
     if(r.height)$('#ht').value=r.height;kpSt('');renderNums()}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}}
 // 結果の画像：正面と側面（点と線つき）を横に並べた1枚
