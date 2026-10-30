@@ -53,12 +53,15 @@ body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{fon
 .campv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 16px)}
 .campv p{color:#fff;margin:0;font-size:17px;font-weight:700;text-align:center}.campv div{display:flex;gap:12px}
 .campv button{font:inherit;font-size:18px;font-weight:800;border-radius:12px;padding:14px 26px;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff}.campv button.ok{background:#1f6f63;border-color:#1f6f63}
+/* 撮ったあとの「OK・撮り直す」は、シャッターボタンの場所の下に（代表 10/31：手元で押しやすく） */
+.campv{left:auto;right:12px;bottom:auto;top:calc(50% - 38px);width:210px;border-radius:14px;padding:12px;gap:10px}
+.campv p{font-size:15px}.campv div{flex-direction:column-reverse;width:100%;gap:10px}.campv button{width:100%;padding:14px 10px}
 #cam.pv .camshot,#cam.pv .camflip,#cam.pv .camsens{display:none}
 :focus-visible{outline:3px solid #2b8cff;outline-offset:2px}
 </style></head>
 <body>
 <header>
-  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/30-1</span>
+  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/31-1</span>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
