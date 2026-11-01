@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>はやしハリきゅう整骨院</title>
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<!-- LINEのリッチメニュー「スタンプカード」から開く入口（LIFF・代表 11/1）。押した方を LINE で確かめて、すぐスタンプカードを開く。家族で複数登録している方は選ぶ -->
+<style>
+:root{--bg:#F4F1EC;--card:#fff;--ink:#2B2723;--sub:#6B635B;--teal:#115C55;--or:#D4521F;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;font-size:16px;line-height:1.7}
+.wrap{max-width:440px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:20px;margin:0 0 12px}
+.msg{color:var(--sub);text-align:center;padding:40px 8px}
+.spin{width:36px;height:36px;margin:0 auto 14px;border:4px solid #E4DDD3;border-top-color:var(--teal);border-radius:50%;animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+.btn{display:block;width:100%;margin:10px 0;padding:16px;border:0;border-radius:16px;background:var(--teal);color:#fff;font:inherit;font-weight:800;font-size:18px;text-align:center;text-decoration:none}
+.btn.sub{background:#E4DDD3;color:var(--ink);font-size:15px}
+.card{background:var(--card);border-radius:18px;padding:18px 16px;margin-top:8px}
+</style>
+</head><body><div class="wrap" id="w"><div class="msg"><div class="spin"></div>開いています…</div></div>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+var EXEC = 'https://script.google.com/macros/s/AKfycby8QI2NKxAnfMymleQvHoTgtKQzDgCMyrNqpLqohiIJtAdZYc0U1zrNqB5NY5_4kwhf/exec';
+var LIFF_ID = '2012318507-fB5MMT3Y';
+var W = document.getElementById('w');
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function closeBtn(){return (window.liff&&liff.isInClient&&liff.isInClient())?'<button class="btn sub" onclick="liff.closeWindow()">閉じる</button>':''}
+function show(h){W.innerHTML=h}
+function fail(t){show('<div class="card"><h1>開けませんでした</h1><p>'+esc(t)+'</p></div>'+closeBtn())}
+function page(){var q=new URLSearchParams(location.search),p=q.get('p');if(!p){var st=q.get('liff.state');if(st){try{p=new URLSearchParams(st.replace(/^[^?]*\?/,'')).get('p')}catch(e){}}}return p||'stamp'}
+(async function(){
+  try{
+    if(!window.liff)throw new Error('LINEの準備ができませんでした。');
+    await liff.init({liffId:LIFF_ID});
+    if(!liff.isLoggedIn()){liff.login({redirectUri:location.href});return}
+    var it=liff.getIDToken();if(!it){fail('LINEの情報が受け取れませんでした。LINEのトーク画面のメニューから開き直してください。');return}
+    var r=await fetch(EXEC,{method:'POST',body:JSON.stringify({op:'liff',it:it,p:page()})});
+    var x=await r.json();
+    if(x.error){fail(x.error);return}
+    if(x.none){show('<div class="card"><h1>スタンプカード</h1><p>'+esc(x.msg)+'</p></div>'+closeBtn());return}
+    var L=x.list||[];
+    if(L.length===1){location.replace(L[0].url);return}
+    show('<h1>どなたのスタンプカードを見ますか？</h1>'+L.map(function(l){return '<a class="btn" href="'+esc(l.url)+'">'+esc(l.name)+' 様</a>'}).join('')+closeBtn());
+  }catch(e){fail('通信がうまくいきませんでした。電波のよい所で、LINEのトーク画面のメニューから開き直してください。')}
+})();
+</script>
+</body></html>
