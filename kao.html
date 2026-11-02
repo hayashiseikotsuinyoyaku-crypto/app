@@ -61,17 +61,17 @@ body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{fon
 </style></head>
 <body>
 <header>
-  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 10/31-2</span>
+  <h1><img src="img/logo.png" alt="">ぴかっto！フェイス</h1><span class="tag">試作 11/2-1</span>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
 <main>
   <section class="card kpbar" id="kpBar" hidden>
     <div class="kpn"><b id="kpName"></b><span id="kpPrev" class="note"></span></div>
-    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpHist" disabled>これまでの記録</button></div>
+    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpHist" disabled>これまでの記録</button><button class="btn staff" id="kpBack">← 予約システムに戻る</button></div>
     <div class="status" id="kpSt"></div>
   </section>
   <section class="card" id="histBox" hidden><h2>これまでの記録 <select id="histSel" style="font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line)"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
-    <div class="status" id="histSt"></div><div id="histBody"></div>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="note" id="histBy"></span><button class="btn staff" id="histLine" style="margin-left:auto">この日の結果をLINEで送る</button></div><div class="status" id="histSt"></div><div id="histBody"></div>
   </section>
   <div class="note staff" id="kpNote">写真はこのiPadの中で分析します。顔の正面を、眼鏡をはずして、髪で眉や耳まわりが隠れないようにして撮ってください。表情は「真顔」で（笑うと口角・頬の数字が変わります）。</div>
   <section class="card"><div class="pair">
@@ -316,12 +316,24 @@ async function kpResume(o){kpSt('今日の施術前の写真を読み込んで�
   catch(e){kpSt('')}kpButtons()}
 // これまでの記録：数字の表と、その日の比べた画像
 async function histShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.list)||[]).find(y=>y.id===id);if(!x)return;$('#histSt').textContent='読み込んでいます…';$('#histBody').innerHTML='';
+  const hl0=$('#histLine');delete hl0.dataset.sure;hl0.textContent='この日の結果をLINEで送る';hl0.disabled=!(KP.info&&KP.info.line);hl0.title=hl0.disabled?'LINEの登録がない方です':'';$('#histBy').textContent=x.by?'撮った人：'+x.by:'';
   const D=FM.diff(x.mB,x.mA),G=FM.highlights(D);
   let h=G.length?'<div class="good">'+G.map(t=>`<div>${esc(t)}</div>`).join('')+'</div>':'';
   try{const r=await kpApi('kpfImg',{id,kind:'R'});if(!r.error)h+=`<img src="data:image/jpeg;base64,${r.data}" alt="${esc(kd(x.date))}の施術前と施術後" style="width:100%;max-width:900px;display:block;margin:10px auto;border-radius:10px">`}catch(e){}
   $('#histBody').innerHTML=h;$('#histSt').textContent=''}
 $('#kpHist').onclick=()=>{const L=((KP.info&&KP.info.list)||[]).filter(x=>x.id!==KP.saved);$('#histSel').innerHTML=L.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');$('#histBox').hidden=false;histShow()};
 $('#histSel').onchange=histShow;$('#histX').onclick=()=>{$('#histBox').hidden=true};
+/* これまでの記録：過去の結果をもう一度LINEで送る（ボディと同じ・11/2） */
+async function histLine(){const b=$('#histLine'),id=$('#histSel').value;if(!id||b.disabled)return;
+  if(!b.dataset.sure){b.dataset.sure=1;b.textContent='もう一度押すと送ります';return}
+  delete b.dataset.sure;b.textContent='この日の結果をLINEで送る';b.disabled=true;$('#histSt').textContent='LINEを送っています…';
+  try{const r=await kpApi('kpfLine',{id});$('#histSt').textContent=r.error?r.error:'患者さんのLINEに、この日の結果を送りました。'}catch(e){$('#histSt').textContent='LINEを送れませんでした。もう一度押してください。'}
+  b.disabled=!(KP.info&&KP.info.line)}
+/* 予約システムに戻る（ボディと同じ：保存していないときは2回押し・11/2） */
+function kpBack(){const b=$('#kpBack');if(KP&&KP.dirty&&(V.B.m||V.A.m)&&!b.dataset.sure){b.dataset.sure=1;b.textContent='保存していません。もう一度押すと戻ります';return}
+  delete b.dataset.sure;b.textContent='← 予約システムに戻る';try{window.close()}catch(e){}
+  setTimeout(()=>{if(!window.closed)kpSt('この画面（タブ）を閉じると、予約システムに戻れます。')},400)}
+$('#kpBack').onclick=kpBack;$('#histLine').onclick=histLine;
 $('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;
 if(KP)kpInfo();else $('#kpNote').textContent='写真はこのiPadの中だけで分析します（予約システムから開くと、保存とLINEで送ることができます）。真顔・正面・眼鏡なしで撮ってください。';
 render();
