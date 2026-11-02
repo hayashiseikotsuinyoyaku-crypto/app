@@ -134,7 +134,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！ボディ</h1><span class="tag">試作 11/2-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！ボディ</h1><span class="tag">試作 11/2-2</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -722,7 +722,8 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
       find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
     KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov,w:V.F.img&&V.F.img.width}:null,S:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov,w:V.S.img&&V.S.img.width}:null});
-    kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
+    const fe=r.fee||{},ft=fe.added?'今日の会計に「姿勢検査料」を足しました'+(fe.staff?'（担当：'+fe.staff+'）':'（担当は会計で選んでください）')+'。':fe.skip==='exists'?'会計の「姿勢検査料」はもう入っています。':fe.skip==='paid'?'今日の会計は済んでいるので、姿勢検査料は足していません。':'';
+    kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。'+ft);kpButtons()}
   catch(e){kpSt('保存できませんでした。インターネットを確認して、もう一度押してください。');kpButtons()}}
 async function kpLine(){if(!KP||!KP.saved)return;if(!$('#kpLine').dataset.sure){$('#kpLine').dataset.sure=1;$('#kpLine').textContent='もう一度押すと送ります';return}
   delete $('#kpLine').dataset.sure;$('#kpLine').textContent='LINEで送る';$('#kpLine').disabled=true;kpSt('LINEを送っています…');
