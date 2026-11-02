@@ -67,11 +67,23 @@ body.pt .staff{display:none}body.pt .card h2{font-size:20px}body.pt table.fm{fon
 <main>
   <section class="card kpbar" id="kpBar" hidden>
     <div class="kpn"><b id="kpName"></b><span id="kpPrev" class="note"></span></div>
-    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpHist" disabled>これまでの記録</button><button class="btn staff" id="kpBack">← 予約システムに戻る</button></div>
+    <div class="btns"><button class="btn pri staff" id="kpSave" disabled>保存する</button><button class="btn staff" id="kpLine" disabled>LINEで送る</button><button class="btn" id="kpCmp" disabled>前回と比べる</button><button class="btn" id="kpHist" disabled>これまでの記録</button><button class="btn staff" id="kpBack">← 予約システムに戻る</button></div>
     <div class="status" id="kpSt"></div>
   </section>
   <section class="card" id="histBox" hidden><h2>これまでの記録 <select id="histSel" style="font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line)"></select><button class="btn" id="histX" style="margin-left:auto">閉じる</button></h2>
     <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="note" id="histBy"></span><button class="btn staff" id="histLine" style="margin-left:auto">この日の結果をLINEで送る</button></div><div class="status" id="histSt"></div><div id="histBody"></div>
+  </section>
+  <section class="card" id="pcBox" hidden><h2>前回と比べる <button class="btn" id="pcX" style="margin-left:auto">閉じる</button></h2>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <label class="note">前回の記録 <select id="pcSel" style="font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--line)"></select></label>
+      <span class="htab" id="pcOld"><button class="btn" data-po="B" aria-pressed="true">その日の施術前</button><button class="btn" data-po="A" aria-pressed="false">その日の施術後</button></span>
+      <span class="note">と</span>
+      <span class="htab" id="pcNow"><button class="btn" data-pn="B" aria-pressed="true">今日の施術前</button><button class="btn" data-pn="A" aria-pressed="false">今日の施術後</button></span></div>
+    <div class="status" id="pcSt"></div>
+    <div class="htab"><button class="btn" data-pm="side" aria-pressed="true">左右に並べる</button><button class="btn" data-pm="over" aria-pressed="false">重ねて比べる</button></div>
+    <div class="cmpv" id="pcSide"><div><div class="cmph" id="pcH1">前回</div><canvas id="pcC1"></canvas></div><div><div class="cmph" id="pcH2">今日</div><canvas id="pcC2"></canvas></div></div>
+    <div class="ov" id="pcOver" hidden><canvas id="pcO"></canvas><div class="ovr"><span>前回</span><input type="range" id="pcR" min="0" max="100" value="50" aria-label="前回と今日の重ね具合"><span>今日</span></div></div>
+    <div id="pcGood"></div><div class="fmw" id="pcTbl"></div>
   </section>
   <div class="note staff" id="kpNote">写真はこのiPadの中で分析します。顔の正面を、眼鏡をはずして、髪で眉や耳まわりが隠れないようにして撮ってください。表情は「真顔」で（笑うと口角・頬の数字が変わります）。</div>
   <section class="card"><div class="pair">
@@ -203,7 +215,7 @@ function draw(k){const v=V[k],box=$('#cv'+k);if(!v.img){box.innerHTML='<div clas
   const W=v.img.width,H=v.img.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');c.drawImage(v.img,0,0);const u=Math.max(W,H)/900;
   try{paint(c,v.L,W,H,u)}catch(e){}sideLab(c,W,u);cv.setAttribute('role','img');cv.setAttribute('aria-label',(k==='B'?'施術前':'施術後')+'の顔の写真（点と線つき）');box.innerHTML='';box.appendChild(cv);v.cv=cv}
 // ---- 目の位置をそろえて並べる・重ねる ----
-function aligned(k,S){const v=V[k];if(!v.img||!v.L)return null;const W=v.img.width,H=v.img.height,F=FM.frame(v.L,W,H),cv=document.createElement('canvas');cv.width=S;cv.height=Math.round(S*1.25);
+function aligned(k,S){const v=typeof k==='string'?V[k]:k;if(!v.img||!v.L)return null;const W=v.img.width,H=v.img.height,F=FM.frame(v.L,W,H),cv=document.createElement('canvas');cv.width=S;cv.height=Math.round(S*1.25);
   const c=cv.getContext('2d'),sc=(S*0.30)/F.ipd;c.fillStyle='#eef2f1';c.fillRect(0,0,cv.width,cv.height);
   c.translate(S/2,cv.height*0.40);c.rotate(-F.ang*Math.PI/180);c.scale(sc,sc);c.translate(-F.o.x,-F.o.y);c.drawImage(v.img,0,0);
   c.setTransform(1,0,0,1,0,0);c.strokeStyle='rgba(255,255,255,.7)';c.setLineDash([6,6]);c.lineWidth=1.5;[0.40].forEach(f=>{c.beginPath();c.moveTo(0,cv.height*f);c.lineTo(S,cv.height*f);c.stroke()});
@@ -282,7 +294,7 @@ async function kpApi(op,body){const ac=window.AbortController?new AbortControlle
   try{const r=await fetch(KP.a,{method:'POST',body:JSON.stringify(Object.assign({op,t:KP.t},body||{})),signal:ac?ac.signal:undefined});return r.json()}finally{clearTimeout(tm)}}
 const kpSt=t=>{$('#kpSt').textContent=t||''};
 const kd=v=>String(v||'').slice(0,10).replace(/-/g,'/');
-function kpButtons(){if(!KP)return;const has=!!(V.B.m||V.A.m);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
+function kpButtons(){if(!KP)return;if(typeof pcBtn==='function')pcBtn();const has=!!(V.B.m||V.A.m);$('#kpSave').disabled=!has||!KP.dirty;$('#kpSave').textContent=KP.saved&&!KP.dirty?'保存しました ✓':'保存する';
   $('#kpLine').disabled=!KP.saved||KP.dirty||!(KP.info&&KP.info.line);$('#kpLine').title=KP.info&&!KP.info.line?'LINEの登録がない方です':''}
 const b64=(c,q)=>c.toDataURL('image/jpeg',q).split(',')[1];
 const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
@@ -304,7 +316,7 @@ async function kpLine(){if(!KP||!KP.saved)return;const b=$('#kpLine');if(!b.data
 async function kpInfo(quiet){if(!KP)return;$('#kpBar').hidden=false;if(!quiet){$('#kpNote').textContent='写真はこのiPadの中で分析し、「保存する」を押すと予約システム（院のGoogleドライブ）に保存します。真顔・正面・眼鏡なしで撮ってください。';kpSt('患者さんの情報を読み込んでいます…')}
   try{const r=await kpApi('kpfInfo');if(r.error){kpSt(r.error);return}KP.info=r;$('#kpName').textContent=r.name+' 様'+(r.kno?'（'+r.kno+'）':'');
     const L=r.list.filter(x=>x.id!==KP.saved);$('#kpPrev').textContent=L.length?'前回 '+kd(L[0].date)+'（これまで'+r.list.length+'回）':'はじめてのぴかっto！フェイスです';
-    $('#kpHist').disabled=!L.length;if(!quiet)kpSt('');
+    $('#kpHist').disabled=!L.length;pcBtn();if(!quiet)kpSt('');
     if(!quiet&&r.open&&!KP.saved&&!V.B.img)await kpResume(r.open)}catch(e){kpSt('予約システムにつながりませんでした。インターネットを確認して、開き直してください。')}kpButtons()}
 // 今日、施術前だけ保存してあるとき（画面を閉じた・読み込み直した）：その施術前を読み込んで、施術後を足せるようにする
 async function kpResume(o){kpSt('今日の施術前の写真を読み込んでいます…');
@@ -333,6 +345,42 @@ async function histLine(){const b=$('#histLine'),id=$('#histSel').value;if(!id||
 function kpBack(){const b=$('#kpBack');if(KP&&KP.dirty&&(V.B.m||V.A.m)&&!b.dataset.sure){b.dataset.sure=1;b.textContent='保存していません。もう一度押すと戻ります';return}
   delete b.dataset.sure;b.textContent='← 予約システムに戻る';try{window.close()}catch(e){}
   setTimeout(()=>{if(!window.closed)kpSt('この画面（タブ）を閉じると、予約システムに戻れます。')},400)}
+/* ---- 前回と比べる（代表 11/2「必須」）：前回までの記録の写真（施術前／施術後）と今日の写真を、目をそろえて並べる・重ねる・数字の変化 ---- */
+const PC={old:'B',now:'B',mode:'side',img:{},v:null};
+function pcList(){return ((KP&&KP.info&&KP.info.list)||[]).filter(x=>x.id!==KP.saved)}
+function pcBtn(){const b=$('#kpCmp');if(b)b.disabled=!pcList().length||!(V.B.img||V.A.img)}
+function pcPress(sel,attr,val){document.querySelectorAll(sel+' [data-'+attr+']').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset[attr]===val)))}
+async function pcShow(){const id=$('#pcSel').value,x=pcList().find(y=>y.id===id);if(!x)return;
+  if(!V[PC.now].img)PC.now=V.B.img?'B':'A';if(PC.old==='A'&&!x.mA)PC.old='B';if(PC.old==='B'&&!x.mB&&x.mA)PC.old='A';
+  pcPress('#pcOld','po',PC.old);pcPress('#pcNow','pn',PC.now);pcPress('#pcBox','pm',PC.mode);
+  document.querySelectorAll('#pcNow [data-pn]').forEach(b=>b.disabled=!V[b.dataset.pn].img);document.querySelectorAll('#pcOld [data-po]').forEach(b=>b.disabled=!(b.dataset.po==='A'?x.mA:x.mB));
+  const nm=k=>k==='A'?'施術後':'施術前';$('#pcH1').textContent=kd(x.date)+'の'+nm(PC.old);$('#pcH2').textContent='今日の'+nm(PC.now);
+  const key=id+'|'+PC.old,want=key;$('#pcSt').textContent='';
+  if(!PC.img[key]){$('#pcSt').textContent='前回の写真を読み込んでいます…';
+    try{const r=await kpApi('kpfImg',{id,kind:PC.old});if(r.error){$('#pcSt').textContent=r.error;return}
+      const im=await new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;i.src='data:image/jpeg;base64,'+r.data});
+      const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;cv.getContext('2d').drawImage(im,0,0);
+      $('#pcSt').textContent='前回の写真の顔の点を見つけています…';const d=await detect(cv);
+      PC.img[key]={img:cv,L:d.L,m:PC.old==='A'?x.mA:x.mB}}catch(e){$('#pcSt').textContent='前回の写真を読み込めませんでした。';return}
+    if($('#pcSel').value+'|'+PC.old!==want)return;$('#pcSt').textContent=''}
+  const P=PC.img[key],N=V[PC.now];
+  if(!P.L||!N.L){$('#pcSt').textContent=!P.L?'前回の写真で顔が見つかりませんでした。':'今日の写真の顔の点を見つけている途中です。少し待ってから、もう一度押してください。';return}
+  const S=600,a=aligned(P,S),b=aligned(N,S),put=(id,src)=>{const t=$(id);t.width=src.width;t.height=src.height;t.getContext('2d').drawImage(src,0,0)};put('#pcC1',a);put('#pcC2',b);
+  const o=$('#pcO');o.width=S;o.height=a.height;const c=o.getContext('2d');c.drawImage(a,0,0);c.globalAlpha=+$('#pcR').value/100;c.drawImage(b,0,0);c.globalAlpha=1;
+  $('#pcSide').hidden=PC.mode!=='side';$('#pcOver').hidden=PC.mode!=='over';
+  // 数字：前回 → 今日
+  const m0=P.m,m1=N.m;if(!m0||!m1){$('#pcTbl').innerHTML='';$('#pcGood').innerHTML='';return}
+  const D=FM.diff(m0,m1),G=FM.highlights(D);
+  $('#pcGood').innerHTML='<div class="good">'+(G.length?G.map(t=>`<div>${esc(t)}</div>`).join(''):'<div>前回から大きな変化は見られませんでした。</div>')+((Math.abs(m0.yaw-m1.yaw)>4||Math.abs(m0.pitch-m1.pitch)>6)?'<div class="w">前回と今日で顔の向きが少し違います。数字の差が大きく出ることがあります。</div>':'')+'</div>';
+  let h='<table class="fm"><thead><tr><th>項目</th><th>'+esc($('#pcH1').textContent)+'</th><th>'+esc($('#pcH2').textContent)+'</th><th>変化</th></tr></thead><tbody>',g0='';
+  const row=(n,sd,k,u)=>{const x=D.find(y=>y.k===k);return `<tr><td>${esc(n)}${sd?'（'+sd+'）':''}</td><td>${fmt(m0[k],u)}</td><td>${fmt(m1[k],u)}</td>${x?`<td class="ch ${x.better===true?'up':x.better===false?'dn':''}">${x.ch>0?'+':''}${x.ch}${x.ab?'':'%'}</td>`:'<td></td>'}</tr>`};
+  FM.ROWS.forEach(([g,n,kr,kl,u])=>{if(g!==g0){h+=`<tr class="grp"><td colspan="4">${g}</td></tr>`;g0=g}h+=kl?row(n,'右',kr,u)+row(n,'左',kl,u):row(n,'',kr,u)});
+  $('#pcTbl').innerHTML=h+'</tbody></table>'}
+$('#kpCmp').onclick=()=>{const L=pcList();if(!L.length)return;$('#pcSel').innerHTML=L.map(x=>`<option value="${x.id}">${kd(x.date)}</option>`).join('');PC.now=V.A.img?'A':'B';PC.old='B';$('#pcBox').hidden=false;$('#pcBox').scrollIntoView({behavior:'smooth',block:'start'});pcShow()};
+$('#pcSel').onchange=pcShow;$('#pcX').onclick=()=>{$('#pcBox').hidden=true};$('#pcR').addEventListener('input',pcShow);
+$('#pcOld').onclick=e=>{const b=e.target.closest('[data-po]');if(!b||b.disabled)return;PC.old=b.dataset.po;pcShow()};
+$('#pcNow').onclick=e=>{const b=e.target.closest('[data-pn]');if(!b||b.disabled)return;PC.now=b.dataset.pn;pcShow()};
+$('#pcBox').querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{PC.mode=b.dataset.pm;pcShow()});
 $('#kpBack').onclick=kpBack;$('#histLine').onclick=histLine;
 $('#kpSave').onclick=kpSave;$('#kpLine').onclick=kpLine;
 if(KP)kpInfo();else $('#kpNote').textContent='写真はこのiPadの中だけで分析します（予約システムから開くと、保存とLINEで送ることができます）。真顔・正面・眼鏡なしで撮ってください。';
