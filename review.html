@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>レビューの書き方｜はやしハリきゅう整骨院 江別本院</title>
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* 院のリッチメニューと同じ色。患者さんがLINEで開くページなので明るい1テーマで固定 */
+:root{
+  --bg:#F4F1EC; --card:#FFFFFF; --ink:#2B2723; --sub:#6B635B; --line:#E6DFD6;
+  --teal:#115C55; --teal-soft:#E6EFEE; --or:#D4521F; --or-soft:#FBEBE0; --gold:#F2A900;
+  --f:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.7;margin:0}
+.wrap{max-width:440px;margin:0 auto;padding-inline:16px;padding-block:16px 48px}
+.note-top{font-size:13px;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.switch{display:grid;grid-template-columns:1fr 1fr;background:#E4DDD3;border-radius:14px;padding:4px;gap:4px;margin-bottom:18px}
+.switch button{font-family:var(--f);font-weight:800;font-size:15px;border:0;border-radius:10px;padding:10px 4px;background:transparent;color:#4a4540;cursor:pointer}
+.switch button[aria-selected="true"]{background:var(--teal);color:#fff}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+.head{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+.head small{color:var(--teal);font-weight:700;font-size:13px}
+h1{font-size:24px;margin:0;font-weight:800;text-wrap:balance}
+h2{font-size:18px;margin:0 0 8px;font-weight:800;display:flex;align-items:center;gap:10px}
+.step{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;font-size:14px;flex:none}
+.sec{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:18px 16px;margin-bottom:14px}
+.sec p{margin:0 0 10px}
+.lead{background:var(--or-soft);border-color:#F2C9AE}
+.muted{color:var(--sub);font-size:14px}
+/* ★ */
+.stars{display:flex;justify-content:space-between;gap:4px;margin:10px 0 4px}
+.stars button{flex:1;border:0;background:none;padding:4px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font-family:var(--f);font-size:12px;color:var(--sub)}
+.stars svg{width:44px;height:44px}
+.stars .s{fill:#fff;stroke:#BDB3A7;stroke-width:1.6}
+.stars button.on .s{fill:var(--gold);stroke:var(--gold)}
+.starmsg{font-weight:800;text-align:center;min-height:28px;margin:6px 0 4px}
+.warn{background:#FFF6E0;border-radius:12px;padding:10px 12px;font-size:14px;margin-top:8px}
+/* 書くことのヒント（代表 11/1：メモ欄とコピーはやめた。患者さん「そのままコピペされるだけなら必要ない」） */
+.hints{margin:0;padding-left:1.3em}.hints li{margin:4px 0;font-weight:700}
+.q{margin-top:12px}
+.q label{font-weight:700;font-size:15px;display:block;margin-bottom:4px}
+.q textarea{width:100%;font-family:var(--f);font-size:16px;border:2px solid var(--line);border-radius:12px;padding:8px 10px;min-height:56px;resize:vertical;background:#FFFCF8;color:var(--ink)}
+.q .ex{font-size:12.5px;color:var(--sub);margin-top:2px}
+.out{margin-top:14px;background:var(--teal-soft);border-radius:14px;padding:12px}
+.out .txt{white-space:pre-wrap;min-height:44px;font-size:15px}
+.out .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+.btn{font-family:var(--f);font-weight:800;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font-size:15px}
+.btn.sub{background:var(--teal);color:#fff}
+.btn.big{display:block;width:100%;text-align:center;text-decoration:none;background:var(--or);color:#fff;font-size:18px;padding:16px}
+/* 写真 */
+.phone{border:2px solid var(--line);border-radius:14px;padding:10px;background:#FAFAFA;font-size:13px;margin:8px 0}
+.phone .row{display:flex;align-items:center;gap:8px;padding:6px 0}
+.phone .hl{border:2px solid var(--or);border-radius:10px;padding:6px 10px;color:var(--or);font-weight:800;display:inline-flex;gap:6px;align-items:center;background:#fff}
+/* スタンプ */
+.card-top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:10px}
+.count{font-size:44px;font-weight:800;color:var(--teal);line-height:1;font-variant-numeric:tabular-nums}
+.count small{font-size:16px;color:var(--sub);margin-left:4px}
+.next{font-size:14px;color:var(--sub);text-align:right}
+.next b{color:var(--or)}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px;background:#EFE9E0;border-radius:18px}
+.cell{aspect-ratio:1;max-width:100%;border-radius:14px;background:#fff;border:2px dashed #CFC6BA;display:flex;align-items:center;justify-content:center;font-weight:800;color:#B9AEA1;font-size:14px;position:relative;font-variant-numeric:tabular-nums}
+.cell.done{background:var(--or);border:2px solid var(--or);color:#fff}
+.cell.goal{border:2px solid var(--gold);background:#FFF6E0;color:#9A6B00}
+.cell.goal.done{background:var(--gold);border-color:var(--gold);color:#fff}
+.cell.now{box-shadow:0 0 0 4px var(--teal)}
+.cell .gift{font-size:11px;position:absolute;bottom:2px;left:0;right:0;text-align:center;font-weight:800}
+.cell.pop{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.cell.pop{animation:none}}
+.rw{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.rw:first-of-type{border-top:0}
+.rw .n{flex:none;width:58px;height:58px;border-radius:16px;background:#FFF6E0;border:2px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;color:#9A6B00;line-height:1.1;font-size:20px}
+.rw .n small{font-size:11px}
+.rw .d{min-width:0}
+.rw .d b{display:block}
+.chip{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:2px 10px;margin-top:4px}
+.chip.got{background:var(--teal-soft);color:var(--teal)}
+.chip.ready{background:var(--or);color:#fff}
+.chip.wait{background:#EFE9E0;color:var(--sub)}
+.demo{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.demo .btn{background:#E4DDD3;color:var(--ink);font-size:13px;padding:8px 14px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px}
+.pv{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px}
+.pv .btn{background:#E4DDD3;color:var(--ink);font-size:13px;padding:6px 14px}
+.pv .btn.on{background:var(--ink);color:#fff}
+.tz{text-align:center;background:var(--teal);border-color:var(--teal);color:#fff;padding:26px 16px}
+.tz .muted{color:#CFE3E0}
+.tz-lock{width:64px;height:64px;margin:0 auto 6px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff}
+.tz-lock svg{width:34px;height:34px}
+.tz-eyebrow{font-size:12px;letter-spacing:.2em;font-weight:800;color:#F7C6A9}
+.tz-title{font-size:24px;font-weight:800;line-height:1.4;margin:4px 0 10px;text-wrap:balance}
+.tz-days{font-size:16px;font-weight:700;margin-bottom:12px}
+.tz-days b{font-size:48px;color:#fff;margin:0 4px;font-variant-numeric:tabular-nums;line-height:1}
+.board.locked .cell{background:#F7F3EE;border-color:#DDD4C8;color:#CFC6BA}
+.board.locked .cell.goal{background:#FFF6E0;border-color:var(--gold);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 5px rgba(242,169,0,.25)}}
+@media (prefers-reduced-motion:reduce){.board.locked .cell.goal{animation:none}}
+.hide{filter:blur(5px);user-select:none}
+.quest{position:relative;background:#5E9E4E;border-radius:18px;padding:8px;border:3px solid var(--ink)}
+.map{display:block;width:100%;max-width:100%;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:10px}
+.bubble{position:relative;background:#fff;border:3px solid var(--ink);border-radius:10px;padding:6px 10px;font-weight:800;font-size:14px;margin-bottom:12px;text-align:center}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-9px;width:12px;height:12px;background:#fff;border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:translateX(-50%) rotate(45deg)}
+ul.rules{margin:0;padding-left:1.2em}
+ul.rules li{margin:2px 0}
+</style></head>
+<body><div class="wrap">
+
+    <div class="head"><small id="clinic"></small><h1>レビューの書き方ガイド</h1></div>
+
+    <div class="sec lead">
+      <p>いつもご来院ありがとうございます。よろしければ、Googleマップに感想をお寄せください。</p>
+      <p class="muted" style="margin:0 0 12px">良かったことも、気になったことも、ご自身の言葉のままで大丈夫です。<b>一言だけでも十分うれしいです。</b>投稿してもしなくても、スタンプや特典は変わりません。</p>
+      <a class="btn big" id="go" href="#" rel="noopener">Googleマップでレビューを書く</a><p class="muted" id="nourl" hidden>ただいま準備中です。</p>
+      <p class="muted" style="margin:8px 0 0;font-size:13px">押すとレビューを書く画面が開きます。Googleアカウントへのログインが必要です。</p>
+    </div>
+
+    <div class="sec">
+      <h2><span class="step">1</span>何を書けばいい？</h2>
+      <p class="muted">思いつくものを、ご自身の言葉でそのまま書いてください。全部でなくて大丈夫です。</p>
+      <ul class="hints">
+        <li>どんなお悩みで来院したか</li>
+        <li>通ってみてどう変わったか</li>
+        <li>施術やスタッフの印象</li>
+        <li>院の雰囲気・通いやすさ</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <h2><span class="step">2</span>★の付け方</h2>
+      <p>★は左から1つ目が「★1」、右はしが「★5」です。押した場所までの★に色がつきます。下の★で試せます。</p>
+      <div class="stars" id="stars"></div>
+      <div class="starmsg" id="starmsg">★を押してみてください</div>
+      <div class="warn">投稿する前に、★の数が思ったとおりになっているか、もう一度見てください。あとから変えるときは、Googleマップの自分のクチコミの「編集」から直せます。</div>
+    </div>
+
+    <div class="sec">
+      <h2><span class="step">3</span>写真を付けるとき</h2>
+      <p>レビューを書く画面の下にある、このボタンから追加できます。</p>
+      <div class="phone">
+        <div class="row">★★★★★</div>
+        <div class="row" style="color:#999">ここに感想を書きます…</div>
+        <div class="row"><span class="hl">📷 写真や動画を追加</span></div>
+      </div>
+      <p class="muted" style="margin:0">院の外観や待合室などがおすすめです。ほかの患者さんの顔やお名前が写らないようにお願いします。</p>
+    </div>
+  </div>
+<div class="toast" id="toast" hidden></div>
+<script>
+(function(){
+  function toast(t){var e=document.getElementById('toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},1800)}
+
+  /* ★ */
+  var LBL=['','とても不満','不満','ふつう','満足','とても満足'];
+  var sv='<svg viewBox="0 0 24 24"><path class="s" d="M12 2.8l2.8 5.8 6.3.9-4.6 4.5 1.1 6.3L12 17.3l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" stroke-linejoin="round"/></svg>';
+  var st=document.getElementById('stars'),sh='';
+  for(var i=1;i<=5;i++)sh+='<button data-n="'+i+'" aria-label="★'+i+'">'+sv+'<span>'+i+'</span></button>';
+  st.innerHTML=sh;
+  st.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){
+    var n=+b.dataset.n;
+    st.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',+x.dataset.n<=n)});
+    document.getElementById('starmsg').textContent='★'+n+'つ（'+LBL[n]+'）になります';
+  })});
+
+  /* GitHubに置いた本院の書き方ガイド（予約システムを通さないので、すぐ開く・代表 11/2）。院の名前とGoogleのリンクは固定 */
+  document.getElementById('clinic').textContent='はやしハリきゅう整骨院 江別本院';document.getElementById('go').href='https:\/\/g.page/r/CR380FvOWZHzEAE/review';
+})();
+</script></body></html>
