@@ -134,7 +134,7 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 </style></head>
 <body>
 <header>
-  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！ボディ</h1><span class="tag">試作 10/31-1</span>
+  <h1 class="brandh"><img src="img/logo.png" alt="">ぴかっto！ボディ</h1><span class="tag">試作 11/2-1</span>
   <label>身長 <input id="ht" inputmode="decimal" value="165" aria-label="身長（cm）"> cm</label>
   <div class="seg" role="group" aria-label="表示"><button id="vStaff" aria-pressed="true">スタッフ</button><button id="vPt" aria-pressed="false">患者さんに見せる</button></div>
 </header>
@@ -718,10 +718,10 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
   const iF=await b64a(V.F.img,.8,1080);await tick();const iS=await b64a(V.S.img,.8,1080);await tick();const iR=await b64a(rep,.8,1400);
   kpSt('保存しています…（10秒ほどかかります。この画面のままお待ちください）');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:iF,S:iS,R:iR,E:'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
-      dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null,
+      dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov,w:V.F.img&&V.F.img.width}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov,w:V.S.img&&V.S.img.width}:null,
       find:L.find.top.map(x=>({t:x.t,d:x.d,tip:x.tip||'',s:x.s})),use:[['これから意識すること',USE_PRE],['なぜ腹筋から？（STEP 1）',USE_WHY.join('\n')]].concat(USE_ORDER.map(k=>[(k==='abs'?'STEP 1　':'STEP 2　')+USE[k][0]+((L.find.use.length?L.find.use:['stand','sit']).includes(k)?'（特に意識）':''),useText(k,L.F,L.S)]))});
     if(r.error){kpSt(r.error);kpButtons();return}
-    KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov}:null,S:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov}:null});
+    KP.saved=r.id;KP.dirty=false;KP.info.list.unshift({id:r.id,date:r.date,F:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov,w:V.F.img&&V.F.img.width}:null,S:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov,w:V.S.img&&V.S.img.width}:null});
     kpSt('保存しました（'+kd(r.date)+'）。予約システムの「最後にした日」も今日になりました。');kpButtons()}
   catch(e){kpSt('保存できませんでした。インターネットを確認して、もう一度押してください。');kpButtons()}}
 async function kpLine(){if(!KP||!KP.saved)return;if(!$('#kpLine').dataset.sure){$('#kpLine').dataset.sure=1;$('#kpLine').textContent='もう一度押すと送ります';return}
@@ -741,7 +741,7 @@ async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.
     (B.length?B:A).forEach(m=>{const pa=A.find(y=>y.id===m.id),pb=B.find(y=>y.id===m.id);const la=pa?pa.lev:null,lb=pb?pb.lev:null;
       rows.push(`<tr class="${la!=null&&lb!=null&&la!==lb?(lb<la?'chg':'worse'):''}"><td>${vn}</td><th>${m.name}</th><td>${labOf(pa)}</td><td class="b">${labOf(pb)}${la!=null&&lb!=null&&lb<la?' ↓よくなっています':''}</td></tr>`)})});
   $('#cmpT').innerHTML=`<table class="cmp"><thead><tr><th></th><th>項目</th><th>前回</th><th>今回</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-  const key=id+'_'+k0,show=async d=>{const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts);if(id!==$('#cmpSel').value||k0!==cmpK)return;$('#cmpA').innerHTML='';
+  const key=id+'_'+k0,show=async d=>{const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts,x[k0]&&x[k0].w);if(id!==$('#cmpSel').value||k0!==cmpK)return;$('#cmpA').innerHTML='';
     if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label','前回の'+(k0==='F'?'正面':'側面')+'（点と線つき）');$('#cmpA').appendChild(cv)}else $('#cmpA').innerHTML='<div class="note">前回の写真を表示できませんでした。</div>'};
   if(HIMG[key])return show(HIMG[key]);
   try{const r=await kpApi('kpImg',{id,kind:k0});if(r.error){$('#cmpA').innerHTML='<div class="note">'+r.error+'</div>';return}HIMG[key]=r.data;await show(r.data)}
@@ -751,7 +751,9 @@ async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.
 function sideLab(c,kind,pts,W,u){const f=kind==='S'&&pts.eye&&pts.occ?(pts.eye.x>=pts.occ.x?1:-1):0,lab=kind==='F'?['右','左']:(f<0?['前','後']:['後','前']);
   c.font=`bold ${22*u}px sans-serif`;c.textBaseline='top';[[lab[0],10*u,'left'],[lab[1],W-10*u,'right']].forEach(([t,x,al])=>{c.textAlign=al;c.lineWidth=4*u;c.strokeStyle='rgba(0,0,0,.6)';c.strokeText(t,x,10*u);c.fillStyle='#fff';c.fillText(t,x,10*u)})}
 // 保存した写真に、保存した点と線を重ねて描く（点がない古い記録は写真だけ）
-function ptsCanvas(b64d,kind,pts){return new Promise(ok=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;
+function ptsCanvas(b64d,kind,pts,ow){return new Promise(ok=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;
+  if(pts&&!ow&&Math.max(im.width,im.height)===1080)ow=Math.round(im.width*1280/1080);   /* 11/2より前に保存した分（撮ったときの大きさがない）：カメラは長い辺1280で撮る */
+  if(pts&&ow&&ow!==im.width){const k=im.width/ow,q={};Object.keys(pts).forEach(n=>{const a=pts[n];q[n]=a&&a.x!=null?{x:a.x*k,y:a.y*k}:a});pts=q}   /* 保存の写真は長い辺1080に小さくするので、撮ったときの大きさに合わせて点を縮める（11/2「ズレてる」） */
   const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600;c.drawImage(im,0,0);
   if(pts&&pts[kind==='F'?'shR':'an']){try{paintPts(c,kind,pts,W,H,u,null);
     sideLab(c,kind,pts,W,u)}catch(e){}}
@@ -773,7 +775,7 @@ async function kpHistShow(){const id=$('#histSel').value,x=((KP.info&&KP.info.li
   const gv=histK==='R'?['F','S']:[histK];
   $('#histT').innerHTML=gv.map(k=>{const it=x[k]&&x[k].items;return it&&it.length?`<h3 class="gtt">${k==='F'?'正面':'側面'}のグラフ（この日）</h3>`+savedGraph(k,it):''}).join('');
   const k0=histK,key=id+'_'+k0,box=$('#histImg'),put=async d=>{if(k0==='R'){box.innerHTML='';const im=new Image();im.alt='これまでの写真';im.src='data:image/jpeg;base64,'+d;box.appendChild(im);return}
-    const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts);if(id!==$('#histSel').value||k0!==histK)return;box.innerHTML='';if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label',(k0==='F'?'正面':'側面')+'の写真（点と線つき）');box.appendChild(cv)}else box.innerHTML='<div class="note">写真を表示できませんでした。</div>'};
+    const cv=await ptsCanvas(d,k0,x[k0]&&x[k0].pts,x[k0]&&x[k0].w);if(id!==$('#histSel').value||k0!==histK)return;box.innerHTML='';if(cv){cv.setAttribute('role','img');cv.setAttribute('aria-label',(k0==='F'?'正面':'側面')+'の写真（点と線つき）');box.appendChild(cv)}else box.innerHTML='<div class="note">写真を表示できませんでした。</div>'};
   if(HIMG[key])return put(HIMG[key]);box.innerHTML='<div class="note">写真を読み込んでいます…</div>';
   try{const r=await kpApi('kpImg',{id,kind:histK});if(id!==$('#histSel').value)return;if(r.error){box.innerHTML='<div class="note">'+r.error+'</div>';return}HIMG[key]=r.data;put(r.data)}
   catch(e){box.innerHTML='<div class="note">写真を読み込めませんでした。</div>'}}
