@@ -22,6 +22,8 @@ function getJson(url, ms) {
     .then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
 }
 
+/* 1行目を通知の題に、2行目からを本文に（代表 11/4：題が「整骨院システム from 整骨院システム」と重なって見えたため） */
+function split(text) { var a = String(text || '新しいお知らせがあります').split('\n'), h = a.shift(); return [h, a.join('\n') || '']; }
 function show(title, body, tag, url, at, quiet) {
   var o = {body: body, tag: tag, icon: ICON, badge: ICON, data: {url: url || ''}, renotify: !quiet, silent: !!quiet};
   if (at) o.timestamp = +at;
@@ -39,10 +41,10 @@ function onPush() {
       return cfgPut(cfg).then(function () {
         if (!items.length) {
           // もう前の通知で見せた分（2回続けて届いたとき）：同じ通知を静かに出し直す（iPhoneは、届いたら必ず何か出す決まり）
-          if (cfg.last) return show(title, cfg.last.body, 'hs-' + cfg.last.id, cfg.last.url, cfg.last.at, true);
+          if (cfg.last) { var t0 = split(cfg.last.body); return show(t0[0], t0[1], 'hs-' + cfg.last.id, cfg.last.url, cfg.last.at, true); }
           return show(title, '新しいお知らせがあります', 'hs-new');
         }
-        return Promise.all(items.slice(0, 5).reverse().map(function (it) { return show(title, String(it.body || '新しいお知らせがあります'), 'hs-' + it.id, it.url, it.at); }));
+        return Promise.all(items.slice(0, 5).reverse().map(function (it) { var t = split(it.body); return show(t[0], t[1], 'hs-' + it.id, it.url, it.at); }));
       });
     });
   }).catch(function () { return show(TITLE, '新しいお知らせがあります', 'hs-new'); });
