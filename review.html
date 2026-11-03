@@ -137,6 +137,8 @@ ul.rules li{margin:2px 0}
       <p>いつもご来院ありがとうございます。よろしければ、Googleマップに感想をお寄せください。</p>
       <p class="muted" style="margin:0 0 12px">良かったことも、気になったことも、ご自身の言葉のままで大丈夫です。<b>一言だけでも十分うれしいです。</b>投稿してもしなくても、スタンプや特典は変わりません。</p>
       <div class="inline-note" id="linenote" hidden>LINEの中ではGoogleにログインできないため、<b>いつものブラウザ</b>で開き直しています。開かないときは下のボタンを押してください。<a class="btn sub" id="ext" href="#" style="display:block;text-align:center;text-decoration:none;margin-top:8px">いつものブラウザで開く</a></div>
+      <div id="andr" hidden><a class="btn big" id="direct" href="#" rel="noopener">✍ 書く画面をすぐ開く</a>
+        <p class="muted" style="margin:6px 0 14px;font-size:13px"><b>Androidの方</b>：押すと書く画面がそのまま開きます。★を付けて書いたら「<b>写真を追加</b>」→「投稿」です。うまく開かないときは下の「Googleマップのアプリで書く」へ。</p></div>
       <a class="btn big" id="app" href="#" rel="noopener">📍 Googleマップのアプリで書く</a>
       <p class="muted" style="margin:6px 0 10px;font-size:13px"><b>おすすめ</b>：写真も一緒に投稿できます。開いたあとは、下の4つの順番で進んでください。</p>
       <ol class="steps4">
@@ -202,6 +204,11 @@ ul.rules li{margin:2px 0}
 
   /* GitHubに置いた本院の書き方ガイド（予約システムを通さないので、すぐ開く・代表 11/2）。院の名前とGoogleのリンクは固定 */
   document.getElementById('clinic').textContent='はやしハリきゅう整骨院 江別本院';document.getElementById('go').href='https:\/\/g.page/r/CR380FvOWZHzEAE/review';
+  /* 11/3 代表「口コミを書く欄まで飛ばせないか」：Android は端末のGoogleアカウントでログインしているので、書く画面へのリンクでそのまま開く（写真も付けられる）。
+     iPhone は Safari でGoogleにログインしていない方が多いので、アプリで開く方をいちばん上に（書く画面へのリンクは「Googleにログインしている方」向けに下へ） */
+  var isAnd=/Android/i.test(navigator.userAgent||'');
+  if(isAnd){document.getElementById('andr').hidden=false;document.getElementById('direct').href='https:\/\/g.page/r/CR380FvOWZHzEAE/review';document.getElementById('app').classList.add('alt');document.getElementById('go').style.display='none';var gp2=document.getElementById('nourl').nextElementSibling;if(gp2)gp2.style.display='none'}
+  else{document.getElementById('go').textContent='書く画面をすぐ開く';var gp=document.getElementById('nourl').nextElementSibling;if(gp)gp.innerHTML='SafariでGoogleにログインしている方は、こちらで書く画面がそのまま開きます（ログインを聞かれたら上のアプリの方が早いです）。'}
 
   /* 11/3 代表：LINEの中のブラウザはGoogleにログインしていないので、毎回IDとパスワードを聞かれる。
      LINEで開いたら、いつものブラウザ（Safari・Chrome）で開き直す（LINEは openExternalBrowser=1 を付けると外のブラウザで開く） */
