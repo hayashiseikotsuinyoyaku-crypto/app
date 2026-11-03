@@ -50,6 +50,28 @@ h2{font-size:18px;margin:0 0 8px;font-weight:800;display:flex;align-items:center
 .btn.sub{background:var(--teal);color:#fff}
 .btn.big{display:block;width:100%;text-align:center;text-decoration:none;background:var(--or);color:#fff;font-size:18px;padding:16px}
 .btn.big.alt{background:#fff;color:var(--ink);border:3px solid var(--ink);font-size:16px;padding:12px}
+.steps4{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.steps4 li{background:#fff;border:2px solid var(--line);border-radius:14px;padding:8px;display:grid;gap:6px;align-content:start}
+.steps4 .sn{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--or);color:#fff;font-size:13px}
+.steps4 .st{font-size:13px;line-height:1.45;min-height:2.9em}
+.mock{position:relative;height:132px;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:#fff;padding:8px;display:grid;gap:6px;align-content:start;font-size:11px}
+.mmap{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#E9EEF2 0 8px,#F4F7F9 8px 16px)}
+.msheet{position:absolute;left:0;right:0;bottom:0;height:52px;background:#fff;border-top:2px solid var(--line);border-radius:12px 12px 0 0;padding:10px 8px 0;display:grid;gap:2px;font-size:11px}
+.msheet .grab{position:absolute;top:4px;left:50%;width:28px;height:4px;margin-left:-14px;border-radius:2px;background:#ccc}
+.msheet .mut{color:var(--sub)}
+.mock .arrow{position:absolute;right:10px;bottom:48px;font-size:26px;font-weight:800;color:var(--or);animation:upa 1.2s ease-in-out infinite}
+@keyframes upa{0%,100%{transform:translateY(4px)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.mock .arrow{animation:none}}
+.mtabs{display:flex;gap:2px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.mtabs span{padding:3px 5px;border-radius:8px;color:var(--sub);white-space:nowrap;font-size:10.5px}
+.mtabs span.on{border:2px solid var(--or);color:var(--or);font-weight:800}
+.mline{height:8px;border-radius:4px;background:#EEE9E2}.mline.s{width:60%}
+.mbtn{border:2px solid var(--or);color:var(--or);font-weight:800;border-radius:999px;padding:5px 8px;text-align:center;background:#fff}
+.mbtn.sm{padding:3px 6px}
+.mstars{color:#bbb;letter-spacing:2px;font-size:14px}.mstars.g{color:var(--gold)}
+.mbox{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;color:#aaa}
+.mpost{justify-self:end;background:#1a73e8;color:#fff;border-radius:999px;padding:2px 10px;font-weight:800}
+@media (max-width:340px){.steps4{grid-template-columns:1fr}}
 .inline-note{background:#FFF6D9;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}
 /* 写真 */
 .phone{border:2px solid var(--line);border-radius:14px;padding:10px;background:#FAFAFA;font-size:13px;margin:8px 0}
@@ -116,7 +138,17 @@ ul.rules li{margin:2px 0}
       <p class="muted" style="margin:0 0 12px">良かったことも、気になったことも、ご自身の言葉のままで大丈夫です。<b>一言だけでも十分うれしいです。</b>投稿してもしなくても、スタンプや特典は変わりません。</p>
       <div class="inline-note" id="linenote" hidden>LINEの中ではGoogleにログインできないため、<b>いつものブラウザ</b>で開き直しています。開かないときは下のボタンを押してください。<a class="btn sub" id="ext" href="#" style="display:block;text-align:center;text-decoration:none;margin-top:8px">いつものブラウザで開く</a></div>
       <a class="btn big" id="app" href="#" rel="noopener">📍 Googleマップのアプリで書く</a>
-      <p class="muted" style="margin:6px 0 12px;font-size:13px"><b>おすすめ</b>：写真も一緒に投稿できます。開いたら「<b>クチコミ</b>」→「<b>クチコミを書く</b>」を押してください。</p>
+      <p class="muted" style="margin:6px 0 10px;font-size:13px"><b>おすすめ</b>：写真も一緒に投稿できます。開いたあとは、下の4つの順番で進んでください。</p>
+      <ol class="steps4">
+        <li><b class="sn">1</b><div class="st">下の白いところを<b>上に引き上げる</b></div>
+          <div class="mock"><div class="mmap"></div><div class="msheet up"><span class="grab"></span><b>はやしハリきゅう整骨院</b><span class="mut">★4.6</span></div><span class="arrow">↑</span></div></li>
+        <li><b class="sn">2</b><div class="st">「<b>クチコミ</b>」を押す</div>
+          <div class="mock"><div class="mtabs"><span>概要</span><span class="on">クチコミ</span><span>写真</span></div><div class="mline"></div><div class="mline s"></div><div class="mline"></div></div></li>
+        <li><b class="sn">3</b><div class="st">「<b>クチコミを書く</b>」を押す</div>
+          <div class="mock"><div class="mline s"></div><div class="mbtn">✎ クチコミを書く</div><div class="mstars">☆☆☆☆☆</div><div class="mline"></div></div></li>
+        <li><b class="sn">4</b><div class="st">★を付けて書いたら<b>「写真を追加」</b>→「投稿」</div>
+          <div class="mock"><div class="mstars g">★★★★★</div><div class="mbox">ご自身の言葉で…</div><div class="mbtn sm">📷 写真を追加</div><div class="mpost">投稿</div></div></li>
+      </ol>
       <a class="btn big alt" id="go" href="#" rel="noopener">ブラウザで書く</a><p class="muted" id="nourl" hidden>ただいま準備中です。</p>
       <p class="muted" style="margin:6px 0 0;font-size:13px">Googleマップのアプリがない方はこちら。Googleアカウントへのログインが必要です。</p>
     </div>
