@@ -49,6 +49,8 @@ h2{font-size:18px;margin:0 0 8px;font-weight:800;display:flex;align-items:center
 .btn{font-family:var(--f);font-weight:800;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font-size:15px}
 .btn.sub{background:var(--teal);color:#fff}
 .btn.big{display:block;width:100%;text-align:center;text-decoration:none;background:var(--or);color:#fff;font-size:18px;padding:16px}
+.btn.big.alt{background:#fff;color:var(--ink);border:3px solid var(--ink);font-size:16px;padding:12px}
+.inline-note{background:#FFF6D9;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}
 /* 写真 */
 .phone{border:2px solid var(--line);border-radius:14px;padding:10px;background:#FAFAFA;font-size:13px;margin:8px 0}
 .phone .row{display:flex;align-items:center;gap:8px;padding:6px 0}
@@ -112,8 +114,11 @@ ul.rules li{margin:2px 0}
     <div class="sec lead">
       <p>いつもご来院ありがとうございます。よろしければ、Googleマップに感想をお寄せください。</p>
       <p class="muted" style="margin:0 0 12px">良かったことも、気になったことも、ご自身の言葉のままで大丈夫です。<b>一言だけでも十分うれしいです。</b>投稿してもしなくても、スタンプや特典は変わりません。</p>
-      <a class="btn big" id="go" href="#" rel="noopener">Googleマップでレビューを書く</a><p class="muted" id="nourl" hidden>ただいま準備中です。</p>
-      <p class="muted" style="margin:8px 0 0;font-size:13px">押すとレビューを書く画面が開きます。Googleアカウントへのログインが必要です。</p>
+      <div class="inline-note" id="linenote" hidden>LINEの中ではGoogleにログインできないため、<b>いつものブラウザ</b>で開き直しています。開かないときは下のボタンを押してください。<a class="btn sub" id="ext" href="#" style="display:block;text-align:center;text-decoration:none;margin-top:8px">いつものブラウザで開く</a></div>
+      <a class="btn big" id="app" href="#" rel="noopener">📍 Googleマップのアプリで書く</a>
+      <p class="muted" style="margin:6px 0 12px;font-size:13px"><b>おすすめ</b>：写真も一緒に投稿できます。開いたら「<b>クチコミ</b>」→「<b>クチコミを書く</b>」を押してください。</p>
+      <a class="btn big alt" id="go" href="#" rel="noopener">ブラウザで書く</a><p class="muted" id="nourl" hidden>ただいま準備中です。</p>
+      <p class="muted" style="margin:6px 0 0;font-size:13px">Googleマップのアプリがない方はこちら。Googleアカウントへのログインが必要です。</p>
     </div>
 
     <div class="sec">
@@ -165,5 +170,17 @@ ul.rules li{margin:2px 0}
 
   /* GitHubに置いた本院の書き方ガイド（予約システムを通さないので、すぐ開く・代表 11/2）。院の名前とGoogleのリンクは固定 */
   document.getElementById('clinic').textContent='はやしハリきゅう整骨院 江別本院';document.getElementById('go').href='https:\/\/g.page/r/CR380FvOWZHzEAE/review';
+
+  /* 11/3 代表：LINEの中のブラウザはGoogleにログインしていないので、毎回IDとパスワードを聞かれる。
+     LINEで開いたら、いつものブラウザ（Safari・Chrome）で開き直す（LINEは openExternalBrowser=1 を付けると外のブラウザで開く） */
+  var ua=navigator.userAgent||'',inLine=/ Line\//i.test(ua),ext=location.href.split('#')[0];
+  ext+=(ext.indexOf('?')<0?'?':'&')+'openExternalBrowser=1';
+  document.getElementById('ext').href=ext;
+  if(inLine){document.getElementById('linenote').hidden=false;if(!/openExternalBrowser=1/.test(location.search)){try{location.replace(ext)}catch(e){}}}
+  /* Googleマップのアプリで院のページを開く（アプリなら写真も付けられる）。アプリがなければブラウザのGoogleマップが開く */
+  var q='はやしハリきゅう整骨院 江別本院',app=document.getElementById('app');
+  app.href='https:\/\/www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+  /* 院の場所の正確なリンク（予約システムが毎日Googleから取っている）があればそれを使う */
+  try{fetch('https:\/\/script.google.com/macros/s/AKfycby8QI2NKxAnfMymleQvHoTgtKQzDgCMyrNqpLqohiIJtAdZYc0U1zrNqB5NY5_4kwhf/exec?p=reviews').then(function(r){return r.json()}).then(function(d){if(d&&d.ok&&/^https:\/\/(maps\.google\.com|www\.google\.com\/maps|maps\.app\.goo\.gl)/.test(d.url||''))app.href=d.url}).catch(function(){})}catch(e){}
 })();
 </script></body></html>
