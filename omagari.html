@@ -76,4 +76,18 @@ if (!RX.test(u)) {
   var f = $('app'); f.src = u; f.hidden = false;
 }
 </script>
+<script>
+/* 11/6：iPhone・iPadで、文字を入れたあと（キーボードが閉じたあと）に押す場所がずれる（代表 11/6：設定のリッチメッセージ）。
+   キーボードで外側の画面が少し上にずれたまま戻らないのが原因なので、キーボードが閉じたら外側の画面を元の位置に戻す */
+(function(){
+  function fix(){try{if(window.scrollX||window.scrollY)window.scrollTo(0,0);if(document.documentElement.scrollTop)document.documentElement.scrollTop=0;if(document.body&&document.body.scrollTop)document.body.scrollTop=0}catch(e){}}
+  var vv=window.visualViewport;
+  function closed(){return !vv||vv.height>=window.innerHeight*0.85}
+  function later(){setTimeout(function(){if(closed())fix()},60);setTimeout(function(){if(closed())fix()},400)}
+  if(vv){vv.addEventListener('resize',later);vv.addEventListener('scroll',later)}
+  window.addEventListener('scroll',function(){if(closed())fix()},{passive:true});
+  window.addEventListener('orientationchange',later);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)later()});
+})();
+</script>
 </body></html>
