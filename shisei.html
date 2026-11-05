@@ -197,6 +197,12 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
    ・点は指で動かして直せる（服・髪でずれるため）。動かすとすぐ計算し直す
    ・数字はカルティと同じ項目（正面：傾き・ずれ／側面：前後の傾き・頭の位置・膝の曲がり）。点数・ランクは出さない */
 const $=s=>document.querySelector(s);
+/* 11/6：iPadのSafariは、絵を描く板（canvas）のメモリに上限があり、使い終わった板を残すと画面の一部が灰色の四角になる（代表 11/5）。使い終わった板はすぐ小さくして返す */
+function freeCv(c){try{if(c&&c.getContext&&c.width){c.width=0;c.height=0}}catch(e){}}
+window.addEventListener('pagehide',()=>{try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
+function freeIn(el){try{if(el)el.querySelectorAll('canvas').forEach(freeCv)}catch(e){}}
+// 中身が同じなら書き直さない（点を動かすたびに、説明のイラストまで作り直していた）
+function setH(el,h){if(!el)return;if(el.__h!==h){el.innerHTML=h;el.__h=h}}
 const LM={nose:0,eyeL:2,eyeR:5,earL:7,earR:8,mouthL:9,mouthR:10,shL:11,shR:12,elL:13,elR:14,wrL:15,wrR:16,hipL:23,hipR:24,knL:25,knR:26,anL:27,anR:28,heL:29,heR:30,toL:31,toR:32};
 // 動かせる点（カルティと同じ場所・代表 10/16）。b＝青い点（高さの基準）
 const PF=[['top','頭頂部',1],['chin','顎'],['jug','胸骨上部'],['shR','右の肩峰'],['shL','左の肩峰'],['elR','右の肘'],['elL','左の肘'],['wrR','右の手首'],['wrL','左の手首'],
@@ -214,7 +220,7 @@ function getPose(){if(window.__FAKE_POSE)return window.__FAKE_POSE;if(pose)retur
 function detect(cv){return poseQ=poseQ.then(()=>new Promise((ok,ng)=>{let p;try{p=getPose()}catch(e){ng(e);return}
   const t=setTimeout(()=>ng(new Error('AIの準備に時間がかかっています。もう一度押してください。')),60000);
   p.onResults(r=>{clearTimeout(t);let mask=null;try{if(r.segmentationMask){const W=cv.width,H=cv.height,m=document.createElement('canvas');m.width=W;m.height=H;const c=m.getContext('2d');c.drawImage(r.segmentationMask,0,0,W,H);
-      const d=c.getImageData(0,0,W,H).data;let rs=0;for(let i=0;i<d.length;i+=400)rs+=d[i];const ch=rs>0?0:3;mask={W,H,at:(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H)return 0;return d[(y*W+x)*4+ch]/255}}}}catch(e){mask=null}
+      const d=c.getImageData(0,0,W,H).data;freeCv(m);let rs=0;for(let i=0;i<d.length;i+=400)rs+=d[i];const ch=rs>0?0:3;mask={W,H,at:(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H)return 0;return d[(y*W+x)*4+ch]/255}}}}catch(e){mask=null}
     ok(r.poseLandmarks?{lm:r.poseLandmarks,mask}:null)});p.send({image:cv}).catch(e=>{clearTimeout(t);ng(e)})}))}
 const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2}),lerp=(a,b,k)=>({x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k});
 function initPts(kind,ai,W,H){const lm=ai.lm||ai,mask=ai.mask||null,P=i=>({x:lm[i].x*W,y:lm[i].y*H});
@@ -377,8 +383,8 @@ const LINKS={F:[['top','chin'],['chin','jug'],['jug','shR'],['jug','shL'],['shR'
 function draw(kind){const v=V[kind],box=$('#cv'+kind);if(!v.img)return;
   let cv=box.querySelector('canvas');if(!cv){box.innerHTML='';cv=document.createElement('canvas');box.appendChild(cv);bindDrag(kind,cv);
     const lab=document.createElement('div');lab.className='lr';box.appendChild(lab)}
-  cv.width=v.img.width;cv.height=v.img.height;const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600/((v.z&&v.z.s)||1);   // 拡大しても点と線は同じ太さに見える
-  c.drawImage(v.img,0,0);if(!v.z)zoomApply(kind);
+  if(cv.width!==v.img.width||cv.height!==v.img.height){cv.width=v.img.width;cv.height=v.img.height}const c=cv.getContext('2d'),W=cv.width,H=cv.height,u=W/600/((v.z&&v.z.s)||1);   // 拡大しても点と線は同じ太さに見える
+  c.clearRect(0,0,W,H);c.drawImage(v.img,0,0);if(!v.z)zoomApply(kind);
   const lr=box.querySelector('.lr');
   if(!v.pts){lr.innerHTML='';return}const p=v.pts;
   const f=kind==='S'?(p.eye.x>=p.occ.x?1:-1):0;
@@ -433,23 +439,23 @@ document.addEventListener('click',e=>{const b=e.target.closest('.gr b[data-id]')
   if(v.ov[id]===i||(v.ov[id]==null&&i===ai))delete v.ov[id];else if(i===ai&&v.ov[id]!=null)delete v.ov[id];else v.ov[id]=i;renderNums()});
 function fdHTML(list){return list.length?list.map((x,i)=>`<div class="fd"><b>${'①②③④'[i]} ${x.t}</b>${x.tip?`<div class="tip">→ ${x.tip}</div>`:''}<details><summary>くわしく</summary>${x.d}</details></div>`).join(''):'<div class="fd ok"><b>大きな偏りは見られません</b>今の体の使い方を続けましょう。</div>'}
 function renderNums(){const F=V.F.pts?applyOv('F',calcF(V.F.pts)):null,S=V.S.pts?applyOv('S',calcS(V.S.pts)):null;
-  $('#tF').innerHTML=table('F',F);$('#tS').innerHTML=table('S',S);
+  setH($('#tF'),table('F',F));setH($('#tS'),table('S',S));
   const r=findings(F,S);
-  $('#fdF').innerHTML=F?fdHTML(r.top.filter(x=>x.s==='F')):'';$('#fdS').innerHTML=S?fdHTML(r.top.filter(x=>x.s==='S')):'';
+  setH($('#fdF'),F?fdHTML(r.top.filter(x=>x.s==='F')):'');setH($('#fdS'),S?fdHTML(r.top.filter(x=>x.s==='S')):'');
   const us=r.use.length?r.use:(F||S?['stand','sit']:[]);
   if(F||S){const mine=us.filter(k=>USE_ORDER.includes(k)).sort((a,b)=>USE_ORDER.indexOf(a)-USE_ORDER.indexOf(b));
     const card=k=>{const U=USE[k],n=useNote(k,F,S);
       return `<div class="uc"><img src="img/${USE_IMG[k]}" alt="${U[0]}のイラスト"><div class="ucb"><b>${U[0]}</b><div class="u1">${U[1]}</div>${n?`<div class="un">★ ${n}</div>`:''}<details><summary>やり方を見る</summary><ul>${U[2].map(x=>`<li>${x.replace(/【(.+?)】/g,'<u>$1</u>')}</li>`).join('')}</ul></details></div></div>`};
     const rest=USE_ORDER.filter(k=>!mine.includes(k));
-    $('#use').innerHTML=`<p class="ulead">あなたが<b>特に意識すること</b>は、この${mine.length}つです。</p>`+mine.map(card).join('')+
-      `<details class="umore"><summary>ほかの体の使い方・くわしい説明</summary>${rest.map(card).join('')}<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div><div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></details>`}
-  else $('#use').innerHTML='<div class="note">写真を撮ると、その方に合わせて出ます。</div>';
+    setH($('#use'),`<p class="ulead">あなたが<b>特に意識すること</b>は、この${mine.length}つです。</p>`+mine.map(card).join('')+
+      `<details class="umore"><summary>ほかの体の使い方・くわしい説明</summary>${rest.map(card).join('')}<div class="upre">${USE_PRE.split('\n').map(x=>`<p>${x}</p>`).join('')}</div><div class="uwhy"><b>なぜ腹筋から？</b>${USE_WHY.map(x=>`<p>${x}</p>`).join('')}</div></details>`)}
+  else setH($('#use'),'<div class="note">写真を撮ると、その方に合わせて出ます。</div>');
   window.__last={F,S,find:r};if(typeof KP!=='undefined'&&KP){if(KP.lastSig!==undefined&&KP.lastSig!==JSON.stringify([F,S,$('#ht').value]))KP.dirty=true;KP.lastSig=JSON.stringify([F,S,$('#ht').value]);kpButtons()}}
 // ---- 写真 ----
 function loadFile(kind,file){const st=$('#s'+kind);st.textContent='写真を読み込んでいます…';
   const url=URL.createObjectURL(file),im=new Image();
   im.onload=async()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
-    V[kind]={img:cv,pts:null,ai:null,ov:{}};draw(kind);renderNums();await runAI(kind)};
+    if(V[kind].img&&V[kind].img!==cv)freeCv(V[kind].img);V[kind]={img:cv,pts:null,ai:null,ov:{}};draw(kind);renderNums();await runAI(kind)};
   im.onerror=()=>{st.textContent='写真を開けませんでした。もう一度撮ってください。'};im.src=url}
 async function runAI(kind){const v=V[kind],st=$('#s'+kind);st.textContent='AIが体の点を探しています…（初回は少し時間がかかります）';
   try{const lm=await detect(v.img);if(!lm||!lm.lm){st.textContent='体が見つかりませんでした。全身が入るように撮り直してください。';return}
@@ -538,10 +544,10 @@ function camShoot(){const v=$('#cv');if(!v.videoWidth)return;const vw=v.videoWid
   $('#camPvT').textContent=(CAM.kind==='F'?'立位正面':'立位左側面')+'：この写真でよろしいですか？';$('#camPv').hidden=false;$('#cam').classList.add('pv')}
 function camResume(){$('#camPv').hidden=true;$('#cam').classList.remove('pv');const v=$('#cv');try{v.play()}catch(e){}
   cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
-function camOk(){if(!CAM.pv)return;const kind=CAM.kind,img=CAM.pv.img;V[kind]={img,pts:null,ai:null,ov:{},tilt:CAM.pv.tilt};CAM.pv=null;
+function camOk(){if(!CAM.pv)return;const kind=CAM.kind,img=CAM.pv.img;if(V[kind].img&&V[kind].img!==img)freeCv(V[kind].img);V[kind]={img,pts:null,ai:null,ov:{},tilt:CAM.pv.tilt};CAM.pv=null;
   draw(kind);renderNums();runAI(kind);
   if(kind==='F'&&!V.S.img){CAM.kind='S';CAM.okH=false;camText();camResume()}else camClose()}
-function camRe(){CAM.pv=null;camResume()}
+function camRe(){if(CAM.pv)freeCv(CAM.pv.img);CAM.pv=null;camResume()}
 function camPress(){if(CAM.pv)return;const el=$('#camC');if(!el.hidden){clearInterval(CAM.tm);el.hidden=true;return}   // 数えている間にもう一度押すと止める
   if(!$('#camTm').checked){camShoot();return}
   let n=10;el.hidden=false;el.textContent=n;clearInterval(CAM.tm);CAM.tm=setInterval(()=>{n--;if(n<=0){clearInterval(CAM.tm);el.hidden=true;camShoot()}else el.textContent=n},1000)}
@@ -707,7 +713,7 @@ const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
 /* 保存用：画面を止めずに写真を小さくしてJPEGにする（代表 10/30：保存が長く、iPadが固まった）。長い辺 max px・画質 q */
 const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
   if(k<1){c=document.createElement('canvas');c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);c.getContext('2d').drawImage(cv,0,0,c.width,c.height)}
-  const done=b=>{if(!b){ok(b64(c,q));return}const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>ok(b64(c,q));fr.readAsDataURL(b)};
+  const fin=x=>{if(c!==cv)freeCv(c);ok(x)};const done=b=>{if(!b){fin(b64(c,q));return}const fr=new FileReader();fr.onload=()=>fin(String(fr.result).split(',')[1]||'');fr.onerror=()=>fin(b64(c,q));fr.readAsDataURL(b)};
   if(c.toBlob)c.toBlob(done,'image/jpeg',q||.8);else done(null)});
 const tick=()=>new Promise(r=>setTimeout(r,30));
 const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
@@ -715,7 +721,7 @@ async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(
   ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
   const rep=kpReport(),xi=null,X=null;   // 重心位置・未来姿勢は使わない（代表）
   $('#kpSave').disabled=true;kpSt('写真を準備しています…');await tick();
-  const iF=await b64a(V.F.img,.8,1080);await tick();const iS=await b64a(V.S.img,.8,1080);await tick();const iR=await b64a(rep,.8,1400);
+  const iF=await b64a(V.F.img,.8,1080);await tick();const iS=await b64a(V.S.img,.8,1080);await tick();const iR=await b64a(rep,.8,1400);freeCv(rep);
   kpSt('保存しています…（10秒ほどかかります。この画面のままお待ちください）');
   try{const r=await kpApi('kpSave',{height:+$('#ht').value||'',F:iF,S:iS,R:iR,E:'',xtra:X?{cog:X.cg.t,future:X.fu.title,ft:X.fu.tf,fs:X.fu.ts,gait:GAIT[X.gk][0]}:null,
       dF:L.F?{items:kpItems(L.F),pts:V.F.pts,ov:V.F.ov,w:V.F.img&&V.F.img.width}:null,dS:L.S?{items:kpItems(L.S),pts:V.S.pts,ov:V.S.ov,w:V.S.img&&V.S.img.width}:null,
@@ -735,7 +741,7 @@ async function kpCmp(){const P=kpPrevList();if(!P.length)return;const sel=$('#cm
 async function kpCmpShow(){const id=$('#cmpSel').value,x=kpPrevList().find(y=>y.id===id);if(!x)return;
   $('#cmpHa').textContent='前回（'+kd(x.date)+'）';$('#cmpA').innerHTML='<div class="note">写真を読み込んでいます…</div>';
   document.querySelectorAll('#cmpTab [data-ck]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ck===cmpK)));
-  const k0=cmpK,cur=V[k0].pts?$('#cv'+k0+' canvas'):null;$('#cmpB').innerHTML='';
+  const k0=cmpK,cur=V[k0].pts?$('#cv'+k0+' canvas'):null;freeIn($('#cmpB'));$('#cmpB').innerHTML='';
   if(cur){const cp=document.createElement('canvas');cp.width=cur.width;cp.height=cur.height;const cx=cp.getContext('2d');cx.drawImage(cur,0,0);try{sideLab(cx,k0,V[k0].pts,cp.width,cp.width/600)}catch(e){}cp.setAttribute('role','img');cp.setAttribute('aria-label','今回の'+(k0==='F'?'正面':'側面')+'（点と線つき）');$('#cmpB').appendChild(cp)}
   else $('#cmpB').innerHTML='<div class="note">今回の'+(k0==='F'?'正面':'側面')+'の写真はありません。</div>';
   const L=window.__last,rows=[];[['正面',x.F,L.F],['左側面',x.S,L.S]].forEach(([vn,a,b])=>{const A=(a&&a.items)||[],B=kpItems(b)||[];
