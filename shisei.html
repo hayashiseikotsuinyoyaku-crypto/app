@@ -207,7 +207,7 @@ function repaintAll(){setTimeout(()=>{try{const els=[...document.body.children].
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('#cam').hidden)repaintAll()});
 /* 戻るボタンで画面がそのまま戻るとき（bfcache）は写真を消さない・監査#8 11/6 */
 window.addEventListener('pageshow',e=>{if(e&&e.persisted&&V&&((V.F&&V.F.img&&!V.F.img.width)||(V.S&&V.S.img&&!V.S.img.width)))location.reload()});
-window.addEventListener('pagehide',e=>{if(e&&e.persisted)return;try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
+window.addEventListener('pagehide',e=>{if(e&&e.persisted)return;try{if(pose){pose.close();pose=null}}catch(x){}try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
 function freeIn(el){try{if(el)el.querySelectorAll('canvas').forEach(freeCv)}catch(e){}}
 // 中身が同じなら書き直さない（点を動かすたびに、説明のイラストまで作り直していた）
 function setH(el,h){if(!el)return;if(el.__h!==h){el.innerHTML=h;el.__h=h}}
