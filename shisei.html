@@ -103,7 +103,9 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 .note{font-size:12.5px;color:var(--sub);line-height:1.7}
 body.pt .staff{display:none}
 [hidden]{display:none!important}
-#cam{position:fixed;inset:0;background:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50}
+#cam{position:fixed;inset:0;background-color:#0e3f39;background-image:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50;transform:translateZ(0);-webkit-transform:translateZ(0)}
+/* 11/6：iPadでカメラの上の方に下の画面が透けて見える（代表 11/6 写真）→カメラ中は下の画面を隠す */
+html.camon,html.camon body{overflow:hidden;background:#0e3f39}html.camon body>header,html.camon body>main{visibility:hidden}
 .cambrand{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 64px);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}.cambrand img{width:34px;height:34px}.cambrand b{color:#1f6f63;font-size:18px;letter-spacing:.02em}
 #cam.pv .cambrand{display:none}
 .brandh{display:inline-flex;align-items:center;gap:8px}.brandh img{width:40px;height:40px}
@@ -481,7 +483,7 @@ async function camOpen(kind){CAM.kind=kind;CAM.gv=null;CAM.okH=false;try{documen
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')await DeviceMotionEvent.requestPermission()}catch(e){}
   window.addEventListener('devicemotion',onMotion);
   if(!(await camStart())){$('#s'+kind).textContent='この画面ではカメラを使えません。「写真から選ぶ」で撮ってください（線つきのカメラは、ぴかっto！のページを直接開いたときに使えます）。';return}
-  $('#cam').hidden=false;$('#camPv').hidden=true;$('#camC').hidden=true;camText();
+  document.documentElement.classList.add('camon');$('#cam').hidden=false;$('#camPv').hidden=true;$('#camC').hidden=true;camText();
   cancelAnimationFrame(CAM.raf);const loop=()=>{camDraw();CAM.raf=requestAnimationFrame(loop)};loop()}
 // 外カメラ（environment）と内カメラ（user）。内カメラでも写真は左右反転しない（右・左がそのまま）
 async function camStart(){try{if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;
@@ -493,7 +495,7 @@ async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing=
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
 function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/19-1）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
-  if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true}
+  if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true;document.documentElement.classList.remove('camon')}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
 // 人の形の枠（カルティと同じ：細い白い線の人の輪郭。腕は体から少し離して下ろす・足はそろえる）
 // 座標：x＝中心からの横、y＝頭の上0〜足の裏100（身長の%）
