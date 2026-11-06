@@ -103,7 +103,7 @@ table.cmp td.b{font-weight:700}table.cmp tr.chg td.b{color:var(--teal)}table.cmp
 .note{font-size:12.5px;color:var(--sub);line-height:1.7}
 body.pt .staff{display:none}
 [hidden]{display:none!important}
-#cam{position:fixed;inset:0;background-color:#0e3f39;background-image:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50;transform:translateZ(0);-webkit-transform:translateZ(0)}
+#cam{position:fixed;inset:0;background-color:#0e3f39;background-image:linear-gradient(160deg,#0e3f39,#1f6f63);z-index:50}
 /* 11/6：iPadでカメラの上の方に下の画面が透けて見える（代表 11/6 写真）→カメラ中は下の画面を隠す */
 html.camon,html.camon body{overflow:hidden;background:#0e3f39}html.camon body>header,html.camon body>main{visibility:hidden}
 .cambrand{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 64px);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:none}.cambrand img{width:34px;height:34px}.cambrand b{color:#1f6f63;font-size:18px;letter-spacing:.02em}
@@ -201,6 +201,10 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 const $=s=>document.querySelector(s);
 /* 11/6：iPadのSafariは、絵を描く板（canvas）のメモリに上限があり、使い終わった板を残すと画面の一部が灰色の四角になる（代表 11/5）。使い終わった板はすぐ小さくして返す */
 function freeCv(c){try{if(c&&c.getContext&&c.width){c.width=0;c.height=0}}catch(e){}}
+/* 11/6：iPadで、カメラを閉じたあとや別のタブから戻ったときに画面が白いまま描かれないことがある（代表 11/6 動画）→描き直させる */
+function repaintAll(){setTimeout(()=>{try{const els=[...document.body.children].filter(x=>!/^(SCRIPT|STYLE)$/.test(x.tagName)&&x.id!=='cam');
+  els.forEach(x=>{x.style.opacity='0.999'});requestAnimationFrame(()=>requestAnimationFrame(()=>{els.forEach(x=>{x.style.opacity=''});['F','S'].forEach(k=>{try{if(V[k]&&V[k].img)draw(k)}catch(e){}})}))}catch(e){}},120)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('#cam').hidden)repaintAll()});
 /* 戻るボタンで画面がそのまま戻るとき（bfcache）は写真を消さない・監査#8 11/6 */
 window.addEventListener('pageshow',e=>{if(e&&e.persisted&&V&&((V.F&&V.F.img&&!V.F.img.width)||(V.S&&V.S.img&&!V.S.img.width)))location.reload()});
 window.addEventListener('pagehide',e=>{if(e&&e.persisted)return;try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
@@ -495,7 +499,7 @@ async function camFlip(){if(CAM.busy)return;CAM.busy=true;CAM.facing=CAM.facing=
   if(!(await camStart())){CAM.facing=CAM.facing==='user'?'environment':'user';await camStart()}CAM.busy=false}
 function camText(){const T=TXT[CAM.kind];$('#camT').textContent=T[0];$('#camN').textContent=T[1]+'（10/19-1）';$('#camH').textContent=T[2]}
 function camClose(){cancelAnimationFrame(CAM.raf);clearInterval(CAM.tm);$('#camC').hidden=true;$('#camPv').hidden=true;$('#cam').classList.remove('pv');CAM.pv=null;window.removeEventListener('devicemotion',onMotion);
-  if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true;document.documentElement.classList.remove('camon')}
+  if(CAM.st)CAM.st.getTracks().forEach(t=>t.stop());CAM.st=null;$('#cam').hidden=true;document.documentElement.classList.remove('camon');repaintAll()}
 function vidBox(){const v=$('#cv'),W=v.clientWidth,H=v.clientHeight,vw=v.videoWidth||W,vh=v.videoHeight||H,s=Math.min(W/vw,H/vh);return {x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
 // 人の形の枠（カルティと同じ：細い白い線の人の輪郭。腕は体から少し離して下ろす・足はそろえる）
 // 座標：x＝中心からの横、y＝頭の上0〜足の裏100（身長の%）
