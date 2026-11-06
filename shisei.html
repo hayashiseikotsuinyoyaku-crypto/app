@@ -199,7 +199,9 @@ body.pt .fd,body.pt .keep li,body.pt .use div{font-size:18px}
 const $=s=>document.querySelector(s);
 /* 11/6：iPadのSafariは、絵を描く板（canvas）のメモリに上限があり、使い終わった板を残すと画面の一部が灰色の四角になる（代表 11/5）。使い終わった板はすぐ小さくして返す */
 function freeCv(c){try{if(c&&c.getContext&&c.width){c.width=0;c.height=0}}catch(e){}}
-window.addEventListener('pagehide',()=>{try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
+/* 戻るボタンで画面がそのまま戻るとき（bfcache）は写真を消さない・監査#8 11/6 */
+window.addEventListener('pageshow',e=>{if(e&&e.persisted&&V&&((V.F&&V.F.img&&!V.F.img.width)||(V.S&&V.S.img&&!V.S.img.width)))location.reload()});
+window.addEventListener('pagehide',e=>{if(e&&e.persisted)return;try{document.querySelectorAll('canvas').forEach(freeCv);['F','S'].forEach(k=>{if(V[k]&&V[k].img)freeCv(V[k].img)})}catch(e){}});
 function freeIn(el){try{if(el)el.querySelectorAll('canvas').forEach(freeCv)}catch(e){}}
 // 中身が同じなら書き直さない（点を動かすたびに、説明のイラストまで作り直していた）
 function setH(el,h){if(!el)return;if(el.__h!==h){el.innerHTML=h;el.__h=h}}
@@ -711,13 +713,14 @@ function kpReport(){const cs=['F','S'].map(k=>V[k].pts?$('#cv'+k+' canvas'):null
   const c=out.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,out.width,H);let x=0;cs.forEach((cv,i)=>{c.drawImage(cv,x,0,ws[i],H);x+=ws[i]+g});return out}
 const b64=(cv,qq)=>cv.toDataURL('image/jpeg',qq||.82).split(',')[1];
 /* 保存用：画面を止めずに写真を小さくしてJPEGにする（代表 10/30：保存が長く、iPadが固まった）。長い辺 max px・画質 q */
-const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
+const b64a=(cv,q,max)=>new Promise(ok=>{if(!cv||!cv.width||!cv.height){ok('');return}let c=cv;const m=max||1080,k=Math.min(1,m/Math.max(cv.width,cv.height));
   if(k<1){c=document.createElement('canvas');c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);c.getContext('2d').drawImage(cv,0,0,c.width,c.height)}
   const fin=x=>{if(c!==cv)freeCv(c);ok(x)};const done=b=>{if(!b){fin(b64(c,q));return}const fr=new FileReader();fr.onload=()=>fin(String(fr.result).split(',')[1]||'');fr.onerror=()=>fin(b64(c,q));fr.readAsDataURL(b)};
   if(c.toBlob)c.toBlob(done,'image/jpeg',q||.8);else done(null)});
 const tick=()=>new Promise(r=>setTimeout(r,30));
 const kpItems=L=>L?L.map(m=>({id:m.id,name:m.name,v:Math.round(m.v*10)/10,u:m.u,side:m.side,lev:lev(m),sg:sgn(m),ov:m.ov!=null?m.ov:null})):null;
 async function kpSave(){if(!KP||!KP.dirty)return;const L=window.__last;if(!L||!(L.F||L.S))return;
+  if(['F','S'].some(k=>L[k]&&V[k]&&V[k].img&&!V[k].img.width))return;   // 写真が消えている（0×0）ときは保存しない・監査#8 11/6
   ['F','S'].forEach(k=>{if(V[k].drag){V[k].drag=null;draw(k)}});
   const rep=kpReport(),xi=null,X=null;   // 重心位置・未来姿勢は使わない（代表）
   $('#kpSave').disabled=true;kpSt('写真を準備しています…');await tick();

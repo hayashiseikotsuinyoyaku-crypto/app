@@ -176,10 +176,11 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
 (function(){
   function fix(){try{if(window.scrollX||window.scrollY)window.scrollTo(0,0);if(document.documentElement.scrollTop)document.documentElement.scrollTop=0;if(document.body&&document.body.scrollTop)document.body.scrollTop=0}catch(e){}}
   var vv=window.visualViewport;
-  function closed(){return !vv||vv.height>=window.innerHeight*0.85}
+  function closed(){return (!vv||(vv.height>=window.innerHeight*0.85&&!(vv.scale>1.01)))}   // ピンチで拡大中は動かさない（監査#8）
+  function fits(){var d=document.documentElement;return d.scrollHeight<=window.innerHeight+2}   // 中身が画面より長いページはふつうにスクロールできるように
   function later(){setTimeout(function(){if(closed())fix()},60);setTimeout(function(){if(closed())fix()},400)}
   if(vv){vv.addEventListener('resize',later);vv.addEventListener('scroll',later)}
-  window.addEventListener('scroll',function(){if(closed())fix()},{passive:true});
+  window.addEventListener('scroll',function(){if(closed()&&fits())fix()},{passive:true});
   window.addEventListener('orientationchange',later);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)later()});
 })();
