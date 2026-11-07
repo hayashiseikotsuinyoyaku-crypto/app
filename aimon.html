@@ -33,13 +33,15 @@ button:disabled{opacity:.5;cursor:default}
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const Q=new URLSearchParams(location.search),T=Q.get('t')||'',A=Q.get('a')||'';
+const EMB=Q.get('embed')==='1'&&window.parent!==window;
 const OKP=/^[0-9a-f]{40}$/.test(T)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(A);
 let INFO=null,R=null,WL=null;
 async function api(op,body,ms){const ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(()=>ac.abort(),ms||60000):0;
   try{const r=await fetch(A,{method:'POST',body:JSON.stringify(Object.assign({op,t:T},body||{})),signal:ac?ac.signal:undefined});return await r.json()}finally{clearTimeout(tm)}}
 const mmss=n=>Math.floor(n/60)+':'+String(n%60).padStart(2,'0');
 const pickMime=()=>{try{return ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||''}catch(e){return ''}};
-function show(h){$('#box').innerHTML=h}
+function show(h){$('#box').innerHTML=h+(EMB&&!R&&h.indexOf('id="back"')<0?'<button id="x" style="margin-top:4px">閉じる（カルテに戻る）</button>':'');const x=$('#x');if(x)x.onclick=back}
+function back(){if(R)stop(true);try{window.parent.postMessage({ts:'hayashi',op:'aimClose'},location.origin)}catch(e){}}
 function idle(msg){show(`<div class="who">${esc(INFO.name)} 様</div><div class="sub">${INFO.kind==='acc'?'交通事故':'一般'}・担当 ${esc(INFO.staff||'')}</div>
   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="big" id="go">🎤 記録をはじめる</button>
   <div class="sub">問診のあいだ押したままにしなくて大丈夫です。終わったら「終わり」を押します（15分まで）。</div>`);$('#go').onclick=start}
@@ -66,7 +68,7 @@ function stop(discard){const X=R;if(!X)return;
     let b64='';try{b64=await new Promise((ok,ng)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]||'');f.onerror=ng;f.readAsDataURL(blob)})}catch(e){}
     let r=null;try{r=await api('aimRun',{mime:X.mime,b64,sec:X.sec},180000)}catch(e){r={error:'つながりませんでした。電波を確かめて、もう一度録ってください。'}}
     b64='';
-    if(r&&r.ok)show(`<div class="ok">✓ 下書きができました</div><div class="sub">予約システムのカルテに戻ってください。下書きが出ています。<br>この画面は閉じて大丈夫です。</div><button id="again">もう一度録る</button>`),$('#again').onclick=()=>idle();
+    if(r&&r.ok)show(`<div class="ok">✓ 下書きができました</div><div class="sub">${EMB?'「閉じる」を押すと、カルテに下書きが出ています。':'予約システムのカルテに戻ってください。下書きが出ています。<br>この画面は閉じて大丈夫です。'}</div>${EMB?'<button class="big" id="back">閉じる（カルテに戻る）</button>':''}<button id="again">もう一度録る</button>`),$('#again').onclick=()=>idle(),EMB&&($('#back').onclick=back);
     else idle((r&&r.error)||'うまくいきませんでした。もう一度録ってください。')};
   try{X.rec.stop()}catch(e){X.rec.onstop()}}
 window.addEventListener('beforeunload',e=>{if(R){e.preventDefault();e.returnValue=''}});

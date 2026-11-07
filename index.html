@@ -48,6 +48,32 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
   <div id="pushst" role="status"></div>
   <button id="pushno" type="button">やめる</button>
 </div></div>
+<script>
+/* AI問診の録音（11/7版m）：予約システム（Googleの画面）の中ではマイクが使えないので、このページの上に録音の画面（aimon.html）を重ねて出す。
+   ホーム画面のアイコンから開いていても、別の画面に入れ替わらない。録音の画面の「閉じる」で、開いていたカルテに戻る */
+(function () {
+  var OK_ORIGIN = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, ov = null, app = null;
+  function close() { if (ov) { ov.remove(); ov = null; } if (app) { try { app.w.postMessage({ts: 'hayashi', op: 'aimDone'}, app.o); } catch (x) {} } }
+  window.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (e.origin === location.origin && d.ts === 'hayashi' && d.op === 'aimClose') { close(); return; }
+    if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi' || d.op !== 'aimRec') return;
+    var u = String((d.data || {}).url || ''), src = e.source, org = e.origin;
+    var reply = function (v) { try { src.postMessage({ts: 'hayashi', id: d.id, v: v}, org); } catch (x) {} };
+    var m = /^https:\/\/hayashiseikotsuinyoyaku-crypto\.github\.io\/app\/aimon\.html\?t=[0-9a-f]{40}&a=[^#]+$/.exec(u);
+    if (!m) { reply({error: 'bad'}); return; }
+    app = {w: src, o: org};
+    if (ov) ov.remove();
+    ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#f4f7f6';
+    var f = document.createElement('iframe');
+    f.src = u + '&embed=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
+    f.style.cssText = 'border:0;width:100%;height:100%;display:block';
+    ov.appendChild(f); document.body.appendChild(ov);
+    reply({ok: true});
+  });
+})();
+</script>
 <iframe id="app" hidden title="整骨院システム" allow="camera; clipboard-write; fullscreen"></iframe>
 <script>
 /* ログインを覚える：中の予約システム（Googleの画面）から頼まれた分だけ、この端末に保存する（代表 10/14） */
