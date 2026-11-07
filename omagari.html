@@ -47,21 +47,28 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
 (function () {
   var OK_ORIGIN = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, ov = null, app = null;
   function close() { if (ov) { ov.remove(); ov = null; } if (app) { try { app.w.postMessage({ts: 'hayashi', op: 'aimDone'}, app.o); } catch (x) {} } }
+  /* 11/7版q：カルテの下に小さな枠で出す（カルテを見ながら・書きながら録れる）。枠の高さは中から知らせてもらう */
   window.addEventListener('message', function (e) {
     var d = e.data || {};
-    if (e.origin === location.origin && d.ts === 'hayashi' && d.op === 'aimClose') { close(); return; }
-    if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi' || d.op !== 'aimRec') return;
-    var u = String((d.data || {}).url || ''), src = e.source, org = e.origin;
+    if (e.origin === location.origin && d.ts === 'hayashi') {
+      if (d.op === 'aimClose') { close(); return; }
+      if (d.op === 'aimSize' && ov) { ov.style.height = Math.max(60, Math.min(+d.h || 90, 420)) + 'px'; return; }
+    }
+    if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi') return;
+    var src = e.source, org = e.origin;
     var reply = function (v) { try { src.postMessage({ts: 'hayashi', id: d.id, v: v}, org); } catch (x) {} };
+    if (d.op === 'aimCtl') { var f0 = ov && ov.querySelector('iframe'); if (!f0) { reply({none: true}); return; } try { f0.contentWindow.postMessage({ts: 'hayashi', op: 'aimCtl', cmd: String((d.data || {}).cmd || '')}, location.origin); } catch (x) {} reply({ok: true}); return; }
+    if (d.op !== 'aimRec') return;
+    var u = String((d.data || {}).url || '');
     var m = /^https:\/\/hayashiseikotsuinyoyaku-crypto\.github\.io\/app\/aimon\.html\?t=[0-9a-f]{40}&a=[^#]+$/.exec(u);
     if (!m) { reply({error: 'bad'}); return; }
     app = {w: src, o: org};
     if (ov) ov.remove();
     ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#f4f7f6';
+    ov.style.cssText = 'position:fixed;z-index:9999;right:max(8px,env(safe-area-inset-right));bottom:max(76px,calc(env(safe-area-inset-bottom) + 70px));width:min(470px,calc(100vw - 16px));height:90px;border-radius:16px;overflow:hidden';   /* 右下（カルテの「保存する」の帯にかからない高さ） */
     var f = document.createElement('iframe');
-    f.src = u + '&embed=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
-    f.style.cssText = 'border:0;width:100%;height:100%;display:block';
+    f.src = u + '&embed=1&mini=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
+    f.style.cssText = 'border:0;width:100%;height:100%;display:block;background:transparent'; f.setAttribute('allowtransparency', 'true');
     ov.appendChild(f); document.body.appendChild(ov);
     reply({ok: true});
   });
