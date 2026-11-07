@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>AI問診の録音</title><meta name="robots" content="noindex">
+<style>
+/* AI問診（試し・11/7版l）：予約システムの画面（Google の枠の中）ではマイクが使えないので、録音だけをこのページで行う。
+   録音はこのページの中だけで持ち、予約システム経由でAIに渡したら捨てる（保存しない）。下書きはカルテに出る */
+:root{--bg:#f4f7f6;--card:#fff;--ink:#1f2a30;--sub:#5a6b70;--line:#d6e0de;--teal:#1f6f63;--teal2:#e3f0ed;--red:#c0392b;
+  --f:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;-webkit-text-size-adjust:100%}
+main{max-width:640px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:16px}
+h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:12px;background:var(--teal2);color:var(--teal);padding:2px 8px;border-radius:99px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:14px;text-align:center}
+.who{font-size:20px;font-weight:800}
+.sub{color:var(--sub);font-size:14.5px;line-height:1.7}
+button{font:inherit;border-radius:14px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:14px 18px;cursor:pointer;font-weight:700}
+button:disabled{opacity:.5;cursor:default}
+.big{font-size:24px;padding:26px 20px;border:0;background:var(--teal);color:#fff;width:100%}
+.big.stop{background:var(--red)}
+.time{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--red)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--red);margin-right:8px;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.2}}
+.meter{height:10px;background:#eef2f1;border-radius:99px;overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--teal);transition:width .1s}
+.ok{color:var(--teal);font-weight:800;font-size:20px}
+.err{color:var(--red);font-weight:700}
+</style></head><body>
+<main>
+  <h1>🎤 AI問診の録音 <span class="tag">試し</span></h1>
+  <div class="card" id="box"><div class="sub">読み込んでいます…</div></div>
+  <div class="sub">録音はこの画面の中だけで持ち、AIに渡したらすぐ消します（どこにも保存しません）。<br>録音のあいだは、iPadの画面を消さないでください（消すと録音が止まることがあります）。</div>
+</main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const Q=new URLSearchParams(location.search),T=Q.get('t')||'',A=Q.get('a')||'';
+const OKP=/^[0-9a-f]{40}$/.test(T)&&/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(A);
+let INFO=null,R=null,WL=null;
+async function api(op,body,ms){const ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(()=>ac.abort(),ms||60000):0;
+  try{const r=await fetch(A,{method:'POST',body:JSON.stringify(Object.assign({op,t:T},body||{})),signal:ac?ac.signal:undefined});return await r.json()}finally{clearTimeout(tm)}}
+const mmss=n=>Math.floor(n/60)+':'+String(n%60).padStart(2,'0');
+const pickMime=()=>{try{return ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||''}catch(e){return ''}};
+function show(h){$('#box').innerHTML=h}
+function idle(msg){show(`<div class="who">${esc(INFO.name)} 様</div><div class="sub">${INFO.kind==='acc'?'交通事故':'一般'}・担当 ${esc(INFO.staff||'')}</div>
+  ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="big" id="go">🎤 記録をはじめる</button>
+  <div class="sub">問診のあいだ押したままにしなくて大丈夫です。終わったら「終わり」を押します（15分まで）。</div>`);$('#go').onclick=start}
+async function start(){const mime=pickMime();
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!mime){idle('この端末では録音できません（iPadのSafariで開いてください）。');return}
+  let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
+  catch(e){idle('マイクが使えませんでした。「許可」を押してください。前に「許可しない」を押したときは、iPadの「設定」→「Safari」→「マイク」を「確認」か「許可」にしてください。');return}
+  const rec=new MediaRecorder(st,{mimeType:mime,audioBitsPerSecond:32000}),chunks=[];
+  R={rec,st,chunks,mime,t0:Date.now(),sec:0};
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};rec.start(1000);
+  try{WL=navigator.wakeLock?await navigator.wakeLock.request('screen'):null}catch(e){WL=null}
+  try{const ac=new (window.AudioContext||window.webkitAudioContext)(),src=ac.createMediaStreamSource(st),an=ac.createAnalyser();an.fftSize=512;src.connect(an);R.ac=ac;R.an=an;R.buf=new Uint8Array(an.fftSize)}catch(e){}
+  show(`<div class="who">${esc(INFO.name)} 様</div><div><span class="dot"></span><b>記録中</b></div><div class="time" id="tm">0:00</div><div class="meter"><i id="mt"></i></div>
+    <button class="big stop" id="end">■ 終わり（AIでまとめる）</button><button id="cancel">やめる（録音を消す）</button>`);
+  $('#end').onclick=()=>stop(false);$('#cancel').onclick=()=>stop(true);
+  R.tick=setInterval(()=>{if(!R)return;R.sec=Math.round((Date.now()-R.t0)/1000);const e=$('#tm');if(e)e.textContent=mmss(R.sec);
+    if(R.an){R.an.getByteTimeDomainData(R.buf);let m=0;for(const v of R.buf)m=Math.max(m,Math.abs(v-128));const i=$('#mt');if(i)i.style.width=Math.min(100,m*1.6)+'%'}
+    if(R.sec>=(INFO.max||900))stop(false)},200)}
+function endRec(){if(!R)return;clearInterval(R.tick);try{R.st.getTracks().forEach(t=>t.stop())}catch(e){}try{R.ac&&R.ac.close()}catch(e){}try{WL&&WL.release()}catch(e){}WL=null}
+function stop(discard){const X=R;if(!X)return;
+  if(discard){try{X.rec.onstop=null;X.rec.stop()}catch(e){}endRec();X.chunks.length=0;R=null;idle('録音を消しました。');return}
+  show(`<div class="who">${esc(INFO.name)} 様</div><div class="sub">AIがまとめています…（1分ほどかかることがあります）</div>`);
+  X.rec.onstop=async()=>{endRec();const blob=new Blob(X.chunks,{type:X.mime.split(';')[0]});X.chunks.length=0;R=null;
+    let b64='';try{b64=await new Promise((ok,ng)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]||'');f.onerror=ng;f.readAsDataURL(blob)})}catch(e){}
+    let r=null;try{r=await api('aimRun',{mime:X.mime,b64,sec:X.sec},180000)}catch(e){r={error:'つながりませんでした。電波を確かめて、もう一度録ってください。'}}
+    b64='';
+    if(r&&r.ok)show(`<div class="ok">✓ 下書きができました</div><div class="sub">予約システムのカルテに戻ってください。下書きが出ています。<br>この画面は閉じて大丈夫です。</div><button id="again">もう一度録る</button>`),$('#again').onclick=()=>idle();
+    else idle((r&&r.error)||'うまくいきませんでした。もう一度録ってください。')};
+  try{X.rec.stop()}catch(e){X.rec.onstop()}}
+window.addEventListener('beforeunload',e=>{if(R){e.preventDefault();e.returnValue=''}});
+(async()=>{if(!OKP){show('<div class="err">この画面は、予約システムのカルテの「🎤問診を記録」から開いてください。</div>');return}
+  let r=null;try{r=await api('aimInfo')}catch(e){}
+  if(!r||r.error){show(`<div class="err">${esc((r&&r.error)||'予約システムにつながりませんでした。')}</div>`);return}
+  INFO=r;idle()})();
+</script>
+</body></html>
