@@ -61,34 +61,57 @@ function idle(msg){show(MINI?`<div class="who">🎤 ${esc(INFO.name)} 様</div>$
   :`<div class="who">${esc(INFO.name)} 様</div><div class="sub">${INFO.kind==='acc'?'交通事故':'一般'}・担当 ${esc(INFO.staff||'')}</div>
   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="big" id="go">🎤 記録をはじめる</button>
   <div class="sub">問診のあいだ押したままにしなくて大丈夫です。終わったら「終わり」を押します（15分まで）。</div>`);$('#go').onclick=start}
+/* 11/7版r：長い問診（30分以上）でも時間切れにならないように、5分ごとに区切って、録りながら少しずつ送る（区切りごとに予約システムで文字にしておく）。
+   「終わり」で残りを送り、全部の文字と電子問診票から下書きを作る。上限60分 */
+let Q2=[],QB=false,SENT=0,FAIL=0;
+async function pump(){if(QB)return;QB=true;
+  while(Q2.length){const it=Q2[0];let r=null;
+    for(let k=0;k<3&&!(r&&r.ok);k++){try{r=await api('aimSeg',{i:it.i,mime:it.mime,b64:it.b64,sec:it.sec},120000)}catch(e){r=null}if(!(r&&r.ok)&&!(r&&r.error&&!/つながり|返事がありません|503|500|429/.test(r.error)))break;if(!(r&&r.ok))await new Promise(z=>setTimeout(z,3000*(k+1)))}
+    if(r&&r.ok){Q2.shift();SENT++}else{it.err=(r&&r.error)||'つながりませんでした';FAIL++;Q2.shift();(window.__FAILED=window.__FAILED||[]).push(it)}
+    paintSent()}
+  QB=false}
+function paintSent(){const e=$('#sent');if(e)e.textContent=SENT?`送った分 ${SENT}区切り`:''}
+const b64of=blob=>new Promise((ok,ng)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]||'');f.onerror=ng;f.readAsDataURL(blob)});
+function newRec(){const rec=new MediaRecorder(R.st,{mimeType:R.mime,audioBitsPerSecond:32000}),chunks=[],i=R.seg++,t0=Date.now();
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  rec.onstop=async()=>{const blob=new Blob(chunks,{type:R0mime(rec)});chunks.length=0;let b64='';try{b64=await b64of(blob)}catch(e){}Q2.push({i,mime:rec.mimeType||R0.mime,b64,sec:Math.round((Date.now()-t0)/1000)});pump();if(rec.__done)rec.__done()};
+  rec.start(1000);R.rec=rec;R.segT0=Date.now()}
+let R0={mime:''};const R0mime=rec=>(rec.mimeType||R0.mime).split(';')[0];
+function rotate(){if(!R||R.stopping)return;const old=R.rec;newRec();try{old.stop()}catch(e){}}
 async function start(auto){const mime=pickMime();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!mime){idle('この端末では録音できません（iPadのSafariで開いてください）。');return}
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
   catch(e){if(auto){idle();return}idle('マイクが使えませんでした。「許可」を押してください。前に「許可しない」を押したときは、iPadの「設定」→「Safari」→「マイク」を「確認」か「許可」にしてください。');return}
-  const rec=new MediaRecorder(st,{mimeType:mime,audioBitsPerSecond:32000}),chunks=[];
-  R={rec,st,chunks,mime,t0:Date.now(),sec:0};
-  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};rec.start(1000);
+  Q2=[];SENT=0;FAIL=0;window.__FAILED=[];R0.mime=mime;
+  R={st,mime,t0:Date.now(),sec:0,seg:0};newRec();
   try{WL=navigator.wakeLock?await navigator.wakeLock.request('screen'):null}catch(e){WL=null}
   try{const ac=new (window.AudioContext||window.webkitAudioContext)(),src=ac.createMediaStreamSource(st),an=ac.createAnalyser();an.fftSize=512;src.connect(an);R.ac=ac;R.an=an;R.buf=new Uint8Array(an.fftSize)}catch(e){}
-  show(MINI?`<span class="dot"></span><b>記録中</b><b class="time" id="tm">0:00</b><div class="meter"><i id="mt"></i></div><button class="big stop" id="end">■ 終わり</button><button id="cancel">やめる</button>`
+  show(MINI?`<span class="dot"></span><b>記録中</b><b class="time" id="tm">0:00</b><div class="meter"><i id="mt"></i></div><button class="big stop" id="end">■ 終わり</button><button id="cancel">やめる</button><span class="sub" id="sent" style="flex:0 0 auto"></span>`
     :`<div class="who">${esc(INFO.name)} 様</div><div><span class="dot"></span><b>記録中</b></div><div class="time" id="tm">0:00</div><div class="meter"><i id="mt"></i></div>
-    <button class="big stop" id="end">■ 終わり（AIでまとめる）</button><button id="cancel">やめる（録音を消す）</button>`);
+    <button class="big stop" id="end">■ 終わり（AIでまとめる）</button><button id="cancel">やめる（録音を消す）</button><div class="sub" id="sent"></div><div class="sub">長い問診でも大丈夫です（60分まで）。5分ごとに少しずつ送っています。</div>`);
   $('#end').onclick=()=>stop(false);$('#cancel').onclick=()=>stop(true);
+  const SEG=(INFO.seg||300)*1000;
   R.tick=setInterval(()=>{if(!R)return;R.sec=Math.round((Date.now()-R.t0)/1000);const e=$('#tm');if(e)e.textContent=mmss(R.sec);
     if(R.an){R.an.getByteTimeDomainData(R.buf);let m=0;for(const v of R.buf)m=Math.max(m,Math.abs(v-128));const i=$('#mt');if(i)i.style.width=Math.min(100,m*1.6)+'%'}
-    if(R.sec>=(INFO.max||900))stop(false)},200)}
+    if(R.sec>=(INFO.max||3600)){stop(false);return}
+    if(Date.now()-R.segT0>=SEG)rotate()},200)}
 function endRec(){if(!R)return;clearInterval(R.tick);try{R.st.getTracks().forEach(t=>t.stop())}catch(e){}try{R.ac&&R.ac.close()}catch(e){}try{WL&&WL.release()}catch(e){}WL=null}
-function stop(discard){const X=R;if(!X)return;
-  if(discard){try{X.rec.onstop=null;X.rec.stop()}catch(e){}endRec();X.chunks.length=0;R=null;if(MINI){back();return}idle('録音を消しました。');return}
+async function fin(X){
   show(MINI?`<div class="sub">⏳ AIがまとめています…（1分ほど）。カルテはそのまま書けます。</div>`:`<div class="who">${esc(INFO.name)} 様</div><div class="sub">AIがまとめています…（1分ほどかかることがあります）</div>`);
-  X.rec.onstop=async()=>{endRec();const blob=new Blob(X.chunks,{type:X.mime.split(';')[0]});X.chunks.length=0;R=null;
-    let b64='';try{b64=await new Promise((ok,ng)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]||'');f.onerror=ng;f.readAsDataURL(blob)})}catch(e){}
-    let r=null;try{r=await api('aimRun',{mime:X.mime,b64,sec:X.sec},180000)}catch(e){r={error:'つながりませんでした。電波を確かめて、もう一度録ってください。'}}
-    b64='';
-    if(r&&r.ok&&MINI){show('<div class="ok">✓ 下書きができました（カルテに出ます）</div>');setTimeout(back,1200)}
-    else if(r&&r.ok)show(`<div class="ok">✓ 下書きができました</div><div class="sub">${EMB?'「閉じる」を押すと、カルテに下書きが出ています。':'予約システムのカルテに戻ってください。下書きが出ています。<br>この画面は閉じて大丈夫です。'}</div>${EMB?'<button class="big" id="back">閉じる（カルテに戻る）</button>':''}<button id="again">もう一度録る</button>`),$('#again').onclick=()=>idle(),EMB&&($('#back').onclick=back);
-    else idle((r&&r.error)||'うまくいきませんでした。もう一度録ってください。')};
-  try{X.rec.stop()}catch(e){X.rec.onstop()}}
+  while(QB||Q2.length)await new Promise(z=>setTimeout(z,300));
+  let r=null;
+  if((window.__FAILED||[]).length){r={error:'送れなかった区切りがあります（'+window.__FAILED[0].err+'）。'}}
+  else{try{r=await api('aimFin',{n:X.seg,sec:X.sec},180000)}catch(e){r={error:'つながりませんでした。電波を確かめて、「もう一度送る」を押してください。'}}}
+  if(r&&r.ok&&MINI){show('<div class="ok">✓ 下書きができました（カルテに出ます）</div>');setTimeout(back,1200)}
+  else if(r&&r.ok)show(`<div class="ok">✓ 下書きができました</div><div class="sub">${EMB?'「閉じる」を押すと、カルテに下書きが出ています。':'予約システムのカルテに戻ってください。下書きが出ています。<br>この画面は閉じて大丈夫です。'}</div>${EMB?'<button class="big" id="back">閉じる（カルテに戻る）</button>':''}<button id="again">もう一度録る</button>`),$('#again').onclick=()=>idle(),EMB&&($('#back').onclick=back);
+  else{/* 送れなかった区切りが残っていれば、もう一度送れるようにする（録音はこの画面の中だけにある） */
+    const left=(window.__FAILED||[]);
+    show(`<div class="err">${esc((r&&r.error)||'うまくいきませんでした。')}</div><button class="big" id="retry">もう一度送る</button><button id="again">録り直す</button>`);
+    $('#retry').onclick=()=>{const L=left.splice(0);L.forEach(it=>{delete it.err;Q2.push(it)});FAIL=0;pump();fin(X)};$('#again').onclick=()=>{window.__FAILED=[];idle()}}}
+function stop(discard){const X=R;if(!X||X.stopping)return;X.stopping=true;
+  if(discard){try{X.rec.onstop=null;X.rec.stop()}catch(e){}endRec();Q2=[];window.__FAILED=[];R=null;if(MINI){back();return}idle('録音を消しました。');return}
+  const last=X.rec;last.__done=()=>{R=null;fin(X)};endRecSoon(X);try{last.stop()}catch(e){last.__done()}}
+function endRecSoon(X){clearInterval(X.tick);setTimeout(()=>{try{X.st.getTracks().forEach(t=>t.stop())}catch(e){}try{X.ac&&X.ac.close()}catch(e){}try{WL&&WL.release()}catch(e){}WL=null},300)}
 /* カルテの「終わり」「やめる」（入口のページ経由） */
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.ts!=='hayashi'||d.op!=='aimCtl')return;
   if(d.cmd==='end'&&R)stop(false);else if(d.cmd==='cancel'){if(R)stop(true);else back()}else if(d.cmd==='start'&&!R&&INFO)start()});
