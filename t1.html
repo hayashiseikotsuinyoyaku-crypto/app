@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>試し1</title>
+<meta name="apple-mobile-web-app-title" content="整骨院システム">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="index.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<style>
+html,body{margin:0;height:100%;background:#fff}
+body{font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#2B2723}
+#app{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px));border:0}
+.box{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;gap:14px;padding:24px;box-sizing:border-box;text-align:center}
+img{width:110px;height:110px;border-radius:24px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:22px;margin:0}
+ol{text-align:left;font-size:17px;line-height:1.8;max-width:340px;padding-left:1.4em;margin:0}
+.note{font-size:14px;color:#6B635B;max-width:340px}
+a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:999px}
+[hidden]{display:none!important}
+/* スマホへの通知をオンにするボタン（中の画面から頼まれたときだけ出す・代表 11/3） */
+#pushov{position:fixed;inset:0;z-index:10;background:rgba(20,30,28,.45);display:flex;align-items:flex-end;justify-content:center}
+#pushov .sheet{background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));box-sizing:border-box;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,.18)}
+#pushov p{margin:0 0 14px;font-size:16px;line-height:1.7}
+#pushov button{font:inherit;border:0;border-radius:999px;cursor:pointer}
+#pushgo{display:block;width:100%;background:#115C55;color:#fff;font-size:19px;font-weight:700;padding:16px 10px}
+#pushno{background:none;color:#6B635B;font-size:15px;margin-top:12px;padding:8px 18px;text-decoration:underline}
+#pushst{font-size:14px;color:#6B635B;min-height:1.2em;margin-top:10px}
+</style>
+</head><body>
+<div class="box" id="setup" hidden>
+  <img src="apple-touch-icon.png" alt="">
+  <h1>整骨院システム</h1>
+  <ol>
+    <li>下の <b>共有ボタン</b>（□に↑のマーク）を押す<br><small>iPadは右上にあります</small></li>
+    <li><b>「ホーム画面に追加」</b>を押す</li>
+    <li>名前が「整骨院システム」になっているのを確かめて<b>「追加」</b></li>
+  </ol>
+  <p class="note">追加したら、ホーム画面のアイコンから開いてください。<br>Androidのスマホは、右上の︙ →「ホーム画面に追加」です。</p>
+  <p><a class="btn" href="https://script.google.com/macros/s/AKfycby8QI2NKxAnfMymleQvHoTgtKQzDgCMyrNqpLqohiIJtAdZYc0U1zrNqB5NY5_4kwhf/exec" target="_blank" rel="noopener">今すぐ開いてみる</a></p>
+</div>
+<div id="pushov" hidden role="dialog" aria-modal="true" aria-labelledby="pushgo"><div class="sheet">
+  <p>このスマホに、予約・キャンセルなどの<br>お知らせを出します。</p>
+  <button id="pushgo" type="button">🔔 このスマホに通知を出す</button>
+  <div id="pushst" role="status"></div>
+  <button id="pushno" type="button">やめる</button>
+</div></div>
+<script>
+/* AI問診の録音（11/7版m）：予約システム（Googleの画面）の中ではマイクが使えないので、このページの上に録音の画面（aimon.html）を重ねて出す。
+   ホーム画面のアイコンから開いていても、別の画面に入れ替わらない。録音の画面の「閉じる」で、開いていたカルテに戻る */
+(function () {
+  var OK_ORIGIN = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, ov = null, app = null;
+  function close() { if (ov) { ov.remove(); ov = null; } if (app) { try { app.w.postMessage({ts: 'hayashi', op: 'aimDone'}, app.o); } catch (x) {} } }
+  /* 11/7版q：カルテの下に小さな枠で出す（カルテを見ながら・書きながら録れる）。枠の高さは中から知らせてもらう */
+  window.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (e.origin === location.origin && d.ts === 'hayashi') {
+      if (d.op === 'aimClose') { close(); return; }
+      if (d.op === 'aimSize' && ov) { ov.style.height = Math.max(60, Math.min(+d.h || 90, 420)) + 'px'; return; }
+    }
+    if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi') return;
+    var src = e.source, org = e.origin;
+    var reply = function (v) { try { src.postMessage({ts: 'hayashi', id: d.id, v: v}, org); } catch (x) {} };
+    if (d.op === 'aimCtl') { var f0 = ov && ov.querySelector('iframe'); if (!f0) { reply({none: true}); return; } try { f0.contentWindow.postMessage({ts: 'hayashi', op: 'aimCtl', cmd: String((d.data || {}).cmd || '')}, location.origin); } catch (x) {} reply({ok: true}); return; }
+    if (d.op !== 'aimRec') return;
+    var u = String((d.data || {}).url || '');
+    var m = /^https:\/\/hayashiseikotsuinyoyaku-crypto\.github\.io\/app\/aimon\.html\?t=[0-9a-f]{40}&a=[^#]+$/.exec(u);
+    if (!m) { reply({error: 'bad'}); return; }
+    app = {w: src, o: org};
+    if (ov) ov.remove();
+    ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;z-index:9999;right:max(8px,env(safe-area-inset-right));bottom:max(76px,calc(env(safe-area-inset-bottom) + 70px));width:min(470px,calc(100vw - 16px));height:90px;border-radius:16px;overflow:hidden';   /* 右下（カルテの「保存する」の帯にかからない高さ） */
+    var f = document.createElement('iframe');
+    f.src = u + '&embed=1&mini=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
+    f.style.cssText = 'border:0;width:100%;height:100%;display:block;background:transparent'; f.setAttribute('allowtransparency', 'true');
+    ov.appendChild(f); document.body.appendChild(ov);
+    reply({ok: true});
+  });
+})();
+</script>
+<iframe id="app" hidden title="整骨院システム" allow="camera; clipboard-write; fullscreen"></iframe>
+<script>
+/* ログインを覚える：中の予約システム（Googleの画面）から頼まれた分だけ、この端末に保存する（代表 10/14） */
+window.addEventListener('message', function (e) {
+  if (!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin)) return;
+  var d = e.data || {}; if (d.ts !== 'hayashi' || !/^[\w-]{1,40}$/.test(String(d.k || ''))) return;
+  var K = 'hs:' + location.pathname + ':' + d.k, v = null;
+  try {
+    if (d.op === 'get') v = localStorage.getItem(K);
+    else if (d.op === 'set') localStorage.setItem(K, String(d.v).slice(0, 500));
+    else if (d.op === 'del') localStorage.removeItem(K);
+  } catch (x) {}
+  try { e.source.postMessage({ts: 'hayashi', id: d.id, v: v}, e.origin); } catch (x) {}
+});
+</script>
+<script>
+/* スマホへの通知（代表 11/3）：院の公式LINEのお知らせは患者さんのLINEとまぎれるので、このアイコンから直接スマホに通知を出す。
+   ・sw.js（サービスワーカー）が通知を受けて、予約システムに「まだ見ていないお知らせ」を取りに行く
+   ・iPhoneは、ホーム画面のアイコンから開いたとき（standalone）だけ使える。許可は、このページの上のボタンを押したときにしか出せない */
+var PUSH = (function () {
+  var OK_ORIGIN = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, EXEC_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[\w.-]+\/|macros\/)s\/[\w-]+\/exec$/;
+  var CFG = 'hs-push-v1', CFG_URL = new URL('__push_cfg', location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '')).href;
+  var ua = navigator.userAgent || '', isIOS = /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  var reg = null, regP = null, app = null, go = null;
+  var m = /[?&]d=(\d{4}-\d{2}-\d{2})/.exec(location.search); if (m) go = m[1];
+  function can() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  if ('serviceWorker' in navigator) {
+    regP = navigator.serviceWorker.register('sw.js', {scope: './'}).then(function (r) { reg = r; return r; }).catch(function (e) { console.warn(e); return null; });
+    navigator.serviceWorker.addEventListener('message', function (e) { var d = e.data || {}; if (d.hs === 'goDay') send({op: 'goDay', v: d.k}); });
+  }
+  function send(o) { if (!app) { if (o.op === 'goDay') go = o.v; return; } o.ts = 'hayashi'; try { app.w.postMessage(o, app.o); } catch (x) {} }
+  function u8(b64) { var s = String(b64).replace(/-/g, '+').replace(/_/g, '/'); s += '===='.slice(s.length % 4 || 4); var r = atob(s), a = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) a[i] = r.charCodeAt(i); return a; }
+  function wait(p, ms) { return Promise.race([p, new Promise(function (ok) { setTimeout(function () { ok(null); }, ms); })]); }
+  function getReg() { return reg ? Promise.resolve(reg) : regP ? wait(regP, 8000).then(function (r) { return r || null; }) : Promise.resolve(null); }
+  function state() {
+    if (isIOS && !standalone) return Promise.resolve({state: 'needHome'});
+    if (!can()) return Promise.resolve({state: 'unsupported'});
+    var p = Notification.permission;
+    if (p === 'denied') return Promise.resolve({state: 'denied'});
+    return getReg().then(function (r) { return r ? r.pushManager.getSubscription() : null; }).then(function (s) {
+      if (p === 'granted' && s) return {state: 'on', endpoint: s.endpoint};
+      return {state: p === 'granted' ? 'granted' : 'none'};
+    }).catch(function () { return {state: p === 'granted' ? 'granted' : 'none'}; });
+  }
+  function subscribe(key) {
+    var opt = {userVisibleOnly: true, applicationServerKey: u8(key)};
+    return getReg().then(function (r) {
+      if (!r) throw new Error('通知のしくみを準備できませんでした。アプリを閉じて、もう一度開いてください。');
+      return r.pushManager.getSubscription().then(function (old) {
+        // 鍵が違う古い登録が残っていたら、外してから入れ直す
+        if (old && old.options && old.options.applicationServerKey) {
+          var a = new Uint8Array(old.options.applicationServerKey), b = opt.applicationServerKey, same = a.length === b.length;
+          for (var i = 0; same && i < a.length; i++) if (a[i] !== b[i]) same = false;
+          if (same) return old;
+          return old.unsubscribe().then(function () { return r.pushManager.subscribe(opt); });
+        }
+        return old || r.pushManager.subscribe(opt);
+      });
+    }).then(function (s) { var j = s.toJSON(); return {endpoint: j.endpoint, keys: {p256dh: j.keys && j.keys.p256dh, auth: j.keys && j.keys.auth}}; });
+  }
+  /* 中の画面から「通知をオンにしたい」と言われたら、このページの上にボタンを出す */
+  var ov = document.getElementById('pushov'), gob = document.getElementById('pushgo'), nob = document.getElementById('pushno'), st = document.getElementById('pushst'), ask = null;
+  function close(v) { ov.hidden = true; gob.disabled = false; st.textContent = ''; var a = ask; ask = null; if (a) a(v); }
+  function show(key, reply) {
+    if (ask) close({cancel: true});
+    ask = reply; ov.hidden = false; gob.disabled = false; st.textContent = '';
+    gob.onclick = function () {
+      gob.disabled = true; st.textContent = '少し待ってください…';
+      // iPhone：許可の画面は、ボタンを押したその場で出す（待ってから出すと出ない）
+      var pp = Notification.permission === 'granted' ? Promise.resolve('granted') : Notification.requestPermission();
+      Promise.resolve(pp).then(function (p) {
+        if (p !== 'granted') { close({error: p === 'denied' ? '通知が「許可しない」になりました。スマホの「設定」で、通知を許可にしてください。' : '通知の許可がされませんでした。もう一度「通知をオンにする」を押して、「許可」を押してください。'}); return; }
+        return subscribe(key).then(function (sub) { close({ok: true, sub: sub}); });
+      }).catch(function (e) { close({error: '通知をオンにできませんでした。（' + String(e && e.message || e).slice(0, 120) + '）'}); });
+    };
+    nob.onclick = function () { close({cancel: true}); };
+  }
+  function cfgPut(o) { return caches.open(CFG).then(function (c) { return c.put(CFG_URL, new Response(JSON.stringify(o), {headers: {'Content-Type': 'application/json'}})); }); }
+  function cfgDel() { return caches.open(CFG).then(function (c) { return c.delete(CFG_URL); }); }
+  window.addEventListener('message', function (e) {
+    if (!OK_ORIGIN.test(e.origin)) return;
+    var d = e.data || {}; if (d.ts !== 'hayashi' || typeof d.op !== 'string' || d.op.indexOf('push') !== 0) return;
+    var src = e.source, org = e.origin, reply = function (v) { try { src.postMessage({ts: 'hayashi', id: d.id, v: v}, org); } catch (x) {} };
+    app = {w: src, o: org};
+    var x = d.data || {};
+    if (d.op === 'pushHello') { reply({go: go}); go = null; return; }
+    if (d.op === 'pushPing') { reply({ok: true}); return; }
+    if (d.op === 'pushState') { state().then(reply); return; }
+    if (d.op === 'pushAsk') {
+      state().then(function (s) {
+        if (s.state === 'needHome' || s.state === 'unsupported' || s.state === 'denied') { reply({error: s.state === 'needHome' ? 'ホーム画面の「整骨院システム」のアイコンから開いてください。' : s.state === 'denied' ? '通知が「許可しない」になっています。スマホの「設定」で、通知を許可にしてください。' : 'この端末は、通知を使えません。', state: s.state}); return; }
+        if (!/^[\w-]{80,100}$/.test(String(x.key || ''))) { reply({error: '通知の鍵を受け取れませんでした。'}); return; }
+        show(String(x.key), reply);
+      });
+      return;
+    }
+    if (d.op === 'pushSave') {
+      var c = x.cfg || {};
+      if (!/^P[0-9a-f]{12}$/.test(String(c.id)) || !/^[0-9a-f]{40}$/.test(String(c.k)) || !EXEC_RE.test(String(c.exec)) || !/^[\w-]{80,100}$/.test(String(c.key || ''))) { reply({error: '登録の内容が正しくありません。'}); return; }
+      cfgPut({id: c.id, k: c.k, exec: c.exec, key: c.key, seq: Math.max(0, +c.seq || 0)}).then(function () { reply({ok: true}); }, function () { reply({error: 'この端末に保存できませんでした。'}); });
+      return;
+    }
+    if (d.op === 'pushOff') {
+      getReg().then(function (r) { return r && r.pushManager.getSubscription(); }).then(function (s) { return s && s.unsubscribe(); }).catch(function () {})
+        .then(cfgDel).catch(function () {}).then(function () { reply({ok: true}); });
+      return;
+    }
+  });
+  return {state: state};
+})();
+</script>
+<script>
+var DEST = 'https://script.google.com/macros/s/AKfycby8QI2NKxAnfMymleQvHoTgtKQzDgCMyrNqpLqohiIJtAdZYc0U1zrNqB5NY5_4kwhf/exec';
+if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
+  document.getElementById('setup').hidden = false;
+  history.replaceState(null, '', location.pathname);
+} else {
+  if (/[?&]d=/.test(location.search)) history.replaceState(null, '', location.pathname);   // 通知から開いた日（中の画面に渡したら消す）
+  var f = document.getElementById('app'); f.src = DEST; f.hidden = false;
+}
+</script>
+
+</body></html>
