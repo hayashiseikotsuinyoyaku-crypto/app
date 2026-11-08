@@ -205,8 +205,11 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
 </script>
 <script>
 /* 11/6：iPhone・iPadで、文字を入れたあと（キーボードが閉じたあと）に押す場所がずれる（代表 11/6：設定のリッチメッセージ）。
-   キーボードで外側の画面が少し上にずれたまま戻らないのが原因なので、キーボードが閉じたら外側の画面を元の位置に戻す */
+   キーボードで外側の画面が少し上にずれたまま戻らないのが原因なので、キーボードが閉じたら外側の画面を元の位置に戻す
+   11/8：iPadOS 27 では、これがあるとID欄を押した瞬間にSafariが落ちる（代表のiPad mini・試しのページで確かめた）。27以上ではしない */
 (function(){
+  var ua=navigator.userAgent,osv=(/(?:OS |Version\/)(\d+)/.exec(ua)||[])[1],ipad=/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+  if(+osv>=27||(!osv&&ipad))return;   // 版がわからないiPad（ホーム画面のアイコンから開いたとき）もしない
   function fix(){try{if(window.scrollX||window.scrollY)window.scrollTo(0,0);if(document.documentElement.scrollTop)document.documentElement.scrollTop=0;if(document.body&&document.body.scrollTop)document.body.scrollTop=0}catch(e){}}
   var vv=window.visualViewport;
   function closed(){return (!vv||(vv.height>=window.innerHeight*0.85&&!(vv.scale>1.01)))}   // ピンチで拡大中は動かさない（監査#8）
