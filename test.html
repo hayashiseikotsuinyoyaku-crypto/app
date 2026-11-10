@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>試し用システム</title>
+<meta name="apple-mobile-web-app-title" content="試し用システム">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<style>
+html,body{margin:0;height:100%;background:#fff}
+body{font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#2B2723}
+#app{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px));border:0}
+.box{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;gap:14px;padding:24px;box-sizing:border-box;text-align:center}
+img{width:110px;height:110px;border-radius:24px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:22px;margin:0}
+ol{text-align:left;font-size:17px;line-height:1.8;max-width:340px;padding-left:1.4em;margin:0}
+.note{font-size:14px;color:#6B635B;max-width:340px}
+a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:999px}
+[hidden]{display:none!important}
+</style>
+</head><body>
+<div class="box" id="ask" hidden>
+  <img src="apple-touch-icon.png" alt="">
+  <h1>試し用システム</h1>
+  <p class="note" style="font-size:16px;color:#2B2723">試し用の予約システムのアドレスを貼ってください<br><small>（https://script.google.com/macros/s/…/exec）</small></p>
+  <input id="u" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="width:100%;max-width:420px;font-size:16px;padding:12px;border:1px solid #ccc;border-radius:10px;box-sizing:border-box">
+  <p class="note" id="err" style="color:#B3261E" hidden>アドレスの形がちがいます。…/exec で終わるアドレスを貼ってください。</p>
+  <p><a class="btn" href="#" id="go">次へ</a></p>
+</div>
+<div class="box" id="setup" hidden>
+  <img src="apple-touch-icon.png" alt="">
+  <h1>試し用システム</h1>
+  <ol>
+    <li>下の <b>共有ボタン</b>（□に↑のマーク）を押す<br><small>iPadは右上にあります</small></li>
+    <li><b>「ホーム画面に追加」</b>を押す</li>
+    <li>名前が「試し用システム」になっているのを確かめて<b>「追加」</b></li>
+  </ol>
+  <p class="note">追加したら、ホーム画面のアイコンから開いてください。<br>Androidのスマホは、右上の︙ →「ホーム画面に追加」です。</p>
+  <p><a class="btn" id="now" href="#" target="_blank" rel="noopener">今すぐ開いてみる</a></p>
+</div>
+<script>
+/* AI問診の録音（11/7版m）：予約システム（Googleの画面）の中ではマイクが使えないので、このページの上に録音の画面（aimon.html）を重ねて出す。
+   ホーム画面のアイコンから開いていても、別の画面に入れ替わらない。録音の画面の「閉じる」で、開いていたカルテに戻る */
+(function () {
+  var OK_ORIGIN = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, ov = null, app = null;
+  function close() { if (ov) { ov.remove(); ov = null; } if (app) { try { app.w.postMessage({ts: 'hayashi', op: 'aimDone'}, app.o); } catch (x) {} } }
+  /* 11/7版q：カルテの下に小さな枠で出す（カルテを見ながら・書きながら録れる）。枠の高さは中から知らせてもらう */
+  window.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (e.origin === location.origin && d.ts === 'hayashi') {
+      if (d.op === 'aimClose') { close(); return; }
+      if (d.op === 'aimSize' && ov) { ov.style.height = Math.max(60, Math.min(+d.h || 90, 420)) + 'px'; return; }
+    }
+    if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi') return;
+    var src = e.source, org = e.origin;
+    var reply = function (v) { try { src.postMessage({ts: 'hayashi', id: d.id, v: v}, org); } catch (x) {} };
+    if (d.op === 'aimCtl') { var f0 = ov && ov.querySelector('iframe'); if (!f0) { reply({none: true}); return; } try { f0.contentWindow.postMessage({ts: 'hayashi', op: 'aimCtl', cmd: String((d.data || {}).cmd || '')}, location.origin); } catch (x) {} reply({ok: true}); return; }
+    if (d.op !== 'aimRec') return;
+    var u = String((d.data || {}).url || '');
+    var m = /^https:\/\/hayashiseikotsuinyoyaku-crypto\.github\.io\/app\/aimon\.html\?t=[0-9a-f]{40}&a=[^#]+$/.exec(u);
+    if (!m) { reply({error: 'bad'}); return; }
+    app = {w: src, o: org};
+    if (ov) ov.remove();
+    ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;z-index:9999;right:max(8px,env(safe-area-inset-right));bottom:max(76px,calc(env(safe-area-inset-bottom) + 70px));width:min(470px,calc(100vw - 16px));height:90px;border-radius:16px;overflow:hidden';   /* 右下（カルテの「保存する」の帯にかからない高さ） */
+    var f = document.createElement('iframe');
+    f.src = u + '&embed=1&mini=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
+    f.style.cssText = 'border:0;width:100%;height:100%;display:block;background:transparent'; f.setAttribute('allowtransparency', 'true');
+    ov.appendChild(f); document.body.appendChild(ov);
+    reply({ok: true});
+  });
+})();
+</script>
+<iframe id="app" hidden title="試し用システム" allow="camera; clipboard-write; fullscreen"></iframe>
+<script>
+/* ログインを覚える：中の予約システム（Googleの画面）から頼まれた分だけ、この端末に保存する（代表 10/14） */
+window.addEventListener('message', function (e) {
+  if (!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(e.origin)) return;
+  var d = e.data || {}; if (d.ts !== 'hayashi' || !/^[\w-]{1,40}$/.test(String(d.k || ''))) return;
+  var K = 'hs:' + location.pathname + ':' + d.k, v = null;
+  try {
+    if (d.op === 'get') v = localStorage.getItem(K);
+    else if (d.op === 'set') localStorage.setItem(K, String(d.v).slice(0, 500));
+    else if (d.op === 'del') localStorage.removeItem(K);
+  } catch (x) {}
+  try { e.source.postMessage({ts: 'hayashi', id: d.id, v: v}, e.origin); } catch (x) {}
+});
+</script>
+<script>
+var DEF = 'https://script.google.com/macros/s/AKfycbyfjWTEVU0y7H9pH9mQ05gtwD8D0aIedDasZT1g7d4WIEgee0p_h0xPkJ7O6NXI5U24CA/exec';
+var RX = /^https:\/\/script\.google\.com\/(a\/[\w.-]+\/)?macros\/s\/[\w-]{20,}\/exec$/;
+var q = new URLSearchParams(location.search), u = (q.get('u') || DEF || '').trim();
+var standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+var $ = function (i) { return document.getElementById(i); };
+if (!RX.test(u)) {
+  $('ask').hidden = false;
+  $('go').onclick = function (e) {
+    e.preventDefault();
+    var v = $('u').value.trim().replace(/[?#].*$/, '');
+    if (!RX.test(v)) { $('err').hidden = false; return; }
+    location.replace(location.pathname + '?setup&u=' + encodeURIComponent(v));
+  };
+} else if (q.has('setup') && !standalone) {
+  $('setup').hidden = false; $('now').href = u;
+} else {
+  var f = $('app'); f.src = u; f.hidden = false;
+}
+</script>
+<script>
+/* 11/6：iPhone・iPadで、文字を入れたあと（キーボードが閉じたあと）に押す場所がずれる（代表 11/6：設定のリッチメッセージ）。
+   キーボードで外側の画面が少し上にずれたまま戻らないのが原因なので、キーボードが閉じたら外側の画面を元の位置に戻す */
+(function(){
+  function fix(){try{if(window.scrollX||window.scrollY)window.scrollTo(0,0);if(document.documentElement.scrollTop)document.documentElement.scrollTop=0;if(document.body&&document.body.scrollTop)document.body.scrollTop=0}catch(e){}}
+  var vv=window.visualViewport;
+  function closed(){return (!vv||(vv.height>=window.innerHeight*0.85&&!(vv.scale>1.01)))}   // ピンチで拡大中は動かさない（監査#8）
+  function fits(){var d=document.documentElement;return d.scrollHeight<=window.innerHeight+2}   // 中身が画面より長いページはふつうにスクロールできるように
+  function later(){setTimeout(function(){if(closed())fix()},60);setTimeout(function(){if(closed())fix()},400)}
+  if(vv){vv.addEventListener('resize',later);vv.addEventListener('scroll',later)}
+  window.addEventListener('scroll',function(){if(closed()&&fits())fix()},{passive:true});
+  window.addEventListener('orientationchange',later);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)later()});
+})();
+</script>
+</body></html>
