@@ -1,1 +1,1 @@
-{"name":"大曲院勤怠","short_name":"大曲院勤怠","start_url":"./omagari-kintai.html","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"apple-touch-icon.png","sizes":"180x180","type":"image/png"}]}
+{"name": "大曲院勤怠", "short_name": "大曲院勤怠", "start_url": "./omagari-kintai.html", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff", "icons": [{"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"}], "scope": "./omagari-kintai.html", "id": "./omagari-kintai.html"}
