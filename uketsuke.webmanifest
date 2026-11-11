@@ -1,0 +1,1 @@
+{"name": "江別本院 受付", "short_name": "江別本院 受付", "start_url": "./uketsuke.html", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff", "icons": [{"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"}], "scope": "./uketsuke.html", "id": "./uketsuke.html"}

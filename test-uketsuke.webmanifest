@@ -1,0 +1,1 @@
+{"name": "試し用 受付", "short_name": "試し用 受付", "start_url": "./test-uketsuke.html", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff", "icons": [{"src": "test-icon.png", "sizes": "180x180", "type": "image/png"}], "scope": "./test-uketsuke.html", "id": "./test-uketsuke.html"}
