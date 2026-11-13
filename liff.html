@@ -28,19 +28,31 @@ function closeBtn(){return (window.liff&&liff.isInClient&&liff.isInClient())?'<b
 function show(h){W.innerHTML=h}
 function fail(t){show('<div class="card"><h1>開けませんでした</h1><p>'+esc(t)+'</p></div>'+closeBtn())}
 function page(){var q=new URLSearchParams(location.search),p=q.get('p');if(!p){var st=q.get('liff.state');if(st){try{p=new URLSearchParams(st.replace(/^[^?]*\?/,'')).get('p')}catch(e){}}}return p||'stamp'}
+/* 診察券（11/13）：1回開いた方は、次からは通信を待たずにすぐ出す（7日おぼえる。この端末の中だけ） */
+var QK='hy_qr_v1',QDAYS=7;
+function qrGet(){try{var o=JSON.parse(localStorage.getItem(QK)||'null');if(o&&o.at&&Date.now()-o.at<QDAYS*864e5&&o.list&&o.list.length)return o.list}catch(e){}return null}
+function qrPut(L){try{localStorage.setItem(QK,JSON.stringify({at:Date.now(),list:L}))}catch(e){}}
+function okUrl(u){return /^https:\/\/hayashiseikotsuinyoyaku-crypto\.github\.io\/app\/card\.html\?c=/.test(String(u||''))}
+function listOut(L,ttl){
+  if(L.length===1){location.replace(L[0].url);return}
+  show('<h1>どなたの'+esc(ttl)+'を'+(ttl==='診察券'?'出しますか？':'見ますか？')+'</h1>'+L.map(function(l){return '<a class="btn" href="'+esc(l.url)+'">'+esc(l.name)+' 様</a>'}).join('')+closeBtn());
+}
 (async function(){
   try{
+    var PG=page();
+    if(PG==='qr'){document.title='診察券';var C=qrGet();if(C&&C.every(function(l){return okUrl(l.url)})){listOut(C,'診察券');return}}
     if(!window.liff)throw new Error('LINEの準備ができませんでした。');
     await liff.init({liffId:LIFF_ID});
     if(!liff.isLoggedIn()){liff.login({redirectUri:location.href});return}
     var it=liff.getIDToken();if(!it){fail('LINEの情報が受け取れませんでした。LINEのトーク画面のメニューから開き直してください。');return}
-    var r=await fetch(EXEC,{method:'POST',body:JSON.stringify({op:'liff',it:it,p:page()})});
+    var r=await fetch(EXEC,{method:'POST',body:JSON.stringify({op:'liff',it:it,p:PG})});
     var x=await r.json();
     if(x.error){fail(x.error);return}
-    if(x.none){show('<div class="card"><h1>スタンプカード</h1><p>'+esc(x.msg)+'</p></div>'+closeBtn());return}
+    var ttl=x.title||'スタンプカード';
+    if(x.none){show('<div class="card"><h1>'+esc(ttl)+'</h1><p>'+esc(x.msg)+'</p></div>'+closeBtn());return}
     var L=x.list||[];
-    if(L.length===1){location.replace(L[0].url);return}
-    show('<h1>どなたのスタンプカードを見ますか？</h1>'+L.map(function(l){return '<a class="btn" href="'+esc(l.url)+'">'+esc(l.name)+' 様</a>'}).join('')+closeBtn());
+    if(PG==='qr'&&L.length&&L.every(function(l){return okUrl(l.url)}))qrPut(L);
+    listOut(L,ttl);
   }catch(e){fail('通信がうまくいきませんでした。電波のよい所で、LINEのトーク画面のメニューから開き直してください。')}
 })();
 </script>
