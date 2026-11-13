@@ -80,9 +80,14 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   var RE=/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, src=null, origin='', stream=null, det=null, starting=false, lastCode='', lastAt=0, shown=false, timer=null;
   var box=document.createElement('div'); box.id='ukbox'; box.hidden=true;
   box.style.cssText='position:fixed;z-index:5;overflow:hidden;border-radius:22px;background:#222;pointer-events:none';
-  box.innerHTML='<video id="ukv" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block"></video><div style="position:absolute;top:14%;bottom:14%;left:22%;right:22%;border:5px solid #fff;border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.28)"></div>';
+  /* 11/13：アイコン（ホーム画面）から開くと、自動ではカメラを開かせてもらえないことがある（代表 11/13）。そのときは、この枠に大きなボタンを出して、押してもらってからカメラを開く */
+  box.innerHTML='<video id="ukv" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block"></video><div id="ukfr" style="position:absolute;top:14%;bottom:14%;left:22%;right:22%;border:5px solid #fff;border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.28)"></div>'
+    +'<button id="ukgo" type="button" hidden style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;background:#222;color:#fff;font:800 26px/1.6 -apple-system,\'Hiragino Sans\',sans-serif;padding:20px;pointer-events:auto">ここを押して<br>カメラをオンにしてください<br><span id="ukgoe" style="font-size:15px;font-weight:500;opacity:.8"></span></button>';
   document.body.appendChild(box);
   var v=box.querySelector('video'), cv=document.createElement('canvas');
+  var go=box.querySelector('#ukgo'), goe=box.querySelector('#ukgoe'), fr=box.querySelector('#ukfr'), want=false, failed='';
+  function paint(){var needBtn=!stream&&!!failed; go.hidden=!needBtn; fr.style.display=stream?'':'none'; v.style.display=stream?'block':'none'; box.hidden=!(want&&(stream||needBtn)); shown=want&&!!stream}
+  go.addEventListener('click',function(){goe.textContent='カメラを開いています…';start(true)});
   function say(m){try{if(src)src.postMessage(m,origin)}catch(e){}}
   function loadJsQR(){if(window.jsQR)return Promise.resolve();var urls=['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js','https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];
     return urls.reduce(function(p,u){return p.catch(function(){return new Promise(function(ok,ng){var s=document.createElement('script');s.src=u;s.onload=function(){window.jsQR?ok():ng()};s.onerror=ng;document.head.appendChild(s)})})},Promise.reject())}
@@ -91,14 +96,15 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   function scan(){if(!shown||scanning||!v.videoWidth)return;var w=640,h=Math.round(v.videoHeight*640/v.videoWidth);cv.width=w;cv.height=h;var x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);
     if(det){scanning=true;det.detect(cv).then(function(a){scanning=false;if(a&&a[0]&&a[0].rawValue)found(a[0].rawValue)},function(){scanning=false})}
     else if(window.jsQR){var d=x.getImageData(0,0,w,h),q=null;try{q=window.jsQR(d.data,w,h,{inversionAttempts:'dontInvert'})}catch(e){}if(q&&q.data)found(q.data)}}
-  function start(){
+  function start(byTap){
     if(stream){say({uk:'camstate',state:'ok'});return} if(starting)return; starting=true;
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){starting=false;say({uk:'camstate',state:'err',name:'NoCamera'});return}
+    say({uk:'camstate',state:'wait'});   // 「外で引き受けました」とすぐ知らせる（中の画面が待ちきれずに自分でカメラを開こうとしないように）
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){starting=false;failed='NoCamera';goe.textContent='この端末ではカメラが使えません（Safariで開いてください）';paint();say({uk:'camstate',state:'err',name:'NoCamera'});return}
     var ready=('BarcodeDetector' in window)?(function(){try{det=new BarcodeDetector({formats:['qr_code']});return Promise.resolve()}catch(e){det=null;return loadJsQR()}})():loadJsQR();
-    ready.then(function(){return navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}})})
+    ready.catch(function(){}); navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}})
     .then(function(s){stream=s;v.srcObject=s;return v.play()})
-    .then(function(){starting=false;say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
-    .catch(function(e){starting=false;say({uk:'camstate',state:'err',name:(e&&e.name)||'Error'})});
+    .then(function(){starting=false;failed='';paint();say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
+    .catch(function(e){starting=false;failed=(e&&e.name)||'Error';goe.textContent=byTap?('カメラを開けませんでした（'+failed+'）。設定→Safari→カメラ を「許可」にして、もう一度押してください'):'';paint();say({uk:'camstate',state:'err',name:failed})});
   }
   window.addEventListener('message',function(e){
     if(!RE.test(e.origin))return; var d=e.data||{}; if(d.uk!=='cam')return; src=e.source; origin=e.origin;
@@ -106,9 +112,9 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
     else if(d.op==='rect'){var f=document.getElementById('app').getBoundingClientRect(), n=function(x){x=Number(x);return isFinite(x)?x:0};
       var sx=d.vw>0?f.width/n(d.vw):1, sy=d.vh>0?f.height/n(d.vh):1;
       box.style.left=(f.left+n(d.x)*sx)+'px';box.style.top=(f.top+n(d.y)*sy)+'px';box.style.width=Math.max(0,n(d.w)*sx)+'px';box.style.height=Math.max(0,n(d.h)*sy)+'px';
-      shown=!!d.show&&!!stream&&n(d.w)>40; box.hidden=!shown;}
+      want=!!d.show&&n(d.w)>40; paint();}
   });
-  document.addEventListener('visibilitychange',function(){if(document.hidden){box.hidden=true;shown=false}else if(stream&&v.paused){v.play().catch(function(){})}});
+  document.addEventListener('visibilitychange',function(){if(document.hidden){want=false;paint()}else if(stream&&v.paused){v.play().catch(function(){})}});
 })();
 </script>
 </body></html>
