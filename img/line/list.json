@@ -1,6 +1,12 @@
 {
  "images": [
   {
+   "file": "qr_uketsuke_1114.jpg",
+   "name": "QR受付のお知らせ＋ご予約（11/14〜16）",
+   "w": 1040,
+   "h": 1040
+  },
+  {
    "file": "kyushin_rinji.jpg",
    "name": "臨時休診：本日は臨時休診です",
    "w": 1040,
