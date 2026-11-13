@@ -73,4 +73,42 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   document.addEventListener('visibilitychange',function(){if(!document.hidden)later()});
 })();
 </script>
+<script>
+/* 11/13：受付のカメラは、このいちばん外のページで開く（iPadのSafariは、入れ子の中のページにカメラを使わせないため）。
+   中の受付画面から「映す場所」を受け取り、同じ場所にカメラの映像を重ねる。QRが読めたら、その中身だけを中の画面に渡す */
+(function(){
+  var RE=/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/, src=null, origin='', stream=null, det=null, starting=false, lastCode='', lastAt=0, shown=false, timer=null;
+  var box=document.createElement('div'); box.id='ukbox'; box.hidden=true;
+  box.style.cssText='position:fixed;z-index:5;overflow:hidden;border-radius:22px;background:#222;pointer-events:none';
+  box.innerHTML='<video id="ukv" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block"></video><div style="position:absolute;top:14%;bottom:14%;left:22%;right:22%;border:5px solid #fff;border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.28)"></div>';
+  document.body.appendChild(box);
+  var v=box.querySelector('video'), cv=document.createElement('canvas');
+  function say(m){try{if(src)src.postMessage(m,origin)}catch(e){}}
+  function loadJsQR(){if(window.jsQR)return Promise.resolve();var urls=['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js','https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];
+    return urls.reduce(function(p,u){return p.catch(function(){return new Promise(function(ok,ng){var s=document.createElement('script');s.src=u;s.onload=function(){window.jsQR?ok():ng()};s.onerror=ng;document.head.appendChild(s)})})},Promise.reject())}
+  function found(code){var now=Date.now();if(code===lastCode&&now-lastAt<1500)return;lastCode=code;lastAt=now;say({uk:'scan',code:String(code).slice(0,199)})}
+  var scanning=false;
+  function scan(){if(!shown||scanning||!v.videoWidth)return;var w=640,h=Math.round(v.videoHeight*640/v.videoWidth);cv.width=w;cv.height=h;var x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);
+    if(det){scanning=true;det.detect(cv).then(function(a){scanning=false;if(a&&a[0]&&a[0].rawValue)found(a[0].rawValue)},function(){scanning=false})}
+    else if(window.jsQR){var d=x.getImageData(0,0,w,h),q=null;try{q=window.jsQR(d.data,w,h,{inversionAttempts:'dontInvert'})}catch(e){}if(q&&q.data)found(q.data)}}
+  function start(){
+    if(stream){say({uk:'camstate',state:'ok'});return} if(starting)return; starting=true;
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){starting=false;say({uk:'camstate',state:'err',name:'NoCamera'});return}
+    var ready=('BarcodeDetector' in window)?(function(){try{det=new BarcodeDetector({formats:['qr_code']});return Promise.resolve()}catch(e){det=null;return loadJsQR()}})():loadJsQR();
+    ready.then(function(){return navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}})})
+    .then(function(s){stream=s;v.srcObject=s;return v.play()})
+    .then(function(){starting=false;say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
+    .catch(function(e){starting=false;say({uk:'camstate',state:'err',name:(e&&e.name)||'Error'})});
+  }
+  window.addEventListener('message',function(e){
+    if(!RE.test(e.origin))return; var d=e.data||{}; if(d.uk!=='cam')return; src=e.source; origin=e.origin;
+    if(d.op==='start')start();
+    else if(d.op==='rect'){var f=document.getElementById('app').getBoundingClientRect(), n=function(x){x=Number(x);return isFinite(x)?x:0};
+      var sx=d.vw>0?f.width/n(d.vw):1, sy=d.vh>0?f.height/n(d.vh):1;
+      box.style.left=(f.left+n(d.x)*sx)+'px';box.style.top=(f.top+n(d.y)*sy)+'px';box.style.width=Math.max(0,n(d.w)*sx)+'px';box.style.height=Math.max(0,n(d.h)*sy)+'px';
+      shown=!!d.show&&!!stream&&n(d.w)>40; box.hidden=!shown;}
+  });
+  document.addEventListener('visibilitychange',function(){if(document.hidden){box.hidden=true;shown=false}else if(stream&&v.paused){v.play().catch(function(){})}});
+})();
+</script>
 </body></html>
