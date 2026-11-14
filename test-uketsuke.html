@@ -86,7 +86,7 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   document.body.appendChild(box);
   /* 11/14：どの版が動いているか・カメラがどうなっているかを、枠の右下に小さく出す（アイコンから開いたときの原因さがし用） */
   var tag=document.createElement('div'); tag.id='uktag'; tag.style.cssText='position:absolute;right:8px;bottom:6px;z-index:3;font:600 11px/1.2 -apple-system,sans-serif;color:#fff;opacity:.7;pointer-events:none;text-shadow:0 0 3px #000'; box.appendChild(tag);
-  var CAMV='c4', dark=0, needTap=false, taps=0;
+  var CAMV='c5', t0=0, SA=!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)), dark=0, needTap=false, taps=0;
   function note(t){try{tag.textContent=CAMV+' '+t}catch(e){}}
   var v=box.querySelector('video'), cv=document.createElement('canvas');
   var go=box.querySelector('#ukgo'), goe=box.querySelector('#ukgoe'), fr=box.querySelector('#ukfr'), want=false, failed='';
@@ -117,8 +117,9 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
       if(!needTap){needTap=true;goe.textContent='';note('tap? '+taps);paint()} stuck=0; return}   // 映像は進んでいるのに、3秒つづけて真っ黒
     note(why?('x '+why+' '+tries):('ok '+(tr&&tr.label?'':'-')+Math.round(v.currentTime)));
     if(!why)return;
+    var info=why+' '+Math.round((Date.now()-t0)/100)/10+'s'+(document.hasFocus&&document.hasFocus()?' f':' nf')+(SA?' app':' web');
     dark=0; drop(); tries++;
-    if(tries<=2){start()} else {failed=why; goe.textContent='カメラが止まりました（'+why+'）。押すと もう一度つなぎます'; paint(); say({uk:'camstate',state:'err',name:'Stopped-'+why})}
+    if(tries<=2){start()} else {failed=why; goe.textContent='カメラが止まりました（'+info+'）。押すと もう一度つなぎます'; paint(); say({uk:'camstate',state:'err',name:'Stopped-'+why})}
   },1000)}
   function start(byTap){
     if(byTap){tries=0;taps=0}
@@ -127,11 +128,11 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){starting=false;failed='NoCamera';goe.textContent='この端末ではカメラが使えません（Safariで開いてください）';paint();say({uk:'camstate',state:'err',name:'NoCamera'});return}
     var ready=('BarcodeDetector' in window)?(function(){try{det=new BarcodeDetector({formats:['qr_code']});return Promise.resolve()}catch(e){det=null;return loadJsQR()}})():loadJsQR();
     ready.catch(function(){}); note('open '+tries); navigator.mediaDevices.getUserMedia(tries>=1?{audio:false,video:true}:{audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}})
-    .then(function(s){stream=s;v.srcObject=s;paint();note('got');
+    .then(function(s){stream=s;t0=Date.now();v.srcObject=s;paint();note('got');
       /* 11/14（代表の写真「c3 open 0」）：アイコンから開くと、再生の合図（play）がいつまでも返ってこず、ここで止まっていた（映像が黒い・読み取りも始まらない）。
          → 再生の合図は待たない。映っているかは見はり（watch）で見て、映らなければ「押してください」を出す（指で押すと再生できる） */
       try{var pp=v.play();if(pp&&pp.catch)pp.catch(function(){})}catch(e){}
-      starting=false;failed='';paint();say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);watch();try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
+      starting=false;failed='';paint();say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);watch();try{if(navigator.wakeLock&&!SA)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}   /* 11/14：アイコンから開いたときは頼まない（カメラが切られる原因の候補）。画面は iPad の設定で消えないようにしてある */})
     .catch(function(e){note('err '+((e&&e.name)||''));starting=false;drop();failed=(e&&e.name)||'Error';goe.textContent=byTap?('カメラを開けませんでした（'+failed+'）。設定→Safari→カメラ を「許可」にして、もう一度押してください'):'';paint();say({uk:'camstate',state:'err',name:failed})});
   }
   window.addEventListener('message',function(e){
