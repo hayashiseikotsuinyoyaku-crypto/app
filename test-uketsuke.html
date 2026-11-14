@@ -96,15 +96,29 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   function scan(){if(!shown||scanning||!v.videoWidth)return;var w=640,h=Math.round(v.videoHeight*640/v.videoWidth);cv.width=w;cv.height=h;var x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);
     if(det){scanning=true;det.detect(cv).then(function(a){scanning=false;if(a&&a[0]&&a[0].rawValue)found(a[0].rawValue)},function(){scanning=false})}
     else if(window.jsQR){var d=x.getImageData(0,0,w,h),q=null;try{q=window.jsQR(d.data,w,h,{inversionAttempts:'dontInvert'})}catch(e){}if(q&&q.data)found(q.data)}}
+  /* 11/14（代表 11/14）：アイコン（ホーム画面）から開くと、カメラが一瞬ついてすぐ止まる（赤いカメラの印が出て消える・緑の点がつかない・映像が黒い）。
+     iPad が、つないだカメラを止めてしまう（止められた・終わった・映像が進まない）のを1秒ごとに見はって、止まっていたら つなぎ直す。
+     2回つなぎ直してもだめなら、枠に「ここを押してください」を出す（指で押してから開くと、iPad が止めにくい）。理由も小さく出す */
+  var tries=0, lastT=-1, stuck=0, good=0, wd=null;
+  function drop(){try{if(stream)stream.getTracks().forEach(function(t){try{t.stop()}catch(e){}})}catch(e){} stream=null; try{v.srcObject=null}catch(e){} clearInterval(timer); clearInterval(wd); wd=null; lastT=-1; stuck=0}
+  function watch(){clearInterval(wd); good=0; wd=setInterval(function(){
+    if(!stream||document.hidden)return; var tr=stream.getVideoTracks()[0], why='';
+    if(!tr||tr.readyState==='ended')why='ended'; else if(tr.muted)why='muted';
+    else{ if(v.paused){v.play().catch(function(){})} if(v.currentTime===lastT){stuck++; if(stuck>=3)why='stuck'} else {stuck=0; good++; if(good>=10)tries=0} lastT=v.currentTime }
+    if(!why)return;
+    drop(); tries++;
+    if(tries<=2){start()} else {failed=why; goe.textContent='カメラが止まりました（'+why+'）。押すと もう一度つなぎます'; paint(); say({uk:'camstate',state:'err',name:'Stopped-'+why})}
+  },1000)}
   function start(byTap){
+    if(byTap)tries=0;
     if(stream){say({uk:'camstate',state:'ok'});return} if(starting)return; starting=true;
     say({uk:'camstate',state:'wait'});   // 「外で引き受けました」とすぐ知らせる（中の画面が待ちきれずに自分でカメラを開こうとしないように）
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){starting=false;failed='NoCamera';goe.textContent='この端末ではカメラが使えません（Safariで開いてください）';paint();say({uk:'camstate',state:'err',name:'NoCamera'});return}
     var ready=('BarcodeDetector' in window)?(function(){try{det=new BarcodeDetector({formats:['qr_code']});return Promise.resolve()}catch(e){det=null;return loadJsQR()}})():loadJsQR();
     ready.catch(function(){}); navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}}})
     .then(function(s){stream=s;v.srcObject=s;return v.play()})
-    .then(function(){starting=false;failed='';paint();say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
-    .catch(function(e){starting=false;failed=(e&&e.name)||'Error';goe.textContent=byTap?('カメラを開けませんでした（'+failed+'）。設定→Safari→カメラ を「許可」にして、もう一度押してください'):'';paint();say({uk:'camstate',state:'err',name:failed})});
+    .then(function(){starting=false;failed='';paint();say({uk:'camstate',state:'ok'});clearInterval(timer);timer=setInterval(scan,220);watch();try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}})
+    .catch(function(e){starting=false;drop();failed=(e&&e.name)||'Error';goe.textContent=byTap?('カメラを開けませんでした（'+failed+'）。設定→Safari→カメラ を「許可」にして、もう一度押してください'):'';paint();say({uk:'camstate',state:'err',name:failed})});
   }
   window.addEventListener('message',function(e){
     if(!RE.test(e.origin))return; var d=e.data||{}; if(d.uk!=='cam')return; src=e.source; origin=e.origin;
