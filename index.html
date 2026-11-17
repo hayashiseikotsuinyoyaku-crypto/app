@@ -59,7 +59,7 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
     var d = e.data || {};
     if (e.origin === location.origin && d.ts === 'hayashi') {
       if (d.op === 'aimClose') { close(); return; }
-      if (d.op === 'aimSize' && ov) { ov.style.height = Math.max(60, Math.min(+d.h || 90, 420)) + 'px'; return; }
+      if (d.op === 'aimSize' && ov) { ov.style.height = Math.max(36, Math.min(+d.h || 90, 420)) + 'px'; if (d.w) ov.style.width = 'min(' + Math.max(160, Math.min(+d.w, 470)) + 'px,calc(100vw - 16px))'; return; }
     }
     if (!OK_ORIGIN.test(e.origin) || d.ts !== 'hayashi') return;
     var src = e.source, org = e.origin;
@@ -74,7 +74,7 @@ a.btn{display:inline-block;background:#115C55;color:#fff;text-decoration:none;fo
     ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;z-index:9999;right:max(8px,env(safe-area-inset-right));bottom:max(76px,calc(env(safe-area-inset-bottom) + 70px));width:min(470px,calc(100vw - 16px));height:90px;border-radius:16px;overflow:hidden';   /* 右下（カルテの「保存する」の帯にかからない高さ） */
     var f = document.createElement('iframe');
-    f.src = u + '&embed=1&mini=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
+    f.src = u + '&embed=1&mini=1&q=1'; f.allow = 'microphone; screen-wake-lock'; f.title = 'AI問診の録音';
     f.style.cssText = 'border:0;width:100%;height:100%;display:block;background:transparent'; f.setAttribute('allowtransparency', 'true');
     ov.appendChild(f); document.body.appendChild(ov);
     reply({ok: true});
