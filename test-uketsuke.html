@@ -86,7 +86,7 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
   document.body.appendChild(box);
   /* 11/14：どの版が動いているか・カメラがどうなっているかを、枠の右下に小さく出す（アイコンから開いたときの原因さがし用） */
   var tag=document.createElement('div'); tag.id='uktag'; tag.style.cssText='position:absolute;right:8px;bottom:6px;z-index:3;font:600 11px/1.2 -apple-system,sans-serif;color:#fff;opacity:.7;pointer-events:none;text-shadow:0 0 3px #000'; box.appendChild(tag);
-  var CAMV='c5', t0=0, SA=!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)), dark=0, needTap=false, taps=0;
+  var CAMV='c6', t0=0, SA=!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)), dark=0, needTap=false, taps=0;
   function note(t){try{tag.textContent=CAMV+' '+t}catch(e){}}
   var v=box.querySelector('video'), cv=document.createElement('canvas');
   var go=box.querySelector('#ukgo'), goe=box.querySelector('#ukgoe'), fr=box.querySelector('#ukfr'), want=false, failed='';
@@ -119,9 +119,15 @@ if (/(^|[?&])setup(=|&|$)/.test(location.search)) {
     if(!why)return;
     var info=why+' '+Math.round((Date.now()-t0)/100)/10+'s'+(document.hasFocus&&document.hasFocus()?' f':' nf')+(SA?' app':' web');
     dark=0; drop(); tries++;
-    if(tries<=2){start()} else {failed=why; goe.textContent='カメラが止まりました（'+info+'）。押すと もう一度つなぎます'; paint(); say({uk:'camstate',state:'err',name:'Stopped-'+why})}
+    if(tries<=2){start()} else {failed=why; goe.textContent='カメラが止まりました（'+info+'）。自動でつなぎ直しています。押すと すぐにつなぎます'; paint(); say({uk:'camstate',state:'err',name:'Stopped-'+why}); again()}
   },1000)}
+  /* 11/17（代表 11/17：iPadを再起動したあと「カメラが止まりました（muted）」のまま つながらなかった）：
+     2回つなぎ直してだめでも あきらめない。15秒ごとに 自動でつなぎ直しを続ける（だれも押さなくても、iPad の準備ができたら勝手に戻る）。
+     押せばすぐつなぐのは今までどおり。「許可されていない」など 押さないと直らない止まり方のときは 自動ではやらない */
+  var againT=null, RETRY_MS=+window.__ukRetryMs||15000;
+  function again(){clearTimeout(againT); againT=setTimeout(function(){againT=null; if(stream||starting)return; if(!want||document.hidden||!failed){if(failed&&!stream)again();return} note('auto '+failed); tries=2; start()},RETRY_MS)}
   function start(byTap){
+    clearTimeout(againT); againT=null;
     if(byTap){tries=0;taps=0}
     if(stream){say({uk:'camstate',state:'ok'});return} if(starting)return; starting=true;
     say({uk:'camstate',state:'wait'});   // 「外で引き受けました」とすぐ知らせる（中の画面が待ちきれずに自分でカメラを開こうとしないように）
