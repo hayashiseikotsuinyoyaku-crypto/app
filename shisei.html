@@ -408,7 +408,7 @@ function paintPts(c,kind,p,W,H,u,drag){
   if(kind==='F'){hl(mid(p.shR,p.shL).y);hl(p.pub.y)}
   LINKS[kind].forEach(([a,b])=>ln(p[a],p[b],'rgba(255,214,90,.95)',1.8));
   (kind==='F'?PF:PS).forEach(([k,,blue])=>{const q=p[k];if(!q)return;c.beginPath();c.arc(q.x,q.y,(k===drag?8:4.6)*u,0,7);c.fillStyle=blue?'#2b8cff':'#ff5a36';c.fill();c.lineWidth=1.4*u;c.strokeStyle='#fff';c.stroke()});
-  if(drag){const q=p[drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===v.drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
+  if(drag){const q=p[drag],lab=((kind==='F'?PF:PS).find(x=>x[0]===drag)||[])[1]||'';c.font=`${15*u}px sans-serif`;c.fillStyle='rgba(0,0,0,.7)';const w=c.measureText(lab).width+12*u;c.fillRect(q.x+12*u,q.y-26*u,w,22*u);c.fillStyle='#fff';c.fillText(lab,q.x+18*u,q.y-10*u)}}
 // 点を動かす（1本指）・拡大縮小（2本指でつまむ）・拡大中は何もない所を1本指でなぞると移動。縮小は元の大きさまで
 function zoomApply(kind){const v=V[kind],box=$('#cv'+kind),cv=box.querySelector('canvas');if(!cv)return;const z=v.z||(v.z={s:1,x:0,y:0});
   const bw=cv.offsetWidth,bh=cv.offsetHeight;z.s=Math.max(1,Math.min(5,z.s));z.x=Math.min(0,Math.max(bw-bw*z.s,z.x));z.y=Math.min(0,Math.max(bh-bh*z.s,z.y));
