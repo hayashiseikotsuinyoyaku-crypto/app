@@ -68,7 +68,7 @@ function back(){if(R)stop(true);try{window.parent.postMessage({ts:'hayashi',op:'
 function idle(msg){show(QUIET?`${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="qe" id="go" style="font-size:15px;padding:10px 16px">AI問診をはじめる</button>`:MINI?`<div class="who">🎤 ${esc(INFO.name)} 様</div>${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="big" id="go">● 記録をはじめる</button>`
   :`<div class="who">${esc(INFO.name)} 様</div><div class="sub">${INFO.kind==='acc'?'交通事故':'一般'}・担当 ${esc(INFO.staff||'')}</div>
   ${msg?`<div class="err">${esc(msg)}</div>`:''}<button class="big" id="go">🎤 記録をはじめる</button>
-  <div class="sub">問診のあいだ押したままにしなくて大丈夫です。終わったら「終わり」を押します（15分まで）。</div>`);$('#go').onclick=start}
+  <div class="sub">問診のあいだ押したままにしなくて大丈夫です。終わったら「終わり」を押します（15分まで）。</div>`);$('#go').onclick=()=>start(false)}   /* 11/22：押したときは 理由を出す（前は 押した合図が auto と見なされて 何も出ずに元に戻っていた） */
 /* 11/7版r：長い問診（30分以上）でも時間切れにならないように、5分ごとに区切って、録りながら少しずつ送る（区切りごとに予約システムで文字にしておく）。
    「終わり」で残りを送り、全部の文字と電子問診票から下書きを作る。上限60分 */
 let Q2=[],QB=false,SENT=0,FAIL=0;
@@ -89,7 +89,8 @@ function rotate(){if(!R||R.stopping)return;const old=R.rec;newRec();try{old.stop
 async function start(auto){const mime=pickMime();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!mime){idle('この端末では録音できません（iPadのSafariで開いてください）。');return}
   let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
-  catch(e){if(auto){idle();return}idle('マイクが使えませんでした。「許可」を押してください。前に「許可しない」を押したときは、iPadの「設定」→「Safari」→「マイク」を「確認」か「許可」にしてください。');return}
+  catch(e){if(auto===true){idle();return}const n=(e&&e.name)||'';
+    idle((n==='NotFoundError'||n==='OverconstrainedError'?'マイクが見つかりませんでした。':n==='NotReadableError'||n==='AbortError'?'マイクをほかのアプリが使っているようです。ほかのアプリを閉じてから、もう一度押してください。':'マイクが使えませんでした。「許可」を押してください。前に「許可しない」を押したときは、iPadの「設定」→「アプリ」→「Safari」→「マイク」を「確認」か「許可」にしてください。')+(n?'（'+n+'）':''));return}
   Q2=[];SENT=0;FAIL=0;window.__FAILED=[];R0.mime=mime;
   R={st,mime,t0:Date.now(),sec:0,seg:0};newRec();
   try{WL=navigator.wakeLock?await navigator.wakeLock.request('screen'):null}catch(e){WL=null}
